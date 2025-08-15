@@ -1,0 +1,16 @@
+//
+//  Config.swift
+//  RunClub
+//
+//  Created by Christian Vivadelli on 8/15/25.
+//
+
+enum Config {
+    static let clientID = "6b4e25209b8d451ea246192ce6fbdca7"
+    static let redirectURI = "runclub://auth-callback"
+    static let scopes = [
+        "user-read-email","user-read-private",
+        "user-library-read","user-top-read",
+        "playlist-modify-public","playlist-modify-private"
+    ].joined(separator: " ")
+}

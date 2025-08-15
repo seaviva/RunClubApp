@@ -1,0 +1,611 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5F94FD012E4F8E1900A3F9AE /* SpotifyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FCFF2E4F8CF600A3F9AE /* SpotifyService.swift */; };
+		5F94FD022E4F8E1F00A3F9AE /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FCFE2E4F8CE400A3F9AE /* AuthService.swift */; };
+		5F94FD032E4F8E2400A3F9AE /* SpotifyCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD002E4F8D0600A3F9AE /* SpotifyCredentials.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5F94FCDD2E4F886300A3F9AE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5F94FCC52E4F886200A3F9AE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5F94FCCC2E4F886200A3F9AE;
+			remoteInfo = RunClub;
+		};
+		5F94FCE72E4F886300A3F9AE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5F94FCC52E4F886200A3F9AE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5F94FCCC2E4F886200A3F9AE;
+			remoteInfo = RunClub;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		5F94FCCD2E4F886200A3F9AE /* RunClub.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RunClub.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5F94FCDC2E4F886300A3F9AE /* RunClubTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunClubTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5F94FCE62E4F886300A3F9AE /* RunClubUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunClubUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5F94FCFE2E4F8CE400A3F9AE /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		5F94FCFF2E4F8CF600A3F9AE /* SpotifyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyService.swift; sourceTree = "<group>"; };
+		5F94FD002E4F8D0600A3F9AE /* SpotifyCredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyCredentials.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5F94FCFA2E4F89FE00A3F9AE /* Exceptions for "RunClub" folder in "RunClub" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 5F94FCCC2E4F886200A3F9AE /* RunClub */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		5F94FCCF2E4F886200A3F9AE /* RunClub */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5F94FCFA2E4F89FE00A3F9AE /* Exceptions for "RunClub" folder in "RunClub" target */,
+			);
+			path = RunClub;
+			sourceTree = "<group>";
+		};
+		5F94FCDF2E4F886300A3F9AE /* RunClubTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RunClubTests;
+			sourceTree = "<group>";
+		};
+		5F94FCE92E4F886300A3F9AE /* RunClubUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RunClubUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5F94FCCA2E4F886200A3F9AE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5F94FCD92E4F886300A3F9AE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5F94FCE32E4F886300A3F9AE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5F94FCC42E4F886200A3F9AE = {
+			isa = PBXGroup;
+			children = (
+				5F94FCFD2E4F8CD500A3F9AE /* Models */,
+				5F94FCFC2E4F8CC400A3F9AE /* Services */,
+				5F94FCCF2E4F886200A3F9AE /* RunClub */,
+				5F94FCDF2E4F886300A3F9AE /* RunClubTests */,
+				5F94FCE92E4F886300A3F9AE /* RunClubUITests */,
+				5F94FCCE2E4F886200A3F9AE /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5F94FCCE2E4F886200A3F9AE /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5F94FCCD2E4F886200A3F9AE /* RunClub.app */,
+				5F94FCDC2E4F886300A3F9AE /* RunClubTests.xctest */,
+				5F94FCE62E4F886300A3F9AE /* RunClubUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5F94FCFC2E4F8CC400A3F9AE /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				5F94FCFF2E4F8CF600A3F9AE /* SpotifyService.swift */,
+				5F94FCFE2E4F8CE400A3F9AE /* AuthService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		5F94FCFD2E4F8CD500A3F9AE /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				5F94FD002E4F8D0600A3F9AE /* SpotifyCredentials.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5F94FCCC2E4F886200A3F9AE /* RunClub */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5F94FCF02E4F886300A3F9AE /* Build configuration list for PBXNativeTarget "RunClub" */;
+			buildPhases = (
+				5F94FCC92E4F886200A3F9AE /* Sources */,
+				5F94FCCA2E4F886200A3F9AE /* Frameworks */,
+				5F94FCCB2E4F886200A3F9AE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				5F94FCCF2E4F886200A3F9AE /* RunClub */,
+			);
+			name = RunClub;
+			packageProductDependencies = (
+			);
+			productName = RunClub;
+			productReference = 5F94FCCD2E4F886200A3F9AE /* RunClub.app */;
+			productType = "com.apple.product-type.application";
+		};
+		5F94FCDB2E4F886300A3F9AE /* RunClubTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5F94FCF32E4F886300A3F9AE /* Build configuration list for PBXNativeTarget "RunClubTests" */;
+			buildPhases = (
+				5F94FCD82E4F886300A3F9AE /* Sources */,
+				5F94FCD92E4F886300A3F9AE /* Frameworks */,
+				5F94FCDA2E4F886300A3F9AE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5F94FCDE2E4F886300A3F9AE /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5F94FCDF2E4F886300A3F9AE /* RunClubTests */,
+			);
+			name = RunClubTests;
+			packageProductDependencies = (
+			);
+			productName = RunClubTests;
+			productReference = 5F94FCDC2E4F886300A3F9AE /* RunClubTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		5F94FCE52E4F886300A3F9AE /* RunClubUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5F94FCF62E4F886300A3F9AE /* Build configuration list for PBXNativeTarget "RunClubUITests" */;
+			buildPhases = (
+				5F94FCE22E4F886300A3F9AE /* Sources */,
+				5F94FCE32E4F886300A3F9AE /* Frameworks */,
+				5F94FCE42E4F886300A3F9AE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5F94FCE82E4F886300A3F9AE /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5F94FCE92E4F886300A3F9AE /* RunClubUITests */,
+			);
+			name = RunClubUITests;
+			packageProductDependencies = (
+			);
+			productName = RunClubUITests;
+			productReference = 5F94FCE62E4F886300A3F9AE /* RunClubUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5F94FCC52E4F886200A3F9AE /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					5F94FCCC2E4F886200A3F9AE = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					5F94FCDB2E4F886300A3F9AE = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 5F94FCCC2E4F886200A3F9AE;
+					};
+					5F94FCE52E4F886300A3F9AE = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 5F94FCCC2E4F886200A3F9AE;
+					};
+				};
+			};
+			buildConfigurationList = 5F94FCC82E4F886200A3F9AE /* Build configuration list for PBXProject "RunClub" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5F94FCC42E4F886200A3F9AE;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5F94FCCE2E4F886200A3F9AE /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5F94FCCC2E4F886200A3F9AE /* RunClub */,
+				5F94FCDB2E4F886300A3F9AE /* RunClubTests */,
+				5F94FCE52E4F886300A3F9AE /* RunClubUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5F94FCCB2E4F886200A3F9AE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5F94FCDA2E4F886300A3F9AE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5F94FCE42E4F886300A3F9AE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5F94FCC92E4F886200A3F9AE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5F94FD022E4F8E1F00A3F9AE /* AuthService.swift in Sources */,
+				5F94FD012E4F8E1900A3F9AE /* SpotifyService.swift in Sources */,
+				5F94FD032E4F8E2400A3F9AE /* SpotifyCredentials.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5F94FCD82E4F886300A3F9AE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5F94FCE22E4F886300A3F9AE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5F94FCDE2E4F886300A3F9AE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5F94FCCC2E4F886200A3F9AE /* RunClub */;
+			targetProxy = 5F94FCDD2E4F886300A3F9AE /* PBXContainerItemProxy */;
+		};
+		5F94FCE82E4F886300A3F9AE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5F94FCCC2E4F886200A3F9AE /* RunClub */;
+			targetProxy = 5F94FCE72E4F886300A3F9AE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		5F94FCEE2E4F886300A3F9AE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 96T3B7GGCR;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		5F94FCEF2E4F886300A3F9AE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 96T3B7GGCR;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		5F94FCF12E4F886300A3F9AE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RunClub/RunClub.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 96T3B7GGCR;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RunClub/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = PKG.RunClub;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		5F94FCF22E4F886300A3F9AE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RunClub/RunClub.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 96T3B7GGCR;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RunClub/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = PKG.RunClub;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		5F94FCF42E4F886300A3F9AE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 96T3B7GGCR;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = PKG.RunClubTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RunClub.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RunClub";
+			};
+			name = Debug;
+		};
+		5F94FCF52E4F886300A3F9AE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 96T3B7GGCR;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = PKG.RunClubTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RunClub.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RunClub";
+			};
+			name = Release;
+		};
+		5F94FCF72E4F886300A3F9AE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 96T3B7GGCR;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = PKG.RunClubUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = RunClub;
+			};
+			name = Debug;
+		};
+		5F94FCF82E4F886300A3F9AE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 96T3B7GGCR;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = PKG.RunClubUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = RunClub;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5F94FCC82E4F886200A3F9AE /* Build configuration list for PBXProject "RunClub" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F94FCEE2E4F886300A3F9AE /* Debug */,
+				5F94FCEF2E4F886300A3F9AE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5F94FCF02E4F886300A3F9AE /* Build configuration list for PBXNativeTarget "RunClub" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F94FCF12E4F886300A3F9AE /* Debug */,
+				5F94FCF22E4F886300A3F9AE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5F94FCF32E4F886300A3F9AE /* Build configuration list for PBXNativeTarget "RunClubTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F94FCF42E4F886300A3F9AE /* Debug */,
+				5F94FCF52E4F886300A3F9AE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5F94FCF62E4F886300A3F9AE /* Build configuration list for PBXNativeTarget "RunClubUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F94FCF72E4F886300A3F9AE /* Debug */,
+				5F94FCF82E4F886300A3F9AE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5F94FCC52E4F886200A3F9AE /* Project object */;
+}
