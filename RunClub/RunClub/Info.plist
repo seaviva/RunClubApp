@@ -15,9 +15,13 @@
 			</array>
 		</dict>
 	</array>
-	<key>LSAplicationQueriesSchemes</key>
+	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>spotify</string>
+	</array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>IBMPlexSans-VariableFont_wdth,wght.ttf</string>
 	</array>
 </dict>
 </plist>

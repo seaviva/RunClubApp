@@ -13,4 +13,9 @@ enum Config {
         "user-library-read","user-top-read",
         "playlist-modify-public","playlist-modify-private"
     ].joined(separator: " ")
+
+    // External audio-features provider (ReccoBeats)
+    // No API key required per docs; base URL:
+    // https://api.reccobeats.com
+    static let reccoBeatsBaseURL = "https://api.reccobeats.com"
 }

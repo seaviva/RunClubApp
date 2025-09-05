@@ -1,0 +1,354 @@
+template,duration,tracks,seconds
+Easy Run,Short (20–30 min),6,932
+Easy Run,Medium (30–45 min),8,1804
+Easy Run,Long (45–60 min),14,2803
+Strong & Steady,Short (20–30 min),6,1577
+Strong & Steady,Medium (30–45 min),10,2148
+Strong & Steady,Long (45–60 min),14,3329
+Long & Easy,Short (20–30 min),10,2608
+Long & Easy,Medium (30–45 min),17,3889
+Long & Easy,Long (45–60 min),24,5271
+Short Waves,Short (20–30 min),7,1485
+Short Waves,Medium (30–45 min),10,2193
+Short Waves,Long (45–60 min),13,2911
+Long Waves,Short (20–30 min),7,1680
+Long Waves,Medium (30–45 min),13,2761
+Long Waves,Long (45–60 min),15,3512
+Pyramid,Short (20–30 min),7,1415
+Pyramid,Medium (30–45 min),10,2315
+Pyramid,Long (45–60 min),14,3181
+Kicker,Short (20–30 min),7,1537
+Kicker,Medium (30–45 min),9,2259
+Kicker,Long (45–60 min),14,2950
+
+FAILURES (9)
+bounds Easy Run-Short (20–30 min) secs=932 range=[1080,1320]
+bounds Easy Run-Medium (30–45 min) secs=1804 range=[1920,2160]
+bounds Easy Run-Long (45–60 min) secs=2803 range=[2880,3120]
+bounds Strong & Steady-Medium (30–45 min) secs=2148 range=[2220,2460]
+bounds Long & Easy-Medium (30–45 min) secs=3889 range=[3960,4200]
+bounds Long & Easy-Long (45–60 min) secs=5271 range=[5280,5520]
+bounds Short Waves-Long (45–60 min) secs=2911 range=[2940,3180]
+bounds Pyramid-Short (20–30 min) secs=1415 range=[1500,1740]
+bounds Kicker-Long (45–60 min) secs=2950 range=[3000,3240]
+
+DETAILS
+
+# Easy Run — Short (20–30 min) (tracks=6 secs=932 range=[1080,1320] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Ben Zimmerman — Yellow Daffodil (Burning) Against A Grey Sidewalk • tempo=141 energy=0.27 dance=0.20 • tempoFit=0.49 effortIdx=0.41 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [easy] tol=15 tgt=0.45 • Noname — Yesterday • tempo=174 energy=0.54 dance=0.46 • tempoFit=0.42 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [moderate] tol=12 tgt=0.48 • Panda Bear — Lonely Wanderer • tempo=80 energy=0.44 dance=0.14 • tempoFit=0.54 effortIdx=0.47 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [easy] tol=15 tgt=0.45 • Beach House — Master Of None • tempo=86 energy=0.34 dance=0.49 • tempoFit=0.47 effortIdx=0.44 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [easy] tol=15 tgt=0.35 • Megafaun — Kill The Horns • tempo=139 energy=0.27 dance=0.41 • tempoFit=0.38 effortIdx=0.35 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [easy] tol=15 tgt=0.35 • Aphex Twin — fz pseudotimestretch+e+3 [138.85] • tempo=139 energy=0.18 dance=0.56 • tempoFit=0.36 effortIdx=0.34 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:6 time:932s rediscovery:100% tempoFit:0.44 slotFit:0.99 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.moderate: 1, RunClub.LocalGenerator.EffortTier.easy: 5] color:easy
+
+# Easy Run — Medium (30–45 min) (tracks=8 secs=1804 range=[1920,2160] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Poolside — Tulsa • tempo=140 energy=0.30 dance=0.42 • tempoFit=0.42 effortIdx=0.39 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [easy] tol=15 tgt=0.45 • Culprate — Whispers, Pt. 1 • tempo=140 energy=0.51 dance=0.49 • tempoFit=0.43 effortIdx=0.45 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [easy] tol=15 tgt=0.45 • Slow Magic — Moon • tempo=174 energy=0.57 dance=0.34 • tempoFit=0.41 effortIdx=0.45 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [moderate] tol=12 tgt=0.48 • Tame Impala — Yes I'm Changing • tempo=180 energy=0.61 dance=0.37 • tempoFit=0.44 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [easy] tol=15 tgt=0.45 • Tech N9ne — Bass Ackwards • tempo=174 energy=0.58 dance=0.63 • tempoFit=0.39 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [easy] tol=15 tgt=0.45 • Fine Cut Bodies — Beaver Blink - Ooah Remix • tempo=87 energy=0.47 dance=0.80 • tempoFit=0.40 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [easy] tol=15 tgt=0.35 • Drake — Sacrifices • tempo=139 energy=0.44 dance=0.90 • tempoFit=0.37 effortIdx=0.44 slotFit=0.91 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [easy] tol=15 tgt=0.35 • Aphex Twin — fz pseudotimestretch+e+3 [138.85] • tempo=139 energy=0.18 dance=0.56 • tempoFit=0.36 effortIdx=0.34 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:8 time:1804s rediscovery:100% tempoFit:0.40 slotFit:0.98 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.easy: 7, RunClub.LocalGenerator.EffortTier.moderate: 1] color:easy
+
+# Easy Run — Long (45–60 min) (tracks=14 secs=2803 range=[2880,3120] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Beach House — Master Of None • tempo=86 energy=0.34 dance=0.49 • tempoFit=0.47 effortIdx=0.44 slotFit=0.96 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [easy] tol=15 tgt=0.40 • Ben Zimmerman — Yellow Daffodil (Burning) Against A Grey Sidewalk • tempo=141 energy=0.27 dance=0.20 • tempoFit=0.49 effortIdx=0.41 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [easy] tol=15 tgt=0.45 • Giraffage — Be With You • tempo=140 energy=0.41 dance=0.69 • tempoFit=0.44 effortIdx=0.45 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [easy] tol=15 tgt=0.45 • Star Slinger — Sketchy Boys on the Back Of the Bus • tempo=140 energy=0.41 dance=0.81 • tempoFit=0.43 effortIdx=0.47 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [easy] tol=15 tgt=0.45 • Drake — Sacrifices • tempo=139 energy=0.44 dance=0.90 • tempoFit=0.37 effortIdx=0.44 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [moderate] tol=12 tgt=0.48 • Lost In The Trees — Wake • tempo=180 energy=0.61 dance=0.39 • tempoFit=0.44 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [moderate] tol=12 tgt=0.48 • Arctic Monkeys — Arabella • tempo=180 energy=0.56 dance=0.58 • tempoFit=0.44 effortIdx=0.49 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [easy] tol=15 tgt=0.45 • Lil Silva — First Mark • tempo=140 energy=0.55 dance=0.35 • tempoFit=0.42 effortIdx=0.45 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [easy] tol=15 tgt=0.45 • Clark — Everlane • tempo=86 energy=0.39 dance=0.14 • tempoFit=0.53 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [easy] tol=15 tgt=0.45 • Lil Peep — Leanin' • tempo=140 energy=0.49 dance=0.50 • tempoFit=0.42 effortIdx=0.45 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #10 [easy] tol=15 tgt=0.35 • Kurt Vile — Losing Momentum (For Jim Jarmusch) • tempo=87 energy=0.15 dance=0.41 • tempoFit=0.39 effortIdx=0.33 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #11 [easy] tol=15 tgt=0.35 • 2 Chainz — MFN Right • tempo=140 energy=0.33 dance=0.92 • tempoFit=0.43 effortIdx=0.46 slotFit=0.89 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #12 [easy] tol=15 tgt=0.35 • Aphex Twin — fz pseudotimestretch+e+3 [138.85] • tempo=139 energy=0.18 dance=0.56 • tempoFit=0.36 effortIdx=0.34 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #13 [easy] tol=15 tgt=0.35 • Modern Baseball — Timmy Bowers • tempo=140 energy=0.27 dance=0.35 • tempoFit=0.42 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:14 time:2803s rediscovery:100% tempoFit:0.43 slotFit:0.98 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.moderate: 2, RunClub.LocalGenerator.EffortTier.easy: 12] color:easy
+
+# Strong & Steady — Short (20–30 min) (tracks=6 secs=1577 range=[1380,1620] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Lost In The Trees — This Dead Bird Is Beautiful • tempo=172 energy=0.30 dance=0.22 • tempoFit=0.51 effortIdx=0.43 slotFit=0.97 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [moderate] tol=12 tgt=0.55 • Outkast — Crumblin' Erb • tempo=90 energy=0.59 dance=0.80 • tempoFit=0.49 effortIdx=0.55 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [moderate] tol=12 tgt=0.55 • Main Attrakionz — Do It For the Bay - feat. DaVinci • tempo=89 energy=0.57 dance=0.64 • tempoFit=0.52 effortIdx=0.55 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [strong] tol=10 tgt=0.60 • Tech N9ne — Yates • tempo=80 energy=0.72 dance=0.54 • tempoFit=0.55 effortIdx=0.60 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [easy] tol=15 tgt=0.35 • Lil Bibby — For the Low • tempo=140 energy=0.27 dance=0.78 • tempoFit=0.43 effortIdx=0.43 slotFit=0.92 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [easy] tol=15 tgt=0.35 • The Avett Brothers — I And Love And You • tempo=140 energy=0.26 dance=0.42 • tempoFit=0.41 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:6 time:1577s rediscovery:100% tempoFit:0.49 slotFit:0.98 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.easy: 3, RunClub.LocalGenerator.EffortTier.moderate: 2, RunClub.LocalGenerator.EffortTier.strong: 1] color:middle
+
+# Strong & Steady — Medium (30–45 min) (tracks=10 secs=2148 range=[2220,2460] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Lil Bibby — How We Move (feat. King Louie) • tempo=140 energy=0.31 dance=0.68 • tempoFit=0.42 effortIdx=0.42 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [moderate] tol=12 tgt=0.55 • An-Ten-Nae — Lean and Go • tempo=160 energy=0.41 dance=0.76 • tempoFit=0.58 effortIdx=0.55 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [moderate] tol=12 tgt=0.55 • NAV — Myself • tempo=80 energy=0.40 dance=0.74 • tempoFit=0.59 effortIdx=0.55 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [strong] tol=10 tgt=0.60 • Tech N9ne — Yates • tempo=80 energy=0.72 dance=0.54 • tempoFit=0.55 effortIdx=0.60 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [strong] tol=10 tgt=0.60 • DJ Rashad — Drank, Kush, Barz (feat. Spinn) • tempo=160 energy=0.82 dance=0.55 • tempoFit=0.51 effortIdx=0.61 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [strong] tol=10 tgt=0.60 • Outkast — Ain't No Thang • tempo=178 energy=0.66 dance=0.68 • tempoFit=0.55 effortIdx=0.60 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [strong] tol=10 tgt=0.60 • Eminem — Greatest • tempo=80 energy=0.74 dance=0.81 • tempoFit=0.51 effortIdx=0.61 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [easy] tol=15 tgt=0.35 • Modern Baseball — Timmy Bowers • tempo=140 energy=0.27 dance=0.35 • tempoFit=0.42 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [easy] tol=15 tgt=0.35 • Squarepusher — Seb-1.05 • tempo=139 energy=0.30 dance=0.41 • tempoFit=0.39 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [easy] tol=15 tgt=0.35 • Aphex Twin — fz pseudotimestretch+e+3 [138.85] • tempo=139 energy=0.18 dance=0.56 • tempoFit=0.36 effortIdx=0.34 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:10 time:2148s rediscovery:100% tempoFit:0.49 slotFit:0.99 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.strong: 4, RunClub.LocalGenerator.EffortTier.easy: 4, RunClub.LocalGenerator.EffortTier.moderate: 2] color:middle
+
+# Strong & Steady — Long (45–60 min) (tracks=14 secs=3329 range=[3180,3420] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Jenny Hval — Period Piece • tempo=140 energy=0.36 dance=0.63 • tempoFit=0.44 effortIdx=0.44 slotFit=0.96 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [easy] tol=15 tgt=0.40 • Neil Young — See The Sky About To Rain - Remastered • tempo=86 energy=0.31 dance=0.42 • tempoFit=0.50 effortIdx=0.45 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [moderate] tol=12 tgt=0.55 • Clark — Winter Linn • tempo=90 energy=0.80 dance=0.55 • tempoFit=0.44 effortIdx=0.55 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [moderate] tol=12 tgt=0.55 • Lil Peep — Runaway • tempo=80 energy=0.59 dance=0.40 • tempoFit=0.57 effortIdx=0.56 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [hard] tol=8 tgt=0.72 • Boys Noize — Got It • tempo=184 energy=0.85 dance=0.46 • tempoFit=0.68 effortIdx=0.71 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [strong] tol=10 tgt=0.60 • Tech N9ne — Yates • tempo=80 energy=0.72 dance=0.54 • tempoFit=0.55 effortIdx=0.60 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [strong] tol=10 tgt=0.60 • Boldy James — One of One • tempo=81 energy=0.54 dance=0.61 • tempoFit=0.64 effortIdx=0.60 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [strong] tol=10 tgt=0.60 • Animal Collective — Kids On Holiday • tempo=88 energy=0.54 dance=0.49 • tempoFit=0.64 effortIdx=0.59 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [strong] tol=10 tgt=0.60 • Outkast — Ain't No Thang • tempo=178 energy=0.66 dance=0.68 • tempoFit=0.55 effortIdx=0.60 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [strong] tol=10 tgt=0.60 • Cam'ron — Killa Cam • tempo=80 energy=0.79 dance=0.67 • tempoFit=0.51 effortIdx=0.61 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #10 [strong] tol=10 tgt=0.60 • Eminem — Greatest • tempo=80 energy=0.74 dance=0.81 • tempoFit=0.51 effortIdx=0.61 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #11 [easy] tol=15 tgt=0.35 • Tyler, The Creator — WOLF • tempo=139 energy=0.30 dance=0.43 • tempoFit=0.37 effortIdx=0.36 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #12 [easy] tol=15 tgt=0.35 • Squarepusher — Seb-1.05 • tempo=139 energy=0.30 dance=0.41 • tempoFit=0.39 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #13 [easy] tol=15 tgt=0.35 • The Avett Brothers — I And Love And You • tempo=140 energy=0.26 dance=0.42 • tempoFit=0.41 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:14 time:3329s rediscovery:100% tempoFit:0.51 slotFit:0.99 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.moderate: 2, RunClub.LocalGenerator.EffortTier.easy: 5, RunClub.LocalGenerator.EffortTier.hard: 1, RunClub.LocalGenerator.EffortTier.strong: 6] color:hard
+
+# Long & Easy — Short (20–30 min) (tracks=10 secs=2608 range=[2580,2820] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Hester V75 — Kjører omvei for å kjøpe sigaretter • tempo=140 energy=0.43 dance=0.66 • tempoFit=0.42 effortIdx=0.45 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [easy] tol=15 tgt=0.40 • Slow Magic — Moon • tempo=174 energy=0.57 dance=0.34 • tempoFit=0.41 effortIdx=0.45 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [easy] tol=15 tgt=0.45 • G. Love & Special Sauce — Blues Music • tempo=87 energy=0.38 dance=0.78 • tempoFit=0.44 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [easy] tol=15 tgt=0.45 • Clark — Everlane • tempo=86 energy=0.39 dance=0.14 • tempoFit=0.53 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [easy] tol=15 tgt=0.45 • Star Slinger — Sketchy Boys on the Back Of the Bus • tempo=140 energy=0.41 dance=0.81 • tempoFit=0.43 effortIdx=0.47 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [moderate] tol=12 tgt=0.48 • Ja Rule — E-Dub & Ja • tempo=90 energy=0.48 dance=0.88 • tempoFit=0.42 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [easy] tol=15 tgt=0.45 • Drake — Sacrifices • tempo=139 energy=0.44 dance=0.90 • tempoFit=0.37 effortIdx=0.44 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [easy] tol=15 tgt=0.45 • Yumi Zouma — The Brae • tempo=140 energy=0.44 dance=0.66 • tempoFit=0.43 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [easy] tol=15 tgt=0.45 • Squarepusher — Into The Blue • tempo=70 energy=0.43 dance=0.72 • tempoFit=0.43 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [easy] tol=15 tgt=0.35 • Purity Ring — heartsigh • tempo=139 energy=0.57 dance=0.61 • tempoFit=0.37 effortIdx=0.44 slotFit=0.91 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:10 time:2608s rediscovery:100% tempoFit:0.43 slotFit:0.97 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.moderate: 1, RunClub.LocalGenerator.EffortTier.easy: 9] color:easy
+
+# Long & Easy — Medium (30–45 min) (tracks=17 secs=3889 range=[3960,4200] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Lil Bibby — How We Move (feat. King Louie) • tempo=140 energy=0.31 dance=0.68 • tempoFit=0.42 effortIdx=0.42 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [easy] tol=15 tgt=0.40 • Bat For Lashes — Laura • tempo=70 energy=0.16 dance=0.37 • tempoFit=0.50 effortIdx=0.40 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [easy] tol=15 tgt=0.40 • Beach House — Master Of None • tempo=86 energy=0.34 dance=0.49 • tempoFit=0.47 effortIdx=0.44 slotFit=0.96 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [easy] tol=15 tgt=0.45 • G. Love & Special Sauce — Blues Music • tempo=87 energy=0.38 dance=0.78 • tempoFit=0.44 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [easy] tol=15 tgt=0.45 • Clark — Everlane • tempo=86 energy=0.39 dance=0.14 • tempoFit=0.53 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [easy] tol=15 tgt=0.45 • Lil Silva — First Mark • tempo=140 energy=0.55 dance=0.35 • tempoFit=0.42 effortIdx=0.45 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [easy] tol=15 tgt=0.45 • Hester V75 — Kjører omvei for å kjøpe sigaretter • tempo=140 energy=0.43 dance=0.66 • tempoFit=0.42 effortIdx=0.45 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [moderate] tol=12 tgt=0.48 • Zac Brown Band — Overnight (feat. Trombone Shorty) • tempo=90 energy=0.52 dance=0.71 • tempoFit=0.44 effortIdx=0.49 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [easy] tol=15 tgt=0.45 • Slow Magic — Moon • tempo=174 energy=0.57 dance=0.34 • tempoFit=0.41 effortIdx=0.45 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #10 [easy] tol=15 tgt=0.45 • Panda Bear — Dolphin • tempo=87 energy=0.42 dance=0.54 • tempoFit=0.43 effortIdx=0.44 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #11 [easy] tol=15 tgt=0.45 • Star Slinger — Sketchy Boys on the Back Of the Bus • tempo=140 energy=0.41 dance=0.81 • tempoFit=0.43 effortIdx=0.47 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #12 [easy] tol=15 tgt=0.45 • Three Days Grace — Overrated • tempo=140 energy=0.56 dance=0.47 • tempoFit=0.43 effortIdx=0.47 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #13 [easy] tol=15 tgt=0.45 • Purity Ring — heartsigh • tempo=139 energy=0.57 dance=0.61 • tempoFit=0.37 effortIdx=0.44 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #14 [easy] tol=15 tgt=0.35 • Steve Hauschildt — Where All Is Fled • tempo=70 energy=0.06 dance=0.21 • tempoFit=0.46 effortIdx=0.34 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #15 [easy] tol=15 tgt=0.35 • Poolside — Tulsa • tempo=140 energy=0.30 dance=0.42 • tempoFit=0.42 effortIdx=0.39 slotFit=0.96 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #16 [easy] tol=15 tgt=0.35 • David August — Help Me Through • tempo=174 energy=0.35 dance=0.54 • tempoFit=0.40 effortIdx=0.41 slotFit=0.94 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #17 [easy] tol=15 tgt=0.35 • Ben Zimmerman — Yellow Daffodil (Burning) Against A Grey Sidewalk • tempo=141 energy=0.27 dance=0.20 • tempoFit=0.49 effortIdx=0.41 slotFit=0.94 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:17 time:3889s rediscovery:100% tempoFit:0.44 slotFit:0.98 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.easy: 16, RunClub.LocalGenerator.EffortTier.moderate: 1] color:easy
+
+# Long & Easy — Long (45–60 min) (tracks=24 secs=5271 range=[5280,5520] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Panda Bear — Dolphin • tempo=87 energy=0.42 dance=0.54 • tempoFit=0.43 effortIdx=0.44 slotFit=0.96 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [easy] tol=15 tgt=0.40 • Neil Young — See The Sky About To Rain - Remastered • tempo=86 energy=0.31 dance=0.42 • tempoFit=0.50 effortIdx=0.45 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [easy] tol=15 tgt=0.40 • Giraffage — Girl • tempo=139 energy=0.46 dance=0.69 • tempoFit=0.36 effortIdx=0.42 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [easy] tol=15 tgt=0.45 • Tech N9ne — Bass Ackwards • tempo=174 energy=0.58 dance=0.63 • tempoFit=0.39 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [easy] tol=15 tgt=0.45 • Lil Silva — First Mark • tempo=140 energy=0.55 dance=0.35 • tempoFit=0.42 effortIdx=0.45 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [easy] tol=15 tgt=0.45 • Three Days Grace — Overrated • tempo=140 energy=0.56 dance=0.47 • tempoFit=0.43 effortIdx=0.47 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [easy] tol=15 tgt=0.45 • GFOTY — Don't Wanna / Let's Do It • tempo=140 energy=0.49 dance=0.74 • tempoFit=0.41 effortIdx=0.47 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [easy] tol=15 tgt=0.45 • Culprate — Whispers, Pt. 1 • tempo=140 energy=0.51 dance=0.49 • tempoFit=0.43 effortIdx=0.45 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [easy] tol=15 tgt=0.45 • Beach House — Master Of None • tempo=86 energy=0.34 dance=0.49 • tempoFit=0.47 effortIdx=0.44 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [moderate] tol=12 tgt=0.48 • 2 Chainz — Momma I Hit A Lick (feat. Kendrick Lamar) • tempo=180 energy=0.47 dance=0.80 • tempoFit=0.44 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #10 [moderate] tol=12 tgt=0.48 • Jitwam — Keepyourbusinesstoyourself • tempo=79 energy=0.70 dance=0.33 • tempoFit=0.42 effortIdx=0.49 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #11 [moderate] tol=12 tgt=0.48 • Open Mike Eagle — Sadface Penance Raps • tempo=89 energy=0.40 dance=0.50 • tempoFit=0.52 effortIdx=0.49 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #12 [easy] tol=15 tgt=0.45 • Pantyraid — Jail Bait • tempo=140 energy=0.51 dance=0.56 • tempoFit=0.43 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #13 [easy] tol=15 tgt=0.45 • G. Love & Special Sauce — Blues Music • tempo=87 energy=0.38 dance=0.78 • tempoFit=0.44 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #14 [easy] tol=15 tgt=0.45 • Kanye West — H•A•M • tempo=140 energy=0.52 dance=0.63 • tempoFit=0.44 effortIdx=0.48 slotFit=0.97 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #15 [easy] tol=15 tgt=0.45 • Lil Bibby — For the Low • tempo=140 energy=0.27 dance=0.78 • tempoFit=0.43 effortIdx=0.43 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #16 [easy] tol=15 tgt=0.45 • Zac Brown Band — Sweet Annie • tempo=140 energy=0.43 dance=0.64 • tempoFit=0.43 effortIdx=0.45 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #17 [easy] tol=15 tgt=0.45 • Yumi Zouma — The Brae • tempo=140 energy=0.44 dance=0.66 • tempoFit=0.43 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #18 [easy] tol=15 tgt=0.35 • Bat For Lashes — Laura • tempo=70 energy=0.16 dance=0.37 • tempoFit=0.50 effortIdx=0.40 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #19 [easy] tol=15 tgt=0.35 • Hester V75 — Kjører omvei for å kjøpe sigaretter • tempo=140 energy=0.43 dance=0.66 • tempoFit=0.42 effortIdx=0.45 slotFit=0.90 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #20 [easy] tol=15 tgt=0.35 • Kurt Vile — Losing Momentum (For Jim Jarmusch) • tempo=87 energy=0.15 dance=0.41 • tempoFit=0.39 effortIdx=0.33 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #21 [easy] tol=15 tgt=0.35 • Pantha Du Prince — Wallflower for Pale Saints • tempo=173 energy=0.24 dance=0.19 • tempoFit=0.44 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #22 [easy] tol=15 tgt=0.35 • David August — Help Me Through • tempo=174 energy=0.35 dance=0.54 • tempoFit=0.40 effortIdx=0.41 slotFit=0.94 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #23 [easy] tol=15 tgt=0.35 • Ben Zimmerman — Yellow Daffodil (Burning) Against A Grey Sidewalk • tempo=141 energy=0.27 dance=0.20 • tempoFit=0.49 effortIdx=0.41 slotFit=0.94 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:24 time:5271s rediscovery:100% tempoFit:0.44 slotFit:0.98 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.easy: 21, RunClub.LocalGenerator.EffortTier.moderate: 3] color:easy
+
+# Short Waves — Short (20–30 min) (tracks=7 secs=1485 range=[1440,1680] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Modern Baseball — Timmy Bowers • tempo=140 energy=0.27 dance=0.35 • tempoFit=0.42 effortIdx=0.37 slotFit=0.97 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [hard] tol=8 tgt=0.80 • TOBACCO — Father Sister Berzerker • tempo=178 energy=0.63 dance=0.16 • tempoFit=1.00 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [easy] tol=15 tgt=0.45 • Tech N9ne — Bass Ackwards • tempo=174 energy=0.58 dance=0.63 • tempoFit=0.39 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [hard] tol=8 tgt=0.80 • Slow Magic — Moon • tempo=174 energy=0.57 dance=0.34 • tempoFit=1.00 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [easy] tol=15 tgt=0.45 • Squarepusher — Into The Blue • tempo=70 energy=0.43 dance=0.72 • tempoFit=0.43 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [easy] tol=15 tgt=0.35 • Megafaun — Kill The Horns • tempo=139 energy=0.27 dance=0.41 • tempoFit=0.38 effortIdx=0.35 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [easy] tol=15 tgt=0.35 • Steve Hauschildt — Where All Is Fled • tempo=70 energy=0.06 dance=0.21 • tempoFit=0.46 effortIdx=0.34 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:7 time:1485s rediscovery:100% tempoFit:0.58 slotFit:0.99 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.hard: 2, RunClub.LocalGenerator.EffortTier.easy: 5] color:hard
+
+# Short Waves — Medium (30–45 min) (tracks=10 secs=2193 range=[2160,2400] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Lil Peep — Leanin' • tempo=140 energy=0.49 dance=0.50 • tempoFit=0.42 effortIdx=0.45 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [hard] tol=8 tgt=0.80 • TOBACCO — Father Sister Berzerker • tempo=178 energy=0.63 dance=0.16 • tempoFit=1.00 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [easy] tol=15 tgt=0.45 • 2 Chainz — MFN Right • tempo=140 energy=0.33 dance=0.92 • tempoFit=0.43 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [hard] tol=8 tgt=0.80 • Noname — Yesterday • tempo=174 energy=0.54 dance=0.46 • tempoFit=1.00 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [easy] tol=15 tgt=0.45 • GFOTY — USA • tempo=140 energy=0.39 dance=0.87 • tempoFit=0.44 effortIdx=0.47 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [max] tol=6 tgt=0.85 • Eminem — Encore • tempo=174 energy=0.66 dance=0.66 • tempoFit=1.00 effortIdx=0.85 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [easy] tol=15 tgt=0.45 • ODESZA — Echoes • tempo=140 energy=0.52 dance=0.52 • tempoFit=0.43 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [easy] tol=15 tgt=0.35 • Lil Bibby — How We Move (feat. King Louie) • tempo=140 energy=0.31 dance=0.68 • tempoFit=0.42 effortIdx=0.42 slotFit=0.93 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [easy] tol=15 tgt=0.35 • The Avett Brothers — I And Love And You • tempo=140 energy=0.26 dance=0.42 • tempoFit=0.41 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [easy] tol=15 tgt=0.35 • Poolside — Tulsa • tempo=140 energy=0.30 dance=0.42 • tempoFit=0.42 effortIdx=0.39 slotFit=0.96 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:10 time:2193s rediscovery:100% tempoFit:0.60 slotFit:0.98 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.easy: 7, RunClub.LocalGenerator.EffortTier.hard: 2, RunClub.LocalGenerator.EffortTier.max: 1] color:hard
+
+# Short Waves — Long (45–60 min) (tracks=13 secs=2911 range=[2940,3180] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Lost In The Trees — This Dead Bird Is Beautiful • tempo=172 energy=0.30 dance=0.22 • tempoFit=0.51 effortIdx=0.43 slotFit=0.97 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [easy] tol=15 tgt=0.40 • Ben Zimmerman — Yellow Daffodil (Burning) Against A Grey Sidewalk • tempo=141 energy=0.27 dance=0.20 • tempoFit=0.49 effortIdx=0.41 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [hard] tol=8 tgt=0.80 • Noname — Yesterday • tempo=174 energy=0.54 dance=0.46 • tempoFit=1.00 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [easy] tol=15 tgt=0.45 • Tech N9ne — Bass Ackwards • tempo=174 energy=0.58 dance=0.63 • tempoFit=0.39 effortIdx=0.46 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [hard] tol=8 tgt=0.80 • Zac Brown Band — Knee Deep (feat. Jimmy Buffett) • tempo=91 energy=0.58 dance=0.71 • tempoFit=0.94 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [easy] tol=15 tgt=0.45 • GFOTY — USA • tempo=140 energy=0.39 dance=0.87 • tempoFit=0.44 effortIdx=0.47 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [hard] tol=8 tgt=0.80 • Chrome Sparks — Send the Pain On • tempo=175 energy=0.57 dance=0.36 • tempoFit=1.00 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [easy] tol=15 tgt=0.45 • Lil Peep — Leanin' • tempo=140 energy=0.49 dance=0.50 • tempoFit=0.42 effortIdx=0.45 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [max] tol=6 tgt=0.85 • Joey Bada$$ — Belly of the Beast (feat. Chronixx) • tempo=89 energy=0.69 dance=0.56 • tempoFit=1.00 effortIdx=0.85 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [easy] tol=15 tgt=0.45 • Jenny Hval — Period Piece • tempo=140 energy=0.36 dance=0.63 • tempoFit=0.44 effortIdx=0.44 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #10 [easy] tol=15 tgt=0.35 • Giraffage — Girl • tempo=139 energy=0.46 dance=0.69 • tempoFit=0.36 effortIdx=0.42 slotFit=0.93 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #11 [easy] tol=15 tgt=0.35 • Pantha Du Prince — Wallflower for Pale Saints • tempo=173 energy=0.24 dance=0.19 • tempoFit=0.44 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #12 [easy] tol=15 tgt=0.35 • Bat For Lashes — Laura • tempo=70 energy=0.16 dance=0.37 • tempoFit=0.50 effortIdx=0.40 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:13 time:2911s rediscovery:100% tempoFit:0.61 slotFit:0.98 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.hard: 3, RunClub.LocalGenerator.EffortTier.easy: 9, RunClub.LocalGenerator.EffortTier.max: 1] color:hard
+
+# Long Waves — Short (20–30 min) (tracks=7 secs=1680 range=[1620,1860] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Neil Young — See The Sky About To Rain - Remastered • tempo=86 energy=0.31 dance=0.42 • tempoFit=0.50 effortIdx=0.45 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [moderate] tol=12 tgt=0.48 • Zac Brown Band — Overnight (feat. Trombone Shorty) • tempo=90 energy=0.52 dance=0.71 • tempoFit=0.44 effortIdx=0.49 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [hard] tol=8 tgt=0.80 • Grateful Dead — All New Minglewood Blues - 2013 Remaster • tempo=91 energy=0.65 dance=0.71 • tempoFit=0.91 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [moderate] tol=12 tgt=0.48 • Open Mike Eagle — Very Much Money (Ice King Dream) • tempo=90 energy=0.52 dance=0.49 • tempoFit=0.45 effortIdx=0.47 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [hard] tol=8 tgt=0.80 • slowthai — Gorgeous • tempo=91 energy=0.62 dance=0.48 • tempoFit=0.95 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [easy] tol=15 tgt=0.35 • Tyler, The Creator — WOLF • tempo=139 energy=0.30 dance=0.43 • tempoFit=0.37 effortIdx=0.36 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [easy] tol=15 tgt=0.35 • Steve Hauschildt — Where All Is Fled • tempo=70 energy=0.06 dance=0.21 • tempoFit=0.46 effortIdx=0.34 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:7 time:1680s rediscovery:100% tempoFit:0.58 slotFit:0.99 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.hard: 2, RunClub.LocalGenerator.EffortTier.moderate: 2, RunClub.LocalGenerator.EffortTier.easy: 3] color:hard
+
+# Long Waves — Medium (30–45 min) (tracks=13 secs=2761 range=[2580,2820] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Poolside — Tulsa • tempo=140 energy=0.30 dance=0.42 • tempoFit=0.42 effortIdx=0.39 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [easy] tol=15 tgt=0.40 • David August — Help Me Through • tempo=174 energy=0.35 dance=0.54 • tempoFit=0.40 effortIdx=0.41 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [moderate] tol=12 tgt=0.48 • Tame Impala — Yes I'm Changing • tempo=180 energy=0.61 dance=0.37 • tempoFit=0.44 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [hard] tol=8 tgt=0.80 • slowthai — Gorgeous • tempo=91 energy=0.62 dance=0.48 • tempoFit=0.95 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [moderate] tol=12 tgt=0.48 • Ja Rule — E-Dub & Ja • tempo=90 energy=0.48 dance=0.88 • tempoFit=0.42 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [hard] tol=8 tgt=0.80 • TOBACCO — Father Sister Berzerker • tempo=178 energy=0.63 dance=0.16 • tempoFit=1.00 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [moderate] tol=12 tgt=0.48 • Grandtheft — All The Way Up (feat. Lia Ices & Brasstracks) • tempo=90 energy=0.45 dance=0.68 • tempoFit=0.46 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [hard] tol=8 tgt=0.80 • Death Grips — Linda's In Custody • tempo=92 energy=0.83 dance=0.64 • tempoFit=0.81 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [moderate] tol=12 tgt=0.48 • Open Mike Eagle — Sadface Penance Raps • tempo=89 energy=0.40 dance=0.50 • tempoFit=0.52 effortIdx=0.49 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [easy] tol=15 tgt=0.35 • Kanye West — Frank's Track • tempo=141 energy=0.18 dance=0.66 • tempoFit=0.48 effortIdx=0.42 slotFit=0.93 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #10 [easy] tol=15 tgt=0.35 • Steve Hauschildt — Where All Is Fled • tempo=70 energy=0.06 dance=0.21 • tempoFit=0.46 effortIdx=0.34 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #11 [easy] tol=15 tgt=0.35 • Bat For Lashes — Laura • tempo=70 energy=0.16 dance=0.37 • tempoFit=0.50 effortIdx=0.40 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #12 [easy] tol=15 tgt=0.35 • Squarepusher — Seb-1.05 • tempo=139 energy=0.30 dance=0.41 • tempoFit=0.39 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:13 time:2761s rediscovery:100% tempoFit:0.56 slotFit:0.99 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.easy: 6, RunClub.LocalGenerator.EffortTier.moderate: 4, RunClub.LocalGenerator.EffortTier.hard: 3] color:hard
+
+# Long Waves — Long (45–60 min) (tracks=15 secs=3512 range=[3480,3720] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Neil Young — See The Sky About To Rain - Remastered • tempo=86 energy=0.31 dance=0.42 • tempoFit=0.50 effortIdx=0.45 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [easy] tol=15 tgt=0.40 • Hester V75 — Kjører omvei for å kjøpe sigaretter • tempo=140 energy=0.43 dance=0.66 • tempoFit=0.42 effortIdx=0.45 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [moderate] tol=12 tgt=0.48 • ODESZA — White Lies • tempo=90 energy=0.54 dance=0.60 • tempoFit=0.44 effortIdx=0.49 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [hard] tol=8 tgt=0.80 • Zac Brown Band — Knee Deep (feat. Jimmy Buffett) • tempo=91 energy=0.58 dance=0.71 • tempoFit=0.94 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [moderate] tol=12 tgt=0.48 • Open Mike Eagle — Sadface Penance Raps • tempo=89 energy=0.40 dance=0.50 • tempoFit=0.52 effortIdx=0.49 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [hard] tol=8 tgt=0.80 • Slow Magic — Moon • tempo=174 energy=0.57 dance=0.34 • tempoFit=1.00 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [moderate] tol=12 tgt=0.48 • Beach House — Tokyo Witch • tempo=80 energy=0.41 dance=0.45 • tempoFit=0.51 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [hard] tol=8 tgt=0.80 • Noname — Yesterday • tempo=174 energy=0.54 dance=0.46 • tempoFit=1.00 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [moderate] tol=12 tgt=0.48 • Arctic Monkeys — One For The Road • tempo=180 energy=0.67 dance=0.41 • tempoFit=0.43 effortIdx=0.50 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [hard] tol=8 tgt=0.80 • TOBACCO — Father Sister Berzerker • tempo=178 energy=0.63 dance=0.16 • tempoFit=1.00 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #10 [moderate] tol=12 tgt=0.48 • Kendrick Lamar — For Sale? - Interlude • tempo=79 energy=0.69 dance=0.30 • tempoFit=0.42 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #11 [hard] tol=8 tgt=0.80 • Joris Delacroix — Courage • tempo=183 energy=0.91 dance=0.43 • tempoFit=0.81 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #12 [easy] tol=15 tgt=0.35 • Purity Ring — heartsigh • tempo=139 energy=0.57 dance=0.61 • tempoFit=0.37 effortIdx=0.44 slotFit=0.91 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #13 [easy] tol=15 tgt=0.35 • Lil Bibby — How We Move (feat. King Louie) • tempo=140 energy=0.31 dance=0.68 • tempoFit=0.42 effortIdx=0.42 slotFit=0.93 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #14 [easy] tol=15 tgt=0.35 • Squarepusher — Seb-1.05 • tempo=139 energy=0.30 dance=0.41 • tempoFit=0.39 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:15 time:3512s rediscovery:100% tempoFit:0.61 slotFit:0.98 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.hard: 5, RunClub.LocalGenerator.EffortTier.easy: 5, RunClub.LocalGenerator.EffortTier.moderate: 5] color:hard
+
+# Pyramid — Short (20–30 min) (tracks=7 secs=1415 range=[1500,1740] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Lil Bibby — How We Move (feat. King Louie) • tempo=140 energy=0.31 dance=0.68 • tempoFit=0.42 effortIdx=0.42 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [moderate] tol=12 tgt=0.35 • Ben Zimmerman — Crystal Lake • tempo=79 energy=0.51 dance=0.33 • tempoFit=0.44 effortIdx=0.45 slotFit=0.90 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [strong] tol=10 tgt=0.45 • Snoop Dogg — California Roll (feat. Stevie Wonder) • tempo=80 energy=0.34 dance=0.75 • tempoFit=0.50 effortIdx=0.48 slotFit=0.97 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [strong] tol=10 tgt=0.55 • Com Truise — Usurper • tempo=89 energy=0.52 dance=0.73 • tempoFit=0.52 effortIdx=0.54 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [moderate] tol=12 tgt=0.48 • Jitwam — Keepyourbusinesstoyourself • tempo=79 energy=0.70 dance=0.33 • tempoFit=0.42 effortIdx=0.49 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [easy] tol=15 tgt=0.35 • Lost In The Trees — This Dead Bird Is Beautiful • tempo=172 energy=0.30 dance=0.22 • tempoFit=0.51 effortIdx=0.43 slotFit=0.92 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [easy] tol=15 tgt=0.35 • Aphex Twin — fz pseudotimestretch+e+3 [138.85] • tempo=139 energy=0.18 dance=0.56 • tempoFit=0.36 effortIdx=0.34 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:7 time:1415s rediscovery:100% tempoFit:0.45 slotFit:0.96 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.strong: 2, RunClub.LocalGenerator.EffortTier.moderate: 2, RunClub.LocalGenerator.EffortTier.easy: 3] color:middle
+
+# Pyramid — Medium (30–45 min) (tracks=10 secs=2315 range=[2280,2520] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Panda Bear — Dolphin • tempo=87 energy=0.42 dance=0.54 • tempoFit=0.43 effortIdx=0.44 slotFit=0.96 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [moderate] tol=12 tgt=0.35 • Leifur James — Wise Old Man • tempo=180 energy=0.37 dance=0.52 • tempoFit=0.46 effortIdx=0.44 slotFit=0.91 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [strong] tol=10 tgt=0.45 • Pantyraid — Get The Money • tempo=160 energy=0.41 dance=0.80 • tempoFit=0.50 effortIdx=0.51 slotFit=0.94 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [hard] tol=8 tgt=0.55 • SZA — Warm Winds (feat. Isaiah Rashad) • tempo=85 energy=0.51 dance=0.39 • tempoFit=0.58 effortIdx=0.54 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [hard] tol=8 tgt=0.65 • BOP — Luv It Mayne • tempo=85 energy=0.66 dance=0.90 • tempoFit=0.60 effortIdx=0.65 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [strong] tol=10 tgt=0.60 • DJ Rashad — Acid Bit (feat. Addison Groove) • tempo=160 energy=0.75 dance=0.80 • tempoFit=0.50 effortIdx=0.61 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [moderate] tol=12 tgt=0.48 • Ja Rule — E-Dub & Ja • tempo=90 energy=0.48 dance=0.88 • tempoFit=0.42 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [easy] tol=15 tgt=0.35 • Tyler, The Creator — WOLF • tempo=139 energy=0.30 dance=0.43 • tempoFit=0.37 effortIdx=0.36 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [easy] tol=15 tgt=0.35 • Megafaun — Kill The Horns • tempo=139 energy=0.27 dance=0.41 • tempoFit=0.38 effortIdx=0.35 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [easy] tol=15 tgt=0.35 • Steve Hauschildt — Where All Is Fled • tempo=70 energy=0.06 dance=0.21 • tempoFit=0.46 effortIdx=0.34 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:10 time:2315s rediscovery:100% tempoFit:0.47 slotFit:0.98 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.hard: 2, RunClub.LocalGenerator.EffortTier.strong: 2, RunClub.LocalGenerator.EffortTier.easy: 4, RunClub.LocalGenerator.EffortTier.moderate: 2] color:hard
+
+# Pyramid — Long (45–60 min) (tracks=14 secs=3181 range=[3180,3420] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Modern Baseball — Timmy Bowers • tempo=140 energy=0.27 dance=0.35 • tempoFit=0.42 effortIdx=0.37 slotFit=0.97 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [easy] tol=15 tgt=0.40 • Pantha Du Prince — Wallflower for Pale Saints • tempo=173 energy=0.24 dance=0.19 • tempoFit=0.44 effortIdx=0.37 slotFit=0.97 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [moderate] tol=12 tgt=0.35 • Populous — Desierto • tempo=180 energy=0.48 dance=0.57 • tempoFit=0.44 effortIdx=0.47 slotFit=0.88 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [strong] tol=10 tgt=0.45 • An-Ten-Nae — Lean and Go • tempo=160 energy=0.41 dance=0.76 • tempoFit=0.50 effortIdx=0.50 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [hard] tol=8 tgt=0.55 • Joey Bada$$ — Summer Knights • tempo=93 energy=0.60 dance=0.48 • tempoFit=0.56 effortIdx=0.56 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [strong] tol=10 tgt=0.65 • ZHU — Stormy Love, NM. • tempo=177 energy=0.69 dance=0.62 • tempoFit=0.63 effortIdx=0.64 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [strong] tol=10 tgt=0.75 • Eminem — Detroit Vs. Everybody • tempo=88 energy=0.77 dance=0.70 • tempoFit=0.74 effortIdx=0.74 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [max] tol=6 tgt=0.85 • BUSDRIVER — Retirement Ode • tempo=89 energy=0.72 dance=0.43 • tempoFit=1.00 effortIdx=0.85 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [hard] tol=8 tgt=0.80 • Slow Magic — Moon • tempo=174 energy=0.57 dance=0.34 • tempoFit=1.00 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [strong] tol=10 tgt=0.60 • DJ Rashad — Acid Bit (feat. Addison Groove) • tempo=160 energy=0.75 dance=0.80 • tempoFit=0.50 effortIdx=0.61 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #10 [moderate] tol=12 tgt=0.48 • Kendrick Lamar — For Sale? - Interlude • tempo=79 energy=0.69 dance=0.30 • tempoFit=0.42 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #11 [easy] tol=15 tgt=0.35 • Purity Ring — heartsigh • tempo=139 energy=0.57 dance=0.61 • tempoFit=0.37 effortIdx=0.44 slotFit=0.91 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #12 [easy] tol=15 tgt=0.35 • Bat For Lashes — Laura • tempo=70 energy=0.16 dance=0.37 • tempoFit=0.50 effortIdx=0.40 slotFit=0.95 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #13 [easy] tol=15 tgt=0.35 • David August — Help Me Through • tempo=174 energy=0.35 dance=0.54 • tempoFit=0.40 effortIdx=0.41 slotFit=0.94 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:14 time:3181s rediscovery:100% tempoFit:0.57 slotFit:0.97 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.max: 1, RunClub.LocalGenerator.EffortTier.moderate: 2, RunClub.LocalGenerator.EffortTier.hard: 2, RunClub.LocalGenerator.EffortTier.easy: 5, RunClub.LocalGenerator.EffortTier.strong: 4] color:hard
+
+# Kicker — Short (20–30 min) (tracks=7 secs=1537 range=[1380,1620] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Kanye West — Frank's Track • tempo=141 energy=0.18 dance=0.66 • tempoFit=0.48 effortIdx=0.42 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [moderate] tol=12 tgt=0.48 • Panda Bear — Lonely Wanderer • tempo=80 energy=0.44 dance=0.14 • tempoFit=0.54 effortIdx=0.47 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [hard] tol=8 tgt=0.80 • Zac Brown Band — Knee Deep (feat. Jimmy Buffett) • tempo=91 energy=0.58 dance=0.71 • tempoFit=0.94 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [max] tol=6 tgt=0.85 • Eminem — Encore • tempo=174 energy=0.66 dance=0.66 • tempoFit=1.00 effortIdx=0.85 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [easy] tol=15 tgt=0.35 • Jenny Hval — Period Piece • tempo=140 energy=0.36 dance=0.63 • tempoFit=0.44 effortIdx=0.44 slotFit=0.91 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [easy] tol=15 tgt=0.35 • Pantha Du Prince — Wallflower for Pale Saints • tempo=173 energy=0.24 dance=0.19 • tempoFit=0.44 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [easy] tol=15 tgt=0.35 • Steve Hauschildt — Where All Is Fled • tempo=70 energy=0.06 dance=0.21 • tempoFit=0.46 effortIdx=0.34 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:7 time:1537s rediscovery:100% tempoFit:0.62 slotFit:0.98 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.max: 1, RunClub.LocalGenerator.EffortTier.hard: 1, RunClub.LocalGenerator.EffortTier.easy: 4, RunClub.LocalGenerator.EffortTier.moderate: 1] color:hard
+
+# Kicker — Medium (30–45 min) (tracks=9 secs=2259 range=[2220,2460] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Pantha Du Prince — Wallflower for Pale Saints • tempo=173 energy=0.24 dance=0.19 • tempoFit=0.44 effortIdx=0.37 slotFit=0.97 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [moderate] tol=12 tgt=0.48 • Tame Impala — Yes I'm Changing • tempo=180 energy=0.61 dance=0.37 • tempoFit=0.44 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [strong] tol=10 tgt=0.60 • Atmosphere — Me • tempo=89 energy=0.68 dance=0.66 • tempoFit=0.55 effortIdx=0.60 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [moderate] tol=12 tgt=0.48 • Flunk — Queen Of The Underground • tempo=90 energy=0.60 dance=0.55 • tempoFit=0.44 effortIdx=0.49 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [strong] tol=10 tgt=0.60 • Sturgill Simpson — Long White Line • tempo=88 energy=0.52 dance=0.58 • tempoFit=0.64 effortIdx=0.60 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [hard] tol=8 tgt=0.80 • Zac Brown Band — Knee Deep (feat. Jimmy Buffett) • tempo=91 energy=0.58 dance=0.71 • tempoFit=0.94 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [max] tol=6 tgt=0.85 • billy woods — Tinseltown • tempo=87 energy=0.70 dance=0.52 • tempoFit=1.00 effortIdx=0.85 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [easy] tol=15 tgt=0.35 • Beach House — Master Of None • tempo=86 energy=0.34 dance=0.49 • tempoFit=0.47 effortIdx=0.44 slotFit=0.91 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [easy] tol=15 tgt=0.35 • The Avett Brothers — I And Love And You • tempo=140 energy=0.26 dance=0.42 • tempoFit=0.41 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:9 time:2259s rediscovery:100% tempoFit:0.59 slotFit:0.98 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.max: 1, RunClub.LocalGenerator.EffortTier.moderate: 2, RunClub.LocalGenerator.EffortTier.strong: 2, RunClub.LocalGenerator.EffortTier.easy: 3, RunClub.LocalGenerator.EffortTier.hard: 1] color:hard
+
+# Kicker — Long (45–60 min) (tracks=14 secs=2950 range=[3000,3240] market=US unplayable=0 swapped=0 removed=0)
+Pool build — total:5038 lockoutFiltered:0 resulting:4566
+Slot #0 [easy] tol=15 tgt=0.40 • Giraffage — Girl • tempo=139 energy=0.46 dance=0.69 • tempoFit=0.36 effortIdx=0.42 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #1 [easy] tol=15 tgt=0.40 • Squarepusher — Abstract Lover • tempo=140 energy=0.35 dance=0.56 • tempoFit=0.44 effortIdx=0.43 slotFit=0.97 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #2 [moderate] tol=12 tgt=0.48 • Open Mike Eagle — Very Much Money (Ice King Dream) • tempo=90 energy=0.52 dance=0.49 • tempoFit=0.45 effortIdx=0.47 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #3 [strong] tol=10 tgt=0.60 • Boldy James — One of One • tempo=81 energy=0.54 dance=0.61 • tempoFit=0.64 effortIdx=0.60 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #4 [moderate] tol=12 tgt=0.48 • 2 Chainz — Momma I Hit A Lick (feat. Kendrick Lamar) • tempo=180 energy=0.47 dance=0.80 • tempoFit=0.44 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #5 [strong] tol=10 tgt=0.60 • Outkast — Ain't No Thang • tempo=178 energy=0.66 dance=0.68 • tempoFit=0.55 effortIdx=0.60 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #6 [moderate] tol=12 tgt=0.48 • Grandtheft — All The Way Up (feat. Lia Ices & Brasstracks) • tempo=90 energy=0.45 dance=0.68 • tempoFit=0.46 effortIdx=0.48 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #7 [strong] tol=10 tgt=0.60 • Atmosphere — Me • tempo=89 energy=0.68 dance=0.66 • tempoFit=0.55 effortIdx=0.60 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #8 [hard] tol=8 tgt=0.80 • Slow Magic — Moon • tempo=174 energy=0.57 dance=0.34 • tempoFit=1.00 effortIdx=0.80 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #9 [max] tol=6 tgt=0.85 • Eminem — Encore • tempo=174 energy=0.66 dance=0.66 • tempoFit=1.00 effortIdx=0.85 slotFit=1.00 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #10 [easy] tol=15 tgt=0.35 • Lil Bibby — For the Low • tempo=140 energy=0.27 dance=0.78 • tempoFit=0.43 effortIdx=0.43 slotFit=0.92 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #11 [easy] tol=15 tgt=0.35 • Poolside — Tulsa • tempo=140 energy=0.30 dance=0.42 • tempoFit=0.42 effortIdx=0.39 slotFit=0.96 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #12 [easy] tol=15 tgt=0.35 • The Avett Brothers — I And Love And You • tempo=140 energy=0.26 dance=0.42 • tempoFit=0.41 effortIdx=0.37 slotFit=0.98 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+Slot #13 [easy] tol=15 tgt=0.35 • Aphex Twin — fz pseudotimestretch+e+3 [138.85] • tempo=139 energy=0.18 dance=0.56 • tempoFit=0.36 effortIdx=0.34 slotFit=0.99 • aff=0.00 redis=true neighbor=false lockoutBreak=false
+LocalGen metrics — tracks:14 time:2950s rediscovery:100% tempoFit:0.54 slotFit:0.98 pool:4566 avgAffinity:0.00 affShare:0.00 neighborsInit:false neighborSlots:0 lockoutBreaks:0 tiers:[RunClub.LocalGenerator.EffortTier.hard: 1, RunClub.LocalGenerator.EffortTier.easy: 6, RunClub.LocalGenerator.EffortTier.max: 1, RunClub.LocalGenerator.EffortTier.strong: 3, RunClub.LocalGenerator.EffortTier.moderate: 3] color:hard

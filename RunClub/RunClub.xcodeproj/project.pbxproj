@@ -7,9 +7,30 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5F1C541F2E54CAFB0001A983 /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F1C541E2E54CAFB0001A983 /* OnboardingFlowView.swift */; };
+		5F1C54202E54CAFB0001A983 /* LoginSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F1C541D2E54CAFB0001A983 /* LoginSplashView.swift */; };
+		5F5FE2632E5CD4EA0098B019 /* CachedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5FE2622E5CD4EA0098B019 /* CachedModels.swift */; };
+		5F5FE2652E5CD4F40098B019 /* LibraryCrawler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5FE2642E5CD4F40098B019 /* LibraryCrawler.swift */; };
+		5F5FE2672E5CD9AD0098B019 /* CrawlCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5FE2662E5CD9AD0098B019 /* CrawlCoordinator.swift */; };
+		5F5FE2692E5DFEA10098B019 /* ReccoBeatsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5FE2682E5DFEA10098B019 /* ReccoBeatsService.swift */; };
+		5F5FE26C2E5E940D0098B019 /* GeneratorUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5FE26A2E5E940D0098B019 /* GeneratorUtils.swift */; };
+		5F5FE26D2E5E940D0098B019 /* LocalGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5FE26B2E5E940D0098B019 /* LocalGenerator.swift */; };
+		5F5FE2702E6A10000098B019 /* GenreUmbrellaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5FE26F2E6A10000098B019 /* GenreUmbrellaService.swift */; };
+		5F6026EE2E537AF6005D7433 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6026ED2E537AF6005D7433 /* SettingsView.swift */; };
+		5F6026F12E537EEC005D7433 /* MonthCalendarSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6026EF2E537EEC005D7433 /* MonthCalendarSheet.swift */; };
+		5F6026F22E537EEC005D7433 /* WeekStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6026F02E537EEC005D7433 /* WeekStrip.swift */; };
 		5F94FD012E4F8E1900A3F9AE /* SpotifyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FCFF2E4F8CF600A3F9AE /* SpotifyService.swift */; };
 		5F94FD022E4F8E1F00A3F9AE /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FCFE2E4F8CE400A3F9AE /* AuthService.swift */; };
 		5F94FD032E4F8E2400A3F9AE /* SpotifyCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD002E4F8D0600A3F9AE /* SpotifyCredentials.swift */; };
+		5F94FD1E2E4FCA0000A3F9AE /* RunTemplateType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD1C2E4FCA0000A3F9AE /* RunTemplateType.swift */; };
+		5F94FD1F2E4FCA0000A3F9AE /* DurationCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD1B2E4FCA0000A3F9AE /* DurationCategory.swift */; };
+		5F94FD202E4FCA0000A3F9AE /* UserPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD1D2E4FCA0000A3F9AE /* UserPreferences.swift */; };
+		5F94FD222E4FCA0C00A3F9AE /* ScheduleService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD212E4FCA0C00A3F9AE /* ScheduleService.swift */; };
+		5F94FD322E4FCB4400A3F9AE /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD302E4FCB4400A3F9AE /* OnboardingView.swift */; };
+		5F94FD332E4FCB4400A3F9AE /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD2F2E4FCB4400A3F9AE /* HomeView.swift */; };
+		5F94FD352E4FD13900A3F9AE /* CustomizeRunView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD342E4FD13900A3F9AE /* CustomizeRunView.swift */; };
+		5F94FD382E4FD14F00A3F9AE /* Decade.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD362E4FD14F00A3F9AE /* Decade.swift */; };
+		5F94FD392E4FD14F00A3F9AE /* Genre.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD372E4FD14F00A3F9AE /* Genre.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -30,12 +51,33 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		5F1C541D2E54CAFB0001A983 /* LoginSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginSplashView.swift; sourceTree = "<group>"; };
+		5F1C541E2E54CAFB0001A983 /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowView.swift; sourceTree = "<group>"; };
+		5F5FE2622E5CD4EA0098B019 /* CachedModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedModels.swift; sourceTree = "<group>"; };
+		5F5FE2642E5CD4F40098B019 /* LibraryCrawler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCrawler.swift; sourceTree = "<group>"; };
+		5F5FE2662E5CD9AD0098B019 /* CrawlCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrawlCoordinator.swift; sourceTree = "<group>"; };
+		5F5FE2682E5DFEA10098B019 /* ReccoBeatsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReccoBeatsService.swift; sourceTree = "<group>"; };
+		5F5FE26A2E5E940D0098B019 /* GeneratorUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratorUtils.swift; sourceTree = "<group>"; };
+		5F5FE26B2E5E940D0098B019 /* LocalGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalGenerator.swift; sourceTree = "<group>"; };
+		5F5FE26F2E6A10000098B019 /* GenreUmbrellaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenreUmbrellaService.swift; sourceTree = "<group>"; };
+		5F6026ED2E537AF6005D7433 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		5F6026EF2E537EEC005D7433 /* MonthCalendarSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthCalendarSheet.swift; sourceTree = "<group>"; };
+		5F6026F02E537EEC005D7433 /* WeekStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekStrip.swift; sourceTree = "<group>"; };
 		5F94FCCD2E4F886200A3F9AE /* RunClub.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RunClub.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F94FCDC2E4F886300A3F9AE /* RunClubTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunClubTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F94FCE62E4F886300A3F9AE /* RunClubUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunClubUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F94FCFE2E4F8CE400A3F9AE /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		5F94FCFF2E4F8CF600A3F9AE /* SpotifyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyService.swift; sourceTree = "<group>"; };
 		5F94FD002E4F8D0600A3F9AE /* SpotifyCredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyCredentials.swift; sourceTree = "<group>"; };
+		5F94FD1B2E4FCA0000A3F9AE /* DurationCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DurationCategory.swift; sourceTree = "<group>"; };
+		5F94FD1C2E4FCA0000A3F9AE /* RunTemplateType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunTemplateType.swift; sourceTree = "<group>"; };
+		5F94FD1D2E4FCA0000A3F9AE /* UserPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferences.swift; sourceTree = "<group>"; };
+		5F94FD212E4FCA0C00A3F9AE /* ScheduleService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleService.swift; sourceTree = "<group>"; };
+		5F94FD2F2E4FCB4400A3F9AE /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		5F94FD302E4FCB4400A3F9AE /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		5F94FD342E4FD13900A3F9AE /* CustomizeRunView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomizeRunView.swift; sourceTree = "<group>"; };
+		5F94FD362E4FD14F00A3F9AE /* Decade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Decade.swift; sourceTree = "<group>"; };
+		5F94FD372E4FD14F00A3F9AE /* Genre.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Genre.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -97,6 +139,7 @@
 		5F94FCC42E4F886200A3F9AE = {
 			isa = PBXGroup;
 			children = (
+				5F94FD312E4FCB4400A3F9AE /* Views */,
 				5F94FCFD2E4F8CD500A3F9AE /* Models */,
 				5F94FCFC2E4F8CC400A3F9AE /* Services */,
 				5F94FCCF2E4F886200A3F9AE /* RunClub */,
@@ -119,6 +162,13 @@
 		5F94FCFC2E4F8CC400A3F9AE /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				5F5FE26A2E5E940D0098B019 /* GeneratorUtils.swift */,
+				5F5FE26B2E5E940D0098B019 /* LocalGenerator.swift */,
+				5F5FE26F2E6A10000098B019 /* GenreUmbrellaService.swift */,
+				5F5FE2682E5DFEA10098B019 /* ReccoBeatsService.swift */,
+				5F5FE2662E5CD9AD0098B019 /* CrawlCoordinator.swift */,
+				5F5FE2642E5CD4F40098B019 /* LibraryCrawler.swift */,
+				5F94FD212E4FCA0C00A3F9AE /* ScheduleService.swift */,
 				5F94FCFF2E4F8CF600A3F9AE /* SpotifyService.swift */,
 				5F94FCFE2E4F8CE400A3F9AE /* AuthService.swift */,
 			);
@@ -128,9 +178,30 @@
 		5F94FCFD2E4F8CD500A3F9AE /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				5F5FE2622E5CD4EA0098B019 /* CachedModels.swift */,
+				5F94FD362E4FD14F00A3F9AE /* Decade.swift */,
+				5F94FD372E4FD14F00A3F9AE /* Genre.swift */,
+				5F94FD1B2E4FCA0000A3F9AE /* DurationCategory.swift */,
+				5F94FD1C2E4FCA0000A3F9AE /* RunTemplateType.swift */,
+				5F94FD1D2E4FCA0000A3F9AE /* UserPreferences.swift */,
 				5F94FD002E4F8D0600A3F9AE /* SpotifyCredentials.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		5F94FD312E4FCB4400A3F9AE /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				5F1C541D2E54CAFB0001A983 /* LoginSplashView.swift */,
+				5F1C541E2E54CAFB0001A983 /* OnboardingFlowView.swift */,
+				5F6026EF2E537EEC005D7433 /* MonthCalendarSheet.swift */,
+				5F6026F02E537EEC005D7433 /* WeekStrip.swift */,
+				5F6026ED2E537AF6005D7433 /* SettingsView.swift */,
+				5F94FD342E4FD13900A3F9AE /* CustomizeRunView.swift */,
+				5F94FD2F2E4FCB4400A3F9AE /* HomeView.swift */,
+				5F94FD302E4FCB4400A3F9AE /* OnboardingView.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -277,9 +348,30 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5F5FE26C2E5E940D0098B019 /* GeneratorUtils.swift in Sources */,
+				5F5FE26D2E5E940D0098B019 /* LocalGenerator.swift in Sources */,
+				5F5FE2702E6A10000098B019 /* GenreUmbrellaService.swift in Sources */,
 				5F94FD022E4F8E1F00A3F9AE /* AuthService.swift in Sources */,
 				5F94FD012E4F8E1900A3F9AE /* SpotifyService.swift in Sources */,
+				5F1C541F2E54CAFB0001A983 /* OnboardingFlowView.swift in Sources */,
+				5F5FE2652E5CD4F40098B019 /* LibraryCrawler.swift in Sources */,
+				5F1C54202E54CAFB0001A983 /* LoginSplashView.swift in Sources */,
+				5F5FE2692E5DFEA10098B019 /* ReccoBeatsService.swift in Sources */,
+				5F94FD352E4FD13900A3F9AE /* CustomizeRunView.swift in Sources */,
+				5F5FE2672E5CD9AD0098B019 /* CrawlCoordinator.swift in Sources */,
+				5F94FD1E2E4FCA0000A3F9AE /* RunTemplateType.swift in Sources */,
+				5F94FD382E4FD14F00A3F9AE /* Decade.swift in Sources */,
+				5F94FD392E4FD14F00A3F9AE /* Genre.swift in Sources */,
+				5F94FD222E4FCA0C00A3F9AE /* ScheduleService.swift in Sources */,
+				5F94FD322E4FCB4400A3F9AE /* OnboardingView.swift in Sources */,
+				5F94FD332E4FCB4400A3F9AE /* HomeView.swift in Sources */,
+				5F94FD1F2E4FCA0000A3F9AE /* DurationCategory.swift in Sources */,
+				5F6026F12E537EEC005D7433 /* MonthCalendarSheet.swift in Sources */,
+				5F6026F22E537EEC005D7433 /* WeekStrip.swift in Sources */,
+				5F94FD202E4FCA0000A3F9AE /* UserPreferences.swift in Sources */,
 				5F94FD032E4F8E2400A3F9AE /* SpotifyCredentials.swift in Sources */,
+				5F6026EE2E537AF6005D7433 /* SettingsView.swift in Sources */,
+				5F5FE2632E5CD4EA0098B019 /* CachedModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -458,7 +550,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = PKG.RunClub;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -488,7 +580,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = PKG.RunClub;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

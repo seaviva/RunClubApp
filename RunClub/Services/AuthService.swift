@@ -87,7 +87,12 @@ final class AuthService: NSObject, ObservableObject {
         req.httpBody = body.data(using: .utf8)
 
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
+            let (data, response) = try await URLSession.shared.data(for: req)
+            if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                let body = String(data: data, encoding: .utf8) ?? ""
+                print("Token exchange HTTP", http.statusCode, body)
+                return
+            }
             struct TokenRes: Decodable { let access_token: String; let refresh_token: String; let expires_in: Double }
             let t = try JSONDecoder().decode(TokenRes.self, from: data)
             let creds = SpotifyCredentials(
@@ -125,7 +130,14 @@ final class AuthService: NSObject, ObservableObject {
             req.httpBody = body.data(using: .utf8)
 
             struct RefreshRes: Decodable { let access_token: String; let expires_in: Double }
-            let (data, _) = try await URLSession.shared.data(for: req)
+            let (data, response) = try await URLSession.shared.data(for: req)
+            if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                let body = String(data: data, encoding: .utf8) ?? ""
+                print("Refresh HTTP", http.statusCode, body)
+                // Force re-login if refresh fails
+                self.isAuthorized = false
+                return
+            }
             let r = try JSONDecoder().decode(RefreshRes.self, from: data)
 
             creds.accessToken = r.access_token
