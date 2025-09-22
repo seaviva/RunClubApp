@@ -17,38 +17,48 @@ struct LoginSplashView: View {
             VideoBackgroundView(resourceName: "backgroundrun")
                 .ignoresSafeArea()
             Color.black.opacity(0.35).ignoresSafeArea() // darken overlay for legibility
-            VStack(spacing: 32) {
+            VStack(spacing: 16) {
                 Spacer()
                 ZStack {
                     // Large typographic logo approximation
-                    Text("RUN\nCLUB")
-                        .font(RCFont.thin(120))
+                    Text("Running made simple.")
+                        .font(RCFont.medium(50))
                         .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
                         .lineSpacing(-64)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 24)
-                        .minimumScaleFactor(0.5)
+                        .padding(.top, 210)
                 }
                 VStack(spacing: 8) {
-                    Text("Custom playlists for every run")
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.white.opacity(0.6))
-                        .font(RCFont.regular(20))
+                    Text("Daily runs guided by custom playlists of your favorite music.")
+                        .multilineTextAlignment(.leading)
+                        .foregroundColor(.white)
+                        .font(RCFont.regular(18))
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 24)
                 }
                 Spacer()
                 Button(action: { auth.startLogin() }) {
-                    Text("Connect Spotify")
-                        .font(RCFont.semiBold(18))
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 64)
-                        .background(Color.white)
-                        .cornerRadius(6)
-                        .padding(.horizontal, 24)
+                    HStack(spacing: 10) {
+                        Image("SpotifyLogo")
+                            .renderingMode(.original)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 22)
+                        Text("Continue with Spotify")
+                            .font(RCFont.semiBold(17))
+                            .foregroundColor(.black)
+                    }
                 }
-                .buttonStyle(.plain)
-                .padding(.bottom, 24)
+                .buttonStyle(SecondaryOutlineButtonStyle())
+            }
+            .overlay(alignment: .topLeading) {
+                Image("runclublogo")
+                    .renderingMode(.original)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 28)
+                    .padding(24)
             }
         }
     }

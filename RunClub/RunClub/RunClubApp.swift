@@ -47,6 +47,7 @@ struct RunClubApp: App {
             RootView()
                 .environmentObject(auth)
                 .environmentObject(progressStore)
+                .onAppear { RootView.sharedAuth = auth }
                 .task {
                     // Restore saved Spotify credentials and refresh if needed
                     auth.loadFromKeychain()

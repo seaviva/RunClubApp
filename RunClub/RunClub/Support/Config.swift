@@ -11,7 +11,11 @@ enum Config {
     static let scopes = [
         "user-read-email","user-read-private",
         "user-library-read","user-top-read",
-        "playlist-modify-public","playlist-modify-private"
+        "playlist-modify-public","playlist-modify-private",
+        // Playback control + metadata for in-app start/pause/resume and track info
+        "user-modify-playback-state","user-read-playback-state","user-read-currently-playing",
+        // Required for Spotify App Remote control
+        "app-remote-control"
     ].joined(separator: " ")
 
     // External audio-features provider (ReccoBeats)

@@ -7,24 +7,26 @@
 
 import SwiftUI
 
-// Primary (Active: white fill, black text; Disabled: white 25% opacity)
+// Primary filled button
+// Active: black fill, white text, 17 semibold, radius 100, width hugs text + 40 padding
+// Disabled: 15% opacity black fill
 struct PrimaryFilledButtonStyle: ButtonStyle {
-    private struct Background: View {
-        @Environment(\.isEnabled) var isEnabled
-        var body: some View {
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color.white.opacity(isEnabled ? 1.0 : 0.25))
-        }
-    }
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(RCFont.semiBold(18))
-            .foregroundColor(.black)
-            .frame(maxWidth: .infinity)
-            .frame(height: 64)
-            .background(Background())
-            .cornerRadius(6)
-            .opacity(configuration.isPressed ? 0.9 : 1.0)
+        ButtonBody(configuration: configuration)
+    }
+    private struct ButtonBody: View {
+        @Environment(\.isEnabled) var isEnabled
+        let configuration: Configuration
+        var body: some View {
+            configuration.label
+                .font(RCFont.semiBold(17))
+                .foregroundColor(.white)
+                .padding(.horizontal, 40)
+                .frame(height: 60)
+                .background((isEnabled ? Color.black : Color.black.opacity(0.15)))
+                .cornerRadius(100)
+                .opacity(configuration.isPressed ? 0.9 : 1.0)
+        }
     }
 }
 
@@ -35,7 +37,7 @@ struct PrimaryFilledColorButtonStyle: ButtonStyle {
         @Environment(\.isEnabled) var isEnabled
         var color: Color
         var body: some View {
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: 100)
                 .fill(color.opacity(isEnabled ? 1.0 : 0.4))
         }
     }
@@ -51,20 +53,26 @@ struct PrimaryFilledColorButtonStyle: ButtonStyle {
     }
 }
 
-// Secondary (Active: no fill, white text, 1px white border)
+// Secondary filled button
+// Active: white fill, black text, 17 semibold, radius 100, width hugs text + 40 padding
+// Disabled: 20% opacity white fill
 struct SecondaryOutlineButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(RCFont.semiBold(18))
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 64)
-            .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color.white, lineWidth: 1)
-            )
-            .cornerRadius(4)
-            .opacity(configuration.isPressed ? 0.9 : 1.0)
+        ButtonBody(configuration: configuration)
+    }
+    private struct ButtonBody: View {
+        @Environment(\.isEnabled) var isEnabled
+        let configuration: Configuration
+        var body: some View {
+            configuration.label
+                .font(RCFont.semiBold(17))
+                .foregroundColor(.black)
+                .padding(.horizontal, 40)
+                .frame(height: 60)
+                .background((isEnabled ? Color.white : Color.white.opacity(0.20)))
+                .cornerRadius(100)
+                .opacity(configuration.isPressed ? 0.95 : 1.0)
+        }
     }
 }
 

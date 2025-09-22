@@ -1117,3 +1117,97 @@ final class SpotifyService {
     }
 }
 
+// MARK: - Preview helpers for RunPreviewService
+extension SpotifyService {
+    struct PreviewItemOut {
+        let id: String
+        let title: String
+        let artist: String
+        let imageURL: URL?
+        let durationMs: Int
+        let effort: LocalGenerator.EffortTier
+    }
+
+    private func tempoRange(for effort: LocalGenerator.EffortTier) -> (Double, Double) {
+        switch effort {
+        case .easy: return (130, 150)
+        case .moderate: return (150, 162)
+        case .strong: return (162, 175)
+        case .hard: return (170, 185)
+        case .max: return (175, 195)
+        }
+    }
+
+    /// Build preview track list matching given efforts (no playlist creation yet)
+    func sampleTracksForPreview(efforts: [LocalGenerator.EffortTier]) async throws -> [PreviewItemOut] {
+        guard !efforts.isEmpty else { return [] }
+        let market = try? await getProfileMarket()
+        var usedTrackIds: Set<String> = []
+        var usedArtistIds: [String: Int] = [:]
+        var result: [PreviewItemOut] = []
+
+        for effort in efforts {
+            let (minTempo, maxTempo) = tempoRange(for: effort)
+            let candidates = try await fetchRecommendationCandidates(minBPM: minTempo, maxBPM: maxTempo, genres: [], decades: [], market: market)
+            var picked: RecommendationResponse.Track? = nil
+            for t in candidates.shuffled() {
+                if usedTrackIds.contains(t.id) { continue }
+                let artistId = t.artists.first?.id ?? t.id
+                if (usedArtistIds[artistId] ?? 0) >= 2 { continue }
+                let secs = t.duration_ms / 1000
+                if secs > 6 * 60 { continue }
+                picked = t
+                usedTrackIds.insert(t.id)
+                usedArtistIds[artistId, default: 0] += 1
+                break
+            }
+            if let t = picked {
+                let title = t.name
+                let artist = t.artists.first?.name ?? "Unknown"
+                let preview = PreviewItemOut(id: t.id,
+                                             title: title,
+                                             artist: artist,
+                                             imageURL: nil,
+                                             durationMs: t.duration_ms,
+                                             effort: effort)
+                result.append(preview)
+            }
+        }
+        return result
+    }
+
+    /// Replace a single preview track matching effort, avoiding excluded IDs
+    func replaceTrackForPreview(effort: LocalGenerator.EffortTier, excluding: Set<String>) async throws -> PreviewItemOut {
+        let market = try? await getProfileMarket()
+        let (minTempo, maxTempo) = tempoRange(for: effort)
+        let candidates = try await fetchRecommendationCandidates(minBPM: minTempo, maxBPM: maxTempo, genres: [], decades: [], market: market)
+        for t in candidates.shuffled() {
+            if excluding.contains(t.id) { continue }
+            let secs = t.duration_ms / 1000
+            if secs > 6 * 60 { continue }
+            return PreviewItemOut(id: t.id,
+                                  title: t.name,
+                                  artist: t.artists.first?.name ?? "Unknown",
+                                  imageURL: nil,
+                                  durationMs: t.duration_ms,
+                                  effort: effort)
+        }
+        // Fallback to first candidate
+        let t = candidates.first!
+        return PreviewItemOut(id: t.id,
+                              title: t.name,
+                              artist: t.artists.first?.name ?? "Unknown",
+                              imageURL: nil,
+                              durationMs: t.duration_ms,
+                              effort: effort)
+    }
+
+    /// Confirm and create a playlist from preview tracks
+    func createConfirmedPlaylist(from preview: PreviewRun) async throws -> URL {
+        let name = "RunClub · \(preview.template.rawValue) · \(preview.duration.displayName) · \(Date().formatted(date: .numeric, time: .omitted))"
+        let description = "RunClub · \(preview.template.rawValue) · \(preview.duration.displayName)"
+        let uris = preview.tracks.map { "spotify:track:\($0.id)" }
+        return try await createPlaylist(name: name, description: description, isPublic: true, uris: uris)
+    }
+}
+

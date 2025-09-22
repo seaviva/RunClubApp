@@ -19,9 +19,26 @@
 	<array>
 		<string>spotify</string>
 	</array>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>activities.runclub.run</string>
+	</array>
 	<key>UIAppFonts</key>
 	<array>
-		<string>IBMPlexSans-VariableFont_wdth,wght.ttf</string>
+		<string>SuisseIntl-Regular.ttf</string>
+		<string>SuisseIntl-Light.ttf</string>
+		<string>SuisseIntl-Medium.ttf</string>
+		<string>SuisseIntl-SemiBold.ttf</string>
+		<string>SuisseIntl-Bold.ttf</string>
+	</array>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
 	</array>
 </dict>
 </plist>

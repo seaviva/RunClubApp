@@ -25,7 +25,6 @@ final class CrawlCoordinator: ObservableObject {
         self.progress = progressStore
         let spotify = SpotifyService()
         if let token = await auth.accessToken() {
-            print("SPOTIFY_TOKEN:", token)
             spotify.accessTokenProvider = { token }
         }
         let market = try? await spotify.getProfileMarket()

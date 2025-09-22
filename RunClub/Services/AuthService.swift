@@ -112,42 +112,56 @@ final class AuthService: NSObject, ObservableObject {
 
     // MARK: - Refresh
 
-    /// Refresh when <60s remaining; persists updated creds.
+    /// Refresh when <60s remaining; persists updated creds. Retries on transient server errors.
     func refreshIfNeeded() async {
         guard var creds = credentials else { return }
         let timeLeft = creds.expiresAt.timeIntervalSinceNow
         guard timeLeft < 60 else { return }
 
-        do {
-            var req = URLRequest(url: URL(string: "https://accounts.spotify.com/api/token")!)
-            req.httpMethod = "POST"
-            req.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-            let body = [
-                "grant_type=refresh_token",
-                "refresh_token=\(creds.refreshToken)",
-                "client_id=\(Config.clientID)"
-            ].joined(separator: "&")
-            req.httpBody = body.data(using: .utf8)
+        // Retry with exponential backoff on 5xx; do not log out on transient errors
+        var attempt = 0
+        while attempt < 3 {
+            do {
+                var req = URLRequest(url: URL(string: "https://accounts.spotify.com/api/token")!)
+                req.httpMethod = "POST"
+                req.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+                let body = [
+                    "grant_type=refresh_token",
+                    "refresh_token=\(creds.refreshToken)",
+                    "client_id=\(Config.clientID)"
+                ].joined(separator: "&")
+                req.httpBody = body.data(using: .utf8)
 
-            struct RefreshRes: Decodable { let access_token: String; let expires_in: Double }
-            let (data, response) = try await URLSession.shared.data(for: req)
-            if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
-                let body = String(data: data, encoding: .utf8) ?? ""
-                print("Refresh HTTP", http.statusCode, body)
-                // Force re-login if refresh fails
-                self.isAuthorized = false
+                struct RefreshRes: Decodable { let access_token: String; let expires_in: Double }
+                let (data, response) = try await URLSession.shared.data(for: req)
+                if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                    let body = String(data: data, encoding: .utf8) ?? ""
+                    print("Refresh HTTP", http.statusCode, body)
+                    if (500...599).contains(http.statusCode) {
+                        attempt += 1
+                        let backoff: UInt64 = UInt64(min(2000 * (1 << (attempt - 1)), 8000))
+                        try? await Task.sleep(nanoseconds: backoff * 1_000_000)
+                        continue
+                    } else {
+                        // Non-retryable: mark unauthorized but do not clear stored refresh token
+                        self.isAuthorized = false
+                        return
+                    }
+                }
+                let r = try JSONDecoder().decode(RefreshRes.self, from: data)
+                creds.accessToken = r.access_token
+                creds.expiresAt = Date().addingTimeInterval(r.expires_in)
+                self.credentials = creds
+                if let encoded = try? JSONEncoder().encode(creds) {
+                    Keychain.set(encoded, key: "spotify_credentials")
+                }
                 return
+            } catch {
+                attempt += 1
+                let backoff: UInt64 = UInt64(min(2000 * (1 << max(0, attempt - 1)), 8000))
+                try? await Task.sleep(nanoseconds: backoff * 1_000_000)
+                continue
             }
-            let r = try JSONDecoder().decode(RefreshRes.self, from: data)
-
-            creds.accessToken = r.access_token
-            creds.expiresAt = Date().addingTimeInterval(r.expires_in)
-            self.credentials = creds
-            if let encoded = try? JSONEncoder().encode(creds) {
-                Keychain.set(encoded, key: "spotify_credentials")
-            }
-        } catch {
-            print("Refresh failed:", error)
         }
     }
 
@@ -183,6 +197,13 @@ extension AuthService: ASWebAuthenticationPresentationContextProviding {
             .compactMap { $0 as? UIWindowScene }
             .first
         return scene?.windows.first { $0.isKeyWindow } ?? ASPresentationAnchor()
+    }
+}
+
+// MARK: - Shared token helper for services needing Web API
+extension AuthService {
+    static func sharedToken() async -> String? {
+        await MainActor.run { RootView.sharedAuth?.credentials?.accessToken }
     }
 }
 

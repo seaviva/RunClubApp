@@ -18,6 +18,19 @@ final class LocalGenerator {
             }
         }
     }
+    // MARK: - Public helpers for run orchestration
+    // Expose planned slots and segment counts for a given template/duration.
+    func plannedSlots(template: RunTemplateType, durationCategory: DurationCategory) -> [Slot] {
+        return buildEffortTimeline(template: template, durationCategory: durationCategory)
+    }
+
+    func plannedSegmentCounts(template: RunTemplateType, durationCategory: DurationCategory) -> (wuSlots: Int, coreSlots: Int, cdSlots: Int) {
+        let planMins = durationPlan(for: template, category: durationCategory)
+        let wuSlots = max(1, planMins.wu / 4)
+        let coreSlots = max(1, planMins.core / 4)
+        let cdSlots = max(1, planMins.cd / 4)
+        return (wuSlots, coreSlots, cdSlots)
+    }
 
     private let modelContext: ModelContext
     // Optional sink used by dry-run to collect log lines

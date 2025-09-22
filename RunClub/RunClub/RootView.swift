@@ -43,7 +43,10 @@ struct RootView: View {
                 }
             }
         }
-        .onOpenURL { url in auth.handleRedirect(url: url) }
+        .onOpenURL { url in
+            auth.handleRedirect(url: url)
+            SpotifyPlaybackController.handleRedirectURL(url)
+        }
         .task(id: auth.isAuthorized) {
             guard auth.isAuthorized else { return }
             await crawlCoordinator.configure(auth: auth, modelContext: modelContext, progressStore: progressStore)
@@ -63,6 +66,11 @@ struct RootView: View {
             }
         }
     }
+}
+
+// Expose a weak shared handle so services can fetch tokens without tight coupling
+extension RootView {
+    static weak var sharedAuth: AuthService?
 }
 
 private struct CrawlToast: View {

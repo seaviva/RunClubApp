@@ -15,31 +15,30 @@ struct OnboardingFlowView: View {
     @State private var step: Int = 0
     @State private var tempRunsPerWeek: Int? = nil
     @State private var tempDuration: DurationCategory? = nil
+    @State private var runsWheelSelection: Int = 3
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
-            VStack(alignment: .leading, spacing: 24) {
-                progressDots
-                switch step {
-                case 0: intro
-                case 1: runsPerWeekStep
-                default: durationStep
+            Color(hex: 0xF0F0F0).ignoresSafeArea()
+            VStack(alignment: .center, spacing: 24) {
+                headerBar
+                Group {
+                    switch step {
+                    case 0: intro
+                    case 1: runsPerWeekStep
+                    default: durationStep
+                    }
                 }
+                .padding(.top, 18)
                 Spacer()
                 Button(action: primaryAction) {
-                    Text(step == 2 ? "Complete" : "Continue")
-                        .font(RCFont.semiBold(18))
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 64)
-                        .background(Color.clear)
+                    Text(step == 2 ? "GET RUNNING" : "CONTINUE")
+                        .font(RCFont.semiBold(17))
                 }
                 .buttonStyle(PrimaryFilledButtonStyle())
-                .padding(.bottom, 24)
                 .disabled(!isPrimaryEnabled)
             }
-            .foregroundColor(.white)
+            .foregroundColor(.black)
             .padding(.horizontal, 20)
             .onAppear {
                 #if canImport(UIKit)
@@ -55,57 +54,81 @@ struct OnboardingFlowView: View {
         }
     }
 
-    private var progressDots: some View {
-        HStack(spacing: 24) {
-            ForEach(0..<3) { i in
-                Rectangle()
-                    .fill(i == step ? Color.white : Color.white.opacity(0.25))
-                    .frame(width: 64, height: 3)
-                    .cornerRadius(1)
+    private var headerBar: some View {
+        HStack {
+            Button(action: { if step > 0 { step -= 1 } }) {
+                Image(systemName: "chevron.left").foregroundColor(.black)
             }
+            .opacity(step > 0 ? 1 : 0)
+            Spacer()
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 16)
+        .padding(.top, 12)
     }
 
     private var intro: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("WELCOME")
-                .font(RCFont.medium(32))
-                .padding(.top, 8)
-            Divider().background(Color.white)
-            Text("Hey there,\n\nEver struggle to figure out what to listen to? This is for you.")
-                .font(RCFont.regular(16))
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Welcome to RunClub")
+                .font(RCFont.medium(36))
+                .padding(.top, 6)
+                .lineSpacing(6)
+            Text("Running doesn’t need to be complicated. Forget heart-rate zones, endless training plans, and walls of stats.")
+                .font(RCFont.regular(17))
                 .padding(.top, 24)
-            Text("We generate custom playlists on the fly for your next run, all based on your likes (and other stuff).")
-                .foregroundColor(.white)
-                .font(RCFont.regular(16))
-            Text("You can create your own custom run plan or playlist anytime.")
-                .foregroundColor(.white)
-                .font(RCFont.regular(16))
+                .lineSpacing(6)
+            Text("And music? Choosing songs shouldn’t be harder than the run itself.")
+                .font(RCFont.regular(17))
+                .lineSpacing(6)
+            Text("RunClub takes the thinking out of it. One tap gives you a run plan guided by the energy of the music. Simple, fun, and a chance to re-discover the music you already love.")
+                .font(RCFont.regular(17))
+                .lineSpacing(6)
+            Text("Let's make running simple & fun again.")
+                .font(RCFont.medium(17))
+                .foregroundColor(.orange)
+                .lineSpacing(6)
             Spacer()
         }
         
     }
 
     private var runsPerWeekStep: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("RUNS PER WEEK")
-                .font(RCFont.medium(32))
-            Divider().background(Color.white)
-            Text("Just let us know how many times you want to run a week – helps us recommend better daily runs for your progress")
-                .foregroundColor(.white.opacity(0.6))
+        VStack(alignment: .leading, spacing: 6) {
+            Text("How many runs per week?")
+                .font(RCFont.medium(36))
+                .lineSpacing(6)
+            Text("We’ll make a basic run plan based on this, but you can change it any time in settings.")
+                .foregroundColor(.black.opacity(0.4))
                 .font(RCFont.regular(16))
                 .padding(.top, 24)
-            HStack(spacing: 16) {
-                ForEach([2,3,4,5], id: \.self) { n in
-                    Button(action: { tempRunsPerWeek = n }) {
-                        Text("\(n)")
-                            .font(RCFont.semiBold(24))
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(SelectableTertiaryButtonStyle(isSelected: tempRunsPerWeek == n))
-                }
+                .lineSpacing(6)
+            ZStack {
+                NumberWheelPicker(selection: $runsWheelSelection,
+                                   values: Array(1...7),
+                                   rowHeight: 83,
+                                   fontSize: 32,
+                                   textColor: UIColor.black)
+                // Cover default selection background from UIPickerView
+                Rectangle()
+                    .fill(Color(hex: 0xF0F0F0))
+                    .frame(height: 86)
+                    .cornerRadius(14)
+                    .allowsHitTesting(false)
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 83, height: 83)
+                    .overlay(
+                        Text("\(runsWheelSelection)")
+                            .font(RCFont.medium(32))
+                            .foregroundColor(.black)
+                    )
+                    .allowsHitTesting(false)
+            }
+            .frame(height: 360)
+            .onAppear {
+                if tempRunsPerWeek == nil { tempRunsPerWeek = 3 }
+                runsWheelSelection = tempRunsPerWeek ?? 3
+            }
+            .onChange(of: runsWheelSelection) { newValue in
+                tempRunsPerWeek = newValue
             }
             Spacer()
         }
@@ -113,26 +136,47 @@ struct OnboardingFlowView: View {
     }
 
     private var durationStep: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("RUN LENGTH")
-                .font(RCFont.medium(32))
-            Divider().background(Color.white)
-            Text("How long do you want these runs to be generally? We’ll use 1.5× for long runs.")
-                .foregroundColor(.white.opacity(0.6))
+        VStack(alignment: .leading, spacing: 6) {
+            Text("How long do you want to run?")
+                .font(RCFont.medium(36))
+                .lineSpacing(6)
+            Text("This just sets the default, duration can be changed at any time. We’ll use 1.5× for 'long & easy' runs.")
+                .foregroundColor(.black.opacity(0.4))
                 .font(RCFont.regular(16))
                 .padding(.top, 24)
-            VStack(spacing: 16) {
+                .lineSpacing(6)
+            VStack(spacing: 12) {
                 ForEach(DurationCategory.allCases) { cat in
                     Button(action: { tempDuration = cat }) {
-                        Text(cat.displayName.uppercased())
-                            .font(RCFont.semiBold(24))
-                            .frame(maxWidth: .infinity)
+                        VStack(spacing: 4) {
+                            Text(title(for: cat))
+                                .font(RCFont.medium(24))
+                                .foregroundColor(tempDuration == cat ? .white : .black)
+                            Text(rangeLabel(for: cat))
+                                .font(RCFont.regular(13))
+                                .foregroundColor(tempDuration == cat ? Color.white.opacity(0.6) : Color.black.opacity(0.4))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(tempDuration == cat ? Color.black : Color.white)
+                        .cornerRadius(100)
                     }
-                    .buttonStyle(SelectableTertiaryButtonStyle(isSelected: tempDuration == cat))
+                    .buttonStyle(.plain)
                 }
             }
+            .padding(.top, 60)
             Spacer()
         }
+    }
+
+    private func title(for cat: DurationCategory) -> String {
+        switch cat { case .short: return "Short"; case .medium: return "Medium"; case .long: return "Long" }
+    }
+
+    private func rangeLabel(for cat: DurationCategory) -> String {
+        let min = cat.minMinutes
+        let max = cat.maxMinutes
+        return "\(min)-\(max) MIN"
     }
 
     private func primaryAction() {

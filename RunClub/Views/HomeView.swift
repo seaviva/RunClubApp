@@ -29,6 +29,12 @@ struct HomeView: View {
     // Per-day state: generated playlist URL and completion flag (in-memory for now)
     @State private var generatedURLByDay: [String: URL] = [:]
     @State private var completedDays: Set<String> = []
+    @State private var showingStartRun = false
+    @State private var showingPreview = false
+    @State private var lastGeneratedTemplate: RunTemplateType? = nil
+    @State private var lastGeneratedDuration: DurationCategory? = nil
+    @State private var pendingTemplate: RunTemplateType? = nil
+    @State private var pendingDuration: DurationCategory? = nil
     private let schedule = ScheduleService()
     private let spotify = SpotifyService()
 
@@ -206,20 +212,27 @@ struct HomeView: View {
             if auth.isAuthorized {
                 HStack(spacing: 16) {
                     if generatedURL == nil {
-                        // Pre-generation: Customize (secondary) + Create (primary)
+                        // Pre-generation: Customize (secondary) + Generate (primary -> Preview)
                         Button("Customize") { showingCustomize = true }
                             .buttonStyle(SecondaryOutlineButtonStyle())
-                        Button("Create Playlist") {
-                            generate()
+                        Button("Generate Playlist") {
+                            let rec = schedule.recommendationForToday(preferences: preferences, date: selectedDate)
+                            let template = customTemplate ?? rec.template ?? .easyRun
+                            let duration = customDuration ?? rec.suggestedDurationCategory ?? preferences.preferredDuration
+                            pendingTemplate = template
+                            pendingDuration = duration
+                            showingPreview = true
                         }
                         .buttonStyle(PrimaryFilledButtonStyle())
                         .disabled(isGenerating || (!rec.isRunDay && customTemplate == nil))
                     } else if !completedDays.contains(dayKey) {
-                        // Post-generation: Open in Spotify (tertiary) + Run Complete (primary green)
+                        // Post-generation: Start Run (primary) + Open Playlist (secondary) + Run Complete (tertiary)
+                        Button("Start Run") { showingStartRun = true }
+                            .buttonStyle(PrimaryFilledButtonStyle())
                         Button("Open Playlist") { openURL(generatedURL!) }
                             .buttonStyle(SecondaryOutlineButtonStyle())
                         Button("Run Complete") { markDone(dayKey) }
-                            .buttonStyle(PrimaryFilledColorButtonStyle(color: Color(red: 0.0, green: 1.0, blue: 0.4667)))
+                            .buttonStyle(SecondaryOutlineButtonStyle())
                     } else {
                         // Post-complete: Reset Completion (tertiary)
                         Button("Reset Completion") { resetDay(dayKey) }
@@ -254,6 +267,29 @@ struct HomeView: View {
             }
             .presentationDetents([.medium, .large])
         }
+        .sheet(isPresented: $showingPreview) {
+            // Fallback to today's recommendation if pending values are nil
+            let rec = schedule.recommendationForToday(preferences: preferences, date: selectedDate)
+            let t = pendingTemplate ?? rec.template ?? .easyRun
+            let d = pendingDuration ?? rec.suggestedDurationCategory ?? preferences.preferredDuration
+            RunPreviewSheet(template: t, duration: d, genres: Array(customGenres), decades: Array(customDecades)) { preview in
+                Task { await confirm(preview: preview) }
+            }
+            .presentationDetents([.large])
+            .interactiveDismissDisabled(true)
+        }
+        .sheet(isPresented: $showingStartRun) {
+            if let url = generatedURLByDay[dayKeyString(for: selectedDate)],
+               let t = lastGeneratedTemplate,
+               let d = lastGeneratedDuration {
+                StartRunView(playlistURI: url.absoluteString, template: t, duration: d)
+                    .presentationDetents([.medium])
+                    .interactiveDismissDisabled(true)
+                    .presentationDragIndicator(.hidden)
+            } else {
+                Text("No run available")
+            }
+        }
         .alert("Generation failed", isPresented: $showError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -265,57 +301,30 @@ struct HomeView: View {
         Task {
             isGenerating = true
             defer { isGenerating = false }
+            // New flow: compute selection and present preview; no network playlist creation here
+            let rec = schedule.recommendationForToday(preferences: preferences, date: selectedDate)
+            let template = customTemplate ?? rec.template ?? .easyRun
+            let duration = customDuration ?? rec.suggestedDurationCategory ?? preferences.preferredDuration
+            pendingTemplate = template
+            pendingDuration = duration
+            showingPreview = true
+        }
+    }
+
+    private func confirm(preview: PreviewRun) async {
             guard let token = await auth.accessToken() else { return }
             spotify.accessTokenProvider = { token }
             do {
-                let rec = schedule.recommendationForToday(preferences: preferences, date: selectedDate)
-                let template = customTemplate ?? rec.template ?? .easyRun
-                let duration = customDuration ?? rec.suggestedDurationCategory ?? preferences.preferredDuration
-                var name = "RunClub · \(template.rawValue) · \(duration.displayName) · \(Date().formatted(date: .numeric, time: .omitted))"
-                // Prefer local generator using SwiftData cache
-                let local = LocalGenerator(modelContext: modelContext)
-                let url = try await local.generatePlaylist(name: name,
-                                                           template: template,
-                                                           durationCategory: duration,
-                                                           genres: Array(customGenres),
-                                                           decades: Array(customDecades),
-                                                           spotify: spotify)
-                generatedURLByDay[dayKeyString(for: selectedDate)] = url
-                await UIApplication.shared.open(url)
+            let url = try await spotify.createConfirmedPlaylist(from: preview)
+            let key = dayKeyString(for: selectedDate)
+            generatedURLByDay[key] = url
+            lastGeneratedTemplate = preview.template
+            lastGeneratedDuration = preview.duration
+            showingPreview = false
+            showingStartRun = true
             } catch {
-                // Surface generator error and fallback to simple likes playlist
-                let message = (error as NSError).localizedDescription
-                print("Generator error:", message)
-                errorMessage = message
-                showError = true
-                do {
-                    // Fallback: legacy remote generator
-                    let rec = schedule.recommendationForToday(preferences: preferences, date: selectedDate)
-                    let template = customTemplate ?? rec.template ?? .easyRun
-                    let duration = customDuration ?? rec.suggestedDurationCategory ?? preferences.preferredDuration
-                    let name = "RunClub · \(template.rawValue) · \(duration.displayName) · \(Date().formatted(date: .numeric, time: .omitted))"
-                    let url = try await spotify.generateSimpleRunPlaylist(
-                        name: name,
-                        template: template,
-                        durationCategory: duration,
-                        genres: Array(customGenres),
-                        decades: Array(customDecades)
-                    )
-                    generatedURLByDay[dayKeyString(for: selectedDate)] = url
-                    await UIApplication.shared.open(url)
-                } catch {
-                    // Final fallback: likes-only
-                    do {
-                        let fallbackName = "RunClub · Test \(Date().formatted(date: .numeric, time: .omitted))"
-                        let url = try await spotify.createSimplePlaylistFromLikes(name: fallbackName)
-                        generatedURLByDay[dayKeyString(for: selectedDate)] = url
-                        await UIApplication.shared.open(url)
-                    } catch {
-                        errorMessage = (error as NSError).localizedDescription
-                        showError = true
-                    }
-                }
-            }
+            errorMessage = (error as NSError).localizedDescription
+            showError = true
         }
     }
 
