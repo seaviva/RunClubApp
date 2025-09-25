@@ -742,7 +742,8 @@ final class LocalGenerator {
                          durationCategory: DurationCategory,
                          genres: [Genre],
                          decades: [Decade],
-                         spotify: SpotifyService) async throws -> DryRunResult {
+                         spotify: SpotifyService,
+                         customMinutes: Int? = nil) async throws -> DryRunResult {
         let market = (try? await spotify.getProfileMarket()) ?? "US"
         let isPlayable: ((String) async -> Bool) = { trackId in
             do { return try await spotify.playableIds(for: [trackId], market: market).contains(trackId) }
@@ -756,10 +757,11 @@ final class LocalGenerator {
                                              decades: decades,
                                              isPlayable: isPlayable)
         self.debugSink = nil
-        // Duration polish (plan-based ±2m)
+        // Duration polish (±2m around either custom minutes or plan.total)
         let plan = durationPlan(for: template, category: durationCategory)
-        let minSeconds = max(0, (plan.total - 2) * 60)
-        let maxSeconds = (plan.total + 2) * 60
+        let targetMinutes = customMinutes ?? plan.total
+        let minSeconds = max(0, (targetMinutes - 2) * 60)
+        let maxSeconds = (targetMinutes + 2) * 60
         var chosen = sel.selected
         var total = sel.totalSeconds
         while total > maxSeconds && !chosen.isEmpty {
@@ -827,6 +829,9 @@ final class LocalGenerator {
     // Template-specific duration plan (minutes). Baselines chosen per spec; small flexibility occurs later.
     private func durationPlan(for template: RunTemplateType, category: DurationCategory) -> (total: Int, wu: Int, core: Int, cd: Int) {
         switch template {
+        case .rest:
+            // No generation for rest; return empty plan
+            return (total: 0, wu: 0, core: 0, cd: 0)
         case .easyRun:
             switch category {
             case .short:  return (total: 20, wu: 4,  core: 13, cd: 3)   // 20–22 → 4/13/3 baseline 20
@@ -874,6 +879,8 @@ final class LocalGenerator {
 
     private func buildEffortTimeline(template: RunTemplateType,
                                      durationCategory: DurationCategory) -> [Slot] {
+        // Rest day: no effort timeline
+        if template == .rest { return [] }
         // Use template-specific duration plan; core minutes map to slot count (~1 slot ≈ 4 min).
         let planMins = durationPlan(for: template, category: durationCategory)
         let wu = planMins.wu
@@ -894,6 +901,8 @@ final class LocalGenerator {
         // Middle by template (approximate to minute buckets of ~4 min per slot)
         let m = max(1, middle / 4)
         switch template {
+        case .rest:
+            break
         case .easyRun:
             // Mostly Easy; allow ≤20% low-end Moderate in middle
             let modCount = min(max(0, Int(round(Double(m) * 0.2))), max(0, m - 1))

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5F0DE3272E845A3000E29F75 /* CompletedRun.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0DE3262E845A3000E29F75 /* CompletedRun.swift */; };
 		5F1C541F2E54CAFB0001A983 /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F1C541E2E54CAFB0001A983 /* OnboardingFlowView.swift */; };
 		5F1C54202E54CAFB0001A983 /* LoginSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F1C541D2E54CAFB0001A983 /* LoginSplashView.swift */; };
 		5F5FE2632E5CD4EA0098B019 /* CachedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5FE2622E5CD4EA0098B019 /* CachedModels.swift */; };
@@ -19,6 +20,9 @@
 		5F6026EE2E537AF6005D7433 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6026ED2E537AF6005D7433 /* SettingsView.swift */; };
 		5F6026F12E537EEC005D7433 /* MonthCalendarSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6026EF2E537EEC005D7433 /* MonthCalendarSheet.swift */; };
 		5F6026F22E537EEC005D7433 /* WeekStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6026F02E537EEC005D7433 /* WeekStrip.swift */; };
+		5F699D5A2E8488000075A2EF /* UIComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699D592E8488000075A2EF /* UIComponents.swift */; };
+		5F699D562E8484640075A2EF /* DurationPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699D542E8484640075A2EF /* DurationPickerSheet.swift */; };
+		5F699D572E8484640075A2EF /* FilterPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699D552E8484640075A2EF /* FilterPickerSheet.swift */; };
 		5F7AE9C12E71778900FEC001 /* GeneratorMatrixRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F7AE9C02E71778900FEC001 /* GeneratorMatrixRunner.swift */; };
 		5F94FD012E4F8E1900A3F9AE /* SpotifyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FCFF2E4F8CF600A3F9AE /* SpotifyService.swift */; };
 		5F94FD022E4F8E1F00A3F9AE /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FCFE2E4F8CE400A3F9AE /* AuthService.swift */; };
@@ -29,7 +33,6 @@
 		5F94FD222E4FCA0C00A3F9AE /* ScheduleService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD212E4FCA0C00A3F9AE /* ScheduleService.swift */; };
 		5F94FD322E4FCB4400A3F9AE /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD302E4FCB4400A3F9AE /* OnboardingView.swift */; };
 		5F94FD332E4FCB4400A3F9AE /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD2F2E4FCB4400A3F9AE /* HomeView.swift */; };
-		5F94FD352E4FD13900A3F9AE /* CustomizeRunView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD342E4FD13900A3F9AE /* CustomizeRunView.swift */; };
 		5F94FD382E4FD14F00A3F9AE /* Decade.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD362E4FD14F00A3F9AE /* Decade.swift */; };
 		5F94FD392E4FD14F00A3F9AE /* Genre.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FD372E4FD14F00A3F9AE /* Genre.swift */; };
 		5FAAAB112E7A000000ABCDEF /* StartRunView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FAAAB102E7A000000ABCDEF /* StartRunView.swift */; };
@@ -77,6 +80,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5F0DE3262E845A3000E29F75 /* CompletedRun.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletedRun.swift; sourceTree = "<group>"; };
 		5F1C541D2E54CAFB0001A983 /* LoginSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginSplashView.swift; sourceTree = "<group>"; };
 		5F1C541E2E54CAFB0001A983 /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowView.swift; sourceTree = "<group>"; };
 		5F2D59C42E74567600641CEA /* ios-sdk */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "ios-sdk"; path = "/Users/cvivadelli/Library/Developer/Xcode/DerivedData/RunClub-avwoixadrqaybrfdrhewjgwlhbtv/SourcePackages/checkouts/ios-sdk"; sourceTree = "<absolute>"; };
@@ -90,6 +94,9 @@
 		5F6026ED2E537AF6005D7433 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		5F6026EF2E537EEC005D7433 /* MonthCalendarSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthCalendarSheet.swift; sourceTree = "<group>"; };
 		5F6026F02E537EEC005D7433 /* WeekStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekStrip.swift; sourceTree = "<group>"; };
+		5F699D592E8488000075A2EF /* UIComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIComponents.swift; sourceTree = "<group>"; };
+		5F699D542E8484640075A2EF /* DurationPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DurationPickerSheet.swift; sourceTree = "<group>"; };
+		5F699D552E8484640075A2EF /* FilterPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPickerSheet.swift; sourceTree = "<group>"; };
 		5F7AE9C02E71778900FEC001 /* GeneratorMatrixRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratorMatrixRunner.swift; sourceTree = "<group>"; };
 		5F94FCCD2E4F886200A3F9AE /* RunClubAppX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RunClubAppX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F94FCDC2E4F886300A3F9AE /* RunClubTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunClubTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -103,7 +110,6 @@
 		5F94FD212E4FCA0C00A3F9AE /* ScheduleService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleService.swift; sourceTree = "<group>"; };
 		5F94FD2F2E4FCB4400A3F9AE /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		5F94FD302E4FCB4400A3F9AE /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
-		5F94FD342E4FD13900A3F9AE /* CustomizeRunView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomizeRunView.swift; sourceTree = "<group>"; };
 		5F94FD362E4FD14F00A3F9AE /* Decade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Decade.swift; sourceTree = "<group>"; };
 		5F94FD372E4FD14F00A3F9AE /* Genre.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Genre.swift; sourceTree = "<group>"; };
 		5FAAAB102E7A000000ABCDEF /* StartRunView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartRunView.swift; sourceTree = "<group>"; };
@@ -257,6 +263,7 @@
 		5F94FCFD2E4F8CD500A3F9AE /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				5F0DE3262E845A3000E29F75 /* CompletedRun.swift */,
 				5FECA3E82E7C5606007D0002 /* PreviewRun.swift */,
 				5F5FE2622E5CD4EA0098B019 /* CachedModels.swift */,
 				5F94FD362E4FD14F00A3F9AE /* Decade.swift */,
@@ -272,6 +279,9 @@
 		5F94FD312E4FCB4400A3F9AE /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				5F699D592E8488000075A2EF /* UIComponents.swift */,
+				5F699D542E8484640075A2EF /* DurationPickerSheet.swift */,
+				5F699D552E8484640075A2EF /* FilterPickerSheet.swift */,
 				5FECA3E62E7C55FD007D0002 /* RunPreviewSheet.swift */,
 				5FECA3E42E7AE9BC007D0002 /* NumberWheelPicker.swift */,
 				5F1C541D2E54CAFB0001A983 /* LoginSplashView.swift */,
@@ -279,7 +289,6 @@
 				5F6026EF2E537EEC005D7433 /* MonthCalendarSheet.swift */,
 				5F6026F02E537EEC005D7433 /* WeekStrip.swift */,
 				5F6026ED2E537AF6005D7433 /* SettingsView.swift */,
-				5F94FD342E4FD13900A3F9AE /* CustomizeRunView.swift */,
 				5F94FD2F2E4FCB4400A3F9AE /* HomeView.swift */,
 				5F94FD302E4FCB4400A3F9AE /* OnboardingView.swift */,
 				5FAAAB102E7A000000ABCDEF /* StartRunView.swift */,
@@ -437,6 +446,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5F699D5A2E8488000075A2EF /* UIComponents.swift in Sources */,
 				5FECA3E52E7AE9BC007D0002 /* NumberWheelPicker.swift in Sources */,
 				5F5FE26C2E5E940D0098B019 /* GeneratorUtils.swift in Sources */,
 				5F5FE26D2E5E940D0098B019 /* LocalGenerator.swift in Sources */,
@@ -445,14 +455,16 @@
 				5F7AE9C12E71778900FEC001 /* GeneratorMatrixRunner.swift in Sources */,
 				5F94FD012E4F8E1900A3F9AE /* SpotifyService.swift in Sources */,
 				5F1C541F2E54CAFB0001A983 /* OnboardingFlowView.swift in Sources */,
+				5F699D562E8484640075A2EF /* DurationPickerSheet.swift in Sources */,
+				5F699D572E8484640075A2EF /* FilterPickerSheet.swift in Sources */,
 				5FECA3EB2E7C5694007D0002 /* RunPreviewService.swift in Sources */,
 				5FECA3E72E7C55FD007D0002 /* RunPreviewSheet.swift in Sources */,
 				5F5FE2652E5CD4F40098B019 /* LibraryCrawler.swift in Sources */,
 				5F1C54202E54CAFB0001A983 /* LoginSplashView.swift in Sources */,
 				5F5FE2692E5DFEA10098B019 /* ReccoBeatsService.swift in Sources */,
-				5F94FD352E4FD13900A3F9AE /* CustomizeRunView.swift in Sources */,
 				5F5FE2672E5CD9AD0098B019 /* CrawlCoordinator.swift in Sources */,
 				5F94FD1E2E4FCA0000A3F9AE /* RunTemplateType.swift in Sources */,
+				5F0DE3272E845A3000E29F75 /* CompletedRun.swift in Sources */,
 				5F94FD382E4FD14F00A3F9AE /* Decade.swift in Sources */,
 				5F94FD392E4FD14F00A3F9AE /* Genre.swift in Sources */,
 				5F94FD222E4FCA0C00A3F9AE /* ScheduleService.swift in Sources */,

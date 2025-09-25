@@ -26,6 +26,9 @@ enum RCFont {
     static func medium(_ size: CGFloat) -> Font { .custom("SuisseIntl-Medium", size: size) }
     static func semiBold(_ size: CGFloat) -> Font { .custom("SuisseIntl-SemiBold", size: size) }
     static func bold(_ size: CGFloat) -> Font { .custom("SuisseIntl-Bold", size: size) }
+
+    // Power Grotesk family (used for the Home run title only)
+    static func powerGroteskLight(_ size: CGFloat) -> Font { .custom("PowerGroteskTrial-Light", size: size) }
 }
 
 

@@ -66,10 +66,10 @@ struct SecondaryOutlineButtonStyle: ButtonStyle {
         var body: some View {
             configuration.label
                 .font(RCFont.semiBold(17))
-                .foregroundColor(.black)
+                .foregroundColor(isEnabled ? .black : Color.black.opacity(0.25))
                 .padding(.horizontal, 40)
                 .frame(height: 60)
-                .background((isEnabled ? Color.white : Color.white.opacity(0.20)))
+                .background(Color.white)
                 .cornerRadius(100)
                 .opacity(configuration.isPressed ? 0.95 : 1.0)
         }
@@ -110,6 +110,44 @@ struct SelectableTertiaryButtonStyle: ButtonStyle {
             )
             .cornerRadius(4)
             .opacity(configuration.isPressed ? 0.9 : 1.0)
+    }
+}
+
+
+// Circular icon button (e.g., play/pause). Default diameter 60px.
+struct CircularIconButtonStyle: ButtonStyle {
+    var diameter: CGFloat = 60
+    var fillColor: Color = .white
+    var iconColor: Color = .black
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundColor(iconColor)
+            .frame(width: diameter, height: diameter)
+            .background(
+                Circle()
+                    .fill(fillColor)
+                    .opacity(configuration.isPressed ? 0.95 : 1.0)
+            )
+    }
+}
+
+struct GhostWhiteButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        ButtonBody(configuration: configuration)
+    }
+    private struct ButtonBody: View {
+        @Environment(\.isEnabled) var isEnabled
+        let configuration: Configuration
+        var body: some View {
+            configuration.label
+                .font(RCFont.semiBold(17))
+                .foregroundColor(.white)
+                .padding(.horizontal, 40)
+                .frame(height: 60)
+                .background(Color.white.opacity(0.10))
+                .cornerRadius(100)
+                .opacity(configuration.isPressed ? 0.95 : 1.0)
+        }
     }
 }
 

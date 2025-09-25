@@ -14,7 +14,8 @@ final class RunPreviewService {
     func buildPreview(template: RunTemplateType,
                       duration: DurationCategory,
                       genres: [Genre],
-                      decades: [Decade]) async throws -> PreviewRun {
+                      decades: [Decade],
+                      customMinutes: Int? = nil) async throws -> PreviewRun {
         let generator = LocalGenerator(modelContext: modelContext)
         let spotify = SpotifyService()
         let token = await AuthService.sharedToken() ?? ""
@@ -23,7 +24,8 @@ final class RunPreviewService {
                                                      durationCategory: duration,
                                                      genres: genres,
                                                      decades: decades,
-                                                     spotify: spotify)
+                                                     spotify: spotify,
+                                                     customMinutes: customMinutes)
         // Map trackIds -> CachedTrack/CachedArtist
         let idsSet = Set(dry.trackIds)
         let tracks: [CachedTrack] = (try? modelContext.fetch(FetchDescriptor<CachedTrack>()))?.filter { idsSet.contains($0.id) } ?? []
@@ -47,7 +49,7 @@ final class RunPreviewService {
                                                   effort: eff))
             }
         }
-        return PreviewRun(template: template, duration: duration, tracks: previewTracks)
+        return PreviewRun(template: template, duration: duration, customMinutes: customMinutes, tracks: previewTracks)
     }
 
     func replaceTrack(preview: PreviewRun, at index: Int, genres: [Genre], decades: [Decade]) async throws -> PreviewRun {
@@ -62,7 +64,8 @@ final class RunPreviewService {
                                                      durationCategory: preview.duration,
                                                      genres: genres,
                                                      decades: decades,
-                                                     spotify: spotify)
+                                                     spotify: spotify,
+                                                     customMinutes: preview.customMinutes)
         let exclude = Set(preview.tracks.map { $0.id })
         // Find candidate with same effort not in exclude
         var replacementId: String?

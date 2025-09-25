@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 @main
 struct RunClubApp: App {
@@ -19,7 +20,8 @@ struct RunClubApp: App {
             CachedTrack.self,
             AudioFeature.self,
             CachedArtist.self,
-            CrawlState.self
+            CrawlState.self,
+            CompletedRun.self
         ])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {
@@ -53,7 +55,26 @@ struct RunClubApp: App {
                     auth.loadFromKeychain()
                     await auth.refreshIfNeeded()
                 }
+                .onAppear {
+                    // Allow notifications to alert while app is foregrounded
+                    UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
+                }
         }
         .modelContainer(sharedModelContainer)
+    }
+}
+
+final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    static let shared = NotificationDelegate()
+    private override init() {}
+    // Show alert banners while app is in the foreground
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        if #available(iOS 14.0, *) {
+            completionHandler([.banner, .list, .sound])
+        } else {
+            completionHandler([.alert, .sound])
+        }
     }
 }

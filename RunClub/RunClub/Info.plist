@@ -30,12 +30,21 @@
 		<string>SuisseIntl-Medium.ttf</string>
 		<string>SuisseIntl-SemiBold.ttf</string>
 		<string>SuisseIntl-Bold.ttf</string>
+		<string>PowerGrotesk-Light.ttf</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

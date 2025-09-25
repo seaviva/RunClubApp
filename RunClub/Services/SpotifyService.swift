@@ -668,6 +668,7 @@ final class SpotifyService {
 
     private func bpmRange(for template: RunTemplateType) -> (Double, Double)? {
         switch template {
+        case .rest: return nil
         case .easyRun: return (130, 150)
         case .strongSteady: return (150, 170)
         case .longEasy: return (130, 155)
@@ -677,6 +678,8 @@ final class SpotifyService {
 
     private func durationBoundsSeconds(for template: RunTemplateType, category: DurationCategory) -> (Int, Int) {
         switch template {
+        case .rest:
+            return (0, 0)
         case .longEasy:
             // Use 1.5× midpoint with ±2 min window, but cap >6min tracks separately
             let target = Int(Double(category.midpointMinutes) * 1.5) * 60
@@ -1115,6 +1118,19 @@ final class SpotifyService {
         let urlString = pl.external_urls["spotify"] ?? "https://open.spotify.com/playlist/\(pl.id)"
         return URL(string: urlString)!
     }
+
+    // MARK: - Public helpers
+    func currentUserId() async throws -> String {
+        var req = URLRequest(url: URL(string: "https://api.spotify.com/v1/me")!)
+        req.addValue("Bearer \(accessTokenProvider())", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+            let body = String(data: data, encoding: .utf8) ?? ""
+            throw NSError(domain: "SpotifyService", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: body])
+        }
+        let me = try JSONDecoder().decode(Me.self, from: data)
+        return me.id
+    }
 }
 
 // MARK: - Preview helpers for RunPreviewService
@@ -1204,8 +1220,11 @@ extension SpotifyService {
 
     /// Confirm and create a playlist from preview tracks
     func createConfirmedPlaylist(from preview: PreviewRun) async throws -> URL {
-        let name = "RunClub · \(preview.template.rawValue) · \(preview.duration.displayName) · \(Date().formatted(date: .numeric, time: .omitted))"
-        let description = "RunClub · \(preview.template.rawValue) · \(preview.duration.displayName)"
+        let durLabel: String = {
+            if let m = preview.customMinutes { return "\(m) min" } else { return preview.duration.displayName }
+        }()
+        let name = "RunClub · \(preview.template.rawValue) · \(durLabel) · \(Date().formatted(date: .numeric, time: .omitted))"
+        let description = "RunClub · \(preview.template.rawValue) · \(durLabel)"
         let uris = preview.tracks.map { "spotify:track:\($0.id)" }
         return try await createPlaylist(name: name, description: description, isPublic: true, uris: uris)
     }

@@ -18,6 +18,7 @@ struct PreviewRun: Identifiable, Hashable {
     let id = UUID()
     let template: RunTemplateType
     let duration: DurationCategory
+    let customMinutes: Int?
     var tracks: [PreviewTrack]
 }
 

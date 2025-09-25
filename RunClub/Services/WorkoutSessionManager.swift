@@ -124,6 +124,17 @@ final class WorkoutSessionManager: NSObject, ObservableObject {
         isRunning = false
         isPaused = false
     }
+
+    // Cancel the workout without saving any HealthKit workout or distance sample
+    func cancelWorkout() {
+        locationManager.stopUpdatingLocation()
+        routeBuilder = nil
+        isRunning = false
+        isPaused = false
+        startDate = nil
+        endDate = nil
+        totalDistanceMeters = 0
+    }
 }
 
 // MARK: - CLLocationManagerDelegate

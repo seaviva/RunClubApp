@@ -14,6 +14,7 @@ struct CustomizeRunView: View {
     @State private var selectedDuration: DurationCategory
     @State private var selectedGenres: Set<Genre> = []
     @State private var selectedDecades: Set<Decade> = []
+    @State private var customMinutes: Int? = nil
     // No prompt for now per design
 
     // For reset behavior
@@ -21,6 +22,8 @@ struct CustomizeRunView: View {
     private let initialDurationValue: DurationCategory
     private let initialGenresValue: Set<Genre>
     private let initialDecadesValue: Set<Decade>
+    private let initialCustomMinutes: Int?
+    private let recommendedTemplateForToday: RunTemplateType?
     
 
     // UI state
@@ -28,156 +31,94 @@ struct CustomizeRunView: View {
     @State private var showDurationPicker: Bool = false
     @State private var templateBoxFrame: CGRect = .zero
     @State private var durationBoxFrame: CGRect = .zero
+    @State private var activeTab: Tab = .run
 
-    let onSave: (RunTemplateType, DurationCategory, Set<Genre>, Set<Decade>, String) -> Void
+    let onSave: (RunTemplateType, DurationCategory, Set<Genre>, Set<Decade>, String, Int?) -> Void
 
     init(initialTemplate: RunTemplateType,
          initialDuration: DurationCategory,
          initialGenres: Set<Genre> = [],
          initialDecades: Set<Decade> = [],
          initialPrompt: String = "",
-         onSave: @escaping (RunTemplateType, DurationCategory, Set<Genre>, Set<Decade>, String) -> Void) {
+         initialCustomMinutes: Int? = nil,
+         recommendedTemplateOrRest: RunTemplateType? = nil,
+         onSave: @escaping (RunTemplateType, DurationCategory, Set<Genre>, Set<Decade>, String, Int?) -> Void) {
         _selectedTemplate = State(initialValue: initialTemplate)
         _selectedDuration = State(initialValue: initialDuration)
         _selectedGenres = State(initialValue: initialGenres)
         _selectedDecades = State(initialValue: initialDecades)
+        _customMinutes = State(initialValue: initialCustomMinutes)
         // Prompt not used
         initialTemplateValue = initialTemplate
         initialDurationValue = initialDuration
         initialGenresValue = initialGenres
         initialDecadesValue = initialDecades
+        self.initialCustomMinutes = initialCustomMinutes
+        self.recommendedTemplateForToday = recommendedTemplateOrRest
         
         self.onSave = onSave
     }
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(hex: 0xA70072), Color(hex: 0xD4004A)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            Color.black
                 .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 32) {
-                // Header
-                HStack(spacing: 10) {
-                    Text("CUSTOMIZE")
-                        .font(RCFont.medium(32))
+            VStack(alignment: .leading, spacing: 24) {
+                // Header per new design
+                ZStack {
+                    HStack {
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark")
+                                .foregroundColor(.white)
+                                .imageScale(.medium)
+                        }
+                        Spacer()
+                        Button(action: {
+                            onSave(selectedTemplate, selectedDuration, selectedGenres, selectedDecades, "", customMinutes)
+                            dismiss()
+                        }) {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.white)
+                                .imageScale(.medium)
+                        }
+                        .disabled(!isDirty)
+                        .opacity(isDirty ? 1.0 : 0.5)
+                    }
+                    Text("CHOOSE WORKOUT TYPE")
+                        .font(RCFont.light(15))
                         .foregroundColor(.white)
-                    Spacer()
-                    Button(action: resetSelections) {
-                        Image(systemName: "arrow.counterclockwise")
-                            .foregroundColor(.white)
-                            .imageScale(.large)
-                    }
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
-                            .foregroundColor(.white)
-                            .imageScale(.large)
-                    }
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 24)
-                .overlay(Rectangle().fill(Color.white).frame(height: 1).padding(.horizontal, 20), alignment: .bottom)
+                .padding(.top, 16)
                 .padding(.bottom, 8)
 
-                // Template section
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("TEMPLATE")
-                        .font(RCFont.regular(13))
-                        .foregroundColor(.white.opacity(0.6))
-
-                    DropdownBox(title: selectedTemplate.rawValue,
-                                subtitle: templateDescription(selectedTemplate),
-                                action: { withAnimation { showTemplatePicker.toggle() } })
-                        .background(GeometryReader { geo in
-                            Color.clear.preference(key: TemplateFrameKey.self, value: geo.frame(in: .named("sheet")))
-                        })
-                        .onPreferenceChange(TemplateFrameKey.self) { templateBoxFrame = $0 }
-                }
-                .padding(.horizontal, 20)
-
-                // Duration section
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("LENGTH")
-                        .font(RCFont.regular(13))
-                        .foregroundColor(.white.opacity(0.6))
-
-                    DropdownBox(title: selectedDuration.displayName,
-                                subtitle: durationDescription(selectedDuration),
-                                action: { withAnimation { showDurationPicker.toggle() } })
-                        .background(GeometryReader { geo in
-                            Color.clear.preference(key: DurationFrameKey.self, value: geo.frame(in: .named("sheet")))
-                        })
-                        .onPreferenceChange(DurationFrameKey.self) { durationBoxFrame = $0 }
-                }
-                .padding(.horizontal, 20)
-
-                // Filters
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("FILTER PLAYLIST")
-                        .font(RCFont.regular(13))
-                        .foregroundColor(.white.opacity(0.6))
-
-                    // Genres
-                    FlowLayout(spacing: 6, runSpacing: 6) {
-                        ForEach(Genre.allCases, id: \.self) { genre in
-                            let binding = Binding<Bool>(
-                                get: { selectedGenres.contains(genre) },
-                                set: { newValue in
-                                    if newValue { selectedGenres.insert(genre) } else { selectedGenres.remove(genre) }
-                                }
-                            )
-                            FilterChip(title: genre.displayName, isSelected: binding)
-                        }
-                    }
-
-                    // Decades
-                    FlowLayout(spacing: 6, runSpacing: 6) {
-                        ForEach(Decade.allCases, id: \.self) { decade in
-                            let binding = Binding<Bool>(
-                                get: { selectedDecades.contains(decade) },
-                                set: { newValue in
-                                    if newValue { selectedDecades.insert(decade) } else { selectedDecades.remove(decade) }
-                                }
-                            )
-                            FilterChip(title: decade.displayName, isSelected: binding)
-                        }
+            // Content switches by tab (Run tab removed; selection now on Home)
+            Group {
+                switch activeTab {
+                case .time:
+                        timeTab
+                    case .filter:
+                        filterTab
                     }
                 }
-                .padding(.horizontal, 20)
+                .animation(.easeInOut, value: activeTab)
 
-                Spacer()
+                Spacer(minLength: 0)
 
-                // Save button
-                Button("Save") {
-                    onSave(selectedTemplate, selectedDuration, selectedGenres, selectedDecades, "")
-                    dismiss()
+                // Bottom tabs (remove Run)
+                HStack(spacing: 0) {
+                    tabItem(title: "LENGTH", systemImage: "timer", selected: activeTab == .time) { activeTab = .time }
+                    Spacer()
+                    tabItem(title: "FILTER", systemImage: "music.note.list", selected: activeTab == .filter) { activeTab = .filter }
                 }
-                .buttonStyle(PrimaryFilledButtonStyle())
-                .padding(.horizontal, 20)
-                .padding(.bottom, 16)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 16)
+                .overlay(Rectangle().fill(Color.white.opacity(0.15)).frame(height: 1), alignment: .top)
             }
         }
         .coordinateSpace(name: "sheet")
-        // Overlay dropdown menus positioned over content so the sheet doesn't expand
-        .overlay(alignment: .topLeading) {
-            ZStack {
-                if showTemplatePicker {
-                    DropdownMenu(items: RunTemplateType.allCases.map { ($0.rawValue, templateDescription($0)) }) { index in
-                        selectedTemplate = RunTemplateType.allCases[index]
-                        withAnimation { showTemplatePicker = false }
-                    }
-                    .frame(width: max(templateBoxFrame.width, 0))
-                    .offset(x: templateBoxFrame.minX, y: templateBoxFrame.maxY + 16)
-                }
-                if showDurationPicker {
-                    DropdownMenu(items: DurationCategory.allCases.map { ($0.displayName, durationDescription($0)) }) { index in
-                        selectedDuration = DurationCategory.allCases[index]
-                        withAnimation { showDurationPicker = false }
-                    }
-                    .frame(width: max(durationBoxFrame.width, 0))
-                    .offset(x: durationBoxFrame.minX, y: durationBoxFrame.maxY + 16)
-                }
-            }
-        }
+        // No dropdown overlays in the new design
     }
 
     private func resetSelections() {
@@ -185,11 +126,15 @@ struct CustomizeRunView: View {
         selectedDuration = initialDurationValue
         selectedGenres = []
         selectedDecades = []
-        
+        customMinutes = initialCustomMinutes
+        durationWheelTouched = false
+        durationWheelSelection = customMinutes ?? 30
     }
 
     private func templateDescription(_ template: RunTemplateType) -> String {
         switch template {
+        case .rest:
+            return "Take a day to recover. Light movement, mobility, or full rest — your call."
         case .easyRun:
             return "Steady easy run for casual and recovery runs"
         case .strongSteady:
@@ -213,6 +158,117 @@ struct CustomizeRunView: View {
         case .medium: return "30 - 45 min"
         case .long: return "45 - 60 min"
         }
+    }
+
+    // MARK: - Tabs
+    private enum Tab { case time, filter }
+
+    // Removed templateCarouselOrder; not needed without Run tab
+
+    // Removed old tabBar with Run
+
+    private func tabItem(title: String, systemImage: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: systemImage)
+                    .foregroundColor(.white)
+                    .opacity(selected ? 1.0 : 0.5)
+                Text(title)
+                    .font(RCFont.medium(14))
+                    .foregroundColor(.white)
+                    .opacity(selected ? 1.0 : 0.5)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    // Removed runTab since selection happens on Home
+
+    // Time tab: wheel picker for custom minutes (optional override)
+    @State private var durationWheelSelection: Int = 30
+    @State private var durationWheelTouched: Bool = false
+
+    private var timeTab: some View {
+        VStack(spacing: 24) {
+            Text("LENGTH")
+                .font(RCFont.regular(13))
+                .foregroundColor(.white.opacity(0.6))
+
+            DurationWheel(selection: Binding<Int>(
+                get: { durationWheelSelection },
+                set: { minutes in
+                    durationWheelSelection = minutes
+                    durationWheelTouched = true
+                    customMinutes = minutes
+                }
+            ), values: Array(stride(from: 20, through: 120, by: 5)))
+            .onAppear {
+                durationWheelSelection = customMinutes ?? 30
+                durationWheelTouched = false
+            }
+
+            Text(durationWheelTouched || customMinutes != nil ? "Custom: \(durationWheelSelection) min" : durationDescription(selectedDuration))
+                .font(RCFont.medium(16))
+                .foregroundColor(.white.opacity(0.9))
+        }
+        .padding(.horizontal, 20)
+    }
+
+    // Filter tab: reuse chips
+    private var filterTab: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("FILTER PLAYLIST")
+                .font(RCFont.regular(13))
+                .foregroundColor(.white.opacity(0.6))
+
+            FlowLayout(spacing: 6, runSpacing: 6) {
+                ForEach(Genre.allCases, id: \.self) { genre in
+                    let binding = Binding<Bool>(
+                        get: { selectedGenres.contains(genre) },
+                        set: { newValue in
+                            if newValue { selectedGenres.insert(genre) } else { selectedGenres.remove(genre) }
+                        }
+                    )
+                    FilterChip(title: genre.displayName, isSelected: binding)
+                }
+            }
+
+            FlowLayout(spacing: 6, runSpacing: 6) {
+                ForEach(Decade.allCases, id: \.self) { decade in
+                    let binding = Binding<Bool>(
+                        get: { selectedDecades.contains(decade) },
+                        set: { newValue in
+                            if newValue { selectedDecades.insert(decade) } else { selectedDecades.remove(decade) }
+                        }
+                    )
+                    FilterChip(title: decade.displayName, isSelected: binding)
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+    }
+}
+
+// MARK: - DurationWheel component
+struct DurationWheel: View {
+    @Binding var selection: Int
+    var values: [Int] = Array(stride(from: 20, through: 120, by: 5))
+
+    var body: some View {
+        ZStack {
+            NumberWheelPicker(selection: $selection,
+                               values: values,
+                               rowHeight: 60,
+                               fontSize: 28,
+                               textColor: UIColor.white)
+            // Highlight band
+            Rectangle()
+                .fill(Color.white.opacity(0.12))
+                .frame(height: 64)
+                .cornerRadius(12)
+                .allowsHitTesting(false)
+        }
+        .frame(height: 300)
     }
 }
 
@@ -384,6 +440,18 @@ private extension Color {
         let g = Double((hex >> 8) & 0xFF) / 255.0
         let b = Double(hex & 0xFF) / 255.0
         self.init(red: r, green: g, blue: b)
+    }
+}
+
+// MARK: - Dirty tracking
+private extension CustomizeRunView {
+    var isDirty: Bool {
+        if selectedTemplate != initialTemplateValue { return true }
+        if selectedDuration != initialDurationValue { return true }
+        if selectedGenres != initialGenresValue { return true }
+        if selectedDecades != initialDecadesValue { return true }
+        if customMinutes != initialCustomMinutes { return true }
+        return false
     }
 }
 

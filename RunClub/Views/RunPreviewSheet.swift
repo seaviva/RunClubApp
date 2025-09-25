@@ -9,6 +9,7 @@ import SwiftData
 struct RunPreviewSheet: View {
     let template: RunTemplateType
     let duration: DurationCategory
+    var customMinutes: Int? = nil
     var genres: [Genre] = []
     var decades: [Decade] = []
     let onContinue: (PreviewRun) -> Void
@@ -21,23 +22,38 @@ struct RunPreviewSheet: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // Header bar
-            HStack(alignment: .center) {
+            // Header bar (match DurationPickerSheet style)
+            ZStack {
                 Text("TODAY’S RUN")
-                    .font(RCFont.medium(24))
-                Spacer()
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(8)
+                    .font(RCFont.light(15))
+                    .foregroundColor(.white)
+                HStack {
+                    Button(action: { dismiss() }) {
+                        Image("x")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 24, height: 24)
+                            .foregroundColor(.white)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Close")
+                    Spacer()
+                    Button(action: { Task { await loadPreview() } }) {
+                        Image("refresh")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 24, height: 24)
+                            .foregroundColor(.white)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Refresh Preview")
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Close")
             }
             // Subheader: Workout Playlist + total runtime
             HStack {
-                Text("Workout Playlist").font(RCFont.semiBold(17))
+                Text("Total Runtime").font(RCFont.semiBold(17))
                 Spacer()
                 Text(totalRuntimeText).font(RCFont.semiBold(17))
             }
@@ -64,7 +80,6 @@ struct RunPreviewSheet: View {
                     endPoint: .bottom
                 )
             )
-            .padding(.bottom, 0)
         }
         .padding(.top, 20)
         .padding(.horizontal,20)
@@ -104,7 +119,7 @@ struct RunPreviewSheet: View {
         isLoading = true
         let service = RunPreviewService(modelContext: modelContext)
         do {
-            let p = try await service.buildPreview(template: template, duration: duration, genres: genres, decades: decades)
+            let p = try await service.buildPreview(template: template, duration: duration, genres: genres, decades: decades, customMinutes: customMinutes)
             preview = p
         } catch {
             preview = nil
@@ -158,32 +173,36 @@ struct RunPreviewSheet: View {
                 Text(formatTotal(seconds)).font(RCFont.regular(14)).foregroundColor(Color.white.opacity(0.4))
             }
             .padding(.bottom, 8)
+            .padding(.top, 4)
             content()
         }
     }
 
     private func rowsView(_ rows: [Row]) -> some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 20) {
             ForEach(rows) { r in
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
                     HStack(alignment: .center, spacing: 12) {
                         Text("\(r.index)")
                             .font(RCFont.regular(13))
                             .foregroundColor(Color.white.opacity(0.4))
-                            .frame(width: 20, alignment: .trailing)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(r.track.title).font(RCFont.medium(16))
+                            .frame(width: 20, alignment: .center)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(r.track.title).font(RCFont.regular(16))
                             Text(r.track.artist).font(RCFont.regular(13)).foregroundColor(Color.white.opacity(0.4))
                         }
                         Spacer()
                         EffortTag(r.track.effort)
                         Button(action: { Task { await replace(at: r.index - 1) } }) {
-                            Image(systemName: replacingIndex == (r.index - 1) ? "arrow.triangle.2.circlepath.circle.fill" : "arrow.triangle.2.circlepath")
-                                .font(.system(size: 20, weight: .regular))
+                            Image("refresh")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(Color(hex: 0x666666))
                         }
                         .disabled(replacingIndex != nil)
                     }
-                    Divider()
                 }
             }
         }
@@ -193,15 +212,13 @@ struct RunPreviewSheet: View {
         let m = seconds / 60
         let s = seconds % 60
         if s == 0 { return "\(m)min" }
-        return "\(m)m \(s)s"
+        return "\(m)min \(s)sec"
     }
 
     private var totalRuntimeText: String {
         guard let p = preview else { return "" }
         let total = p.tracks.reduce(0) { $0 + ($1.durationMs / 1000) }
-        let m = total / 60
-        let s = total % 60
-        return String(format: "%d:%02d", m, s)
+        return formatTotal(total)
     }
 }
 
@@ -211,10 +228,10 @@ private struct EffortTag: View {
     var body: some View {
         Text(label)
             .font(RCFont.semiBold(12))
-            .foregroundColor(.white)
+            .foregroundColor(color)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(color)
+            .background(color.opacity(0.20))
             .cornerRadius(12)
     }
     private var label: String {
@@ -222,11 +239,11 @@ private struct EffortTag: View {
     }
     private var color: Color {
         switch effort {
-        case .easy: return Color(red: 0.0, green: 0.6, blue: 0.3)
-        case .moderate: return Color(red: 0.6, green: 0.0, blue: 0.6) // magenta/purple mix
-        case .strong: return Color(red: 0.4, green: 0.0, blue: 0.6) // deep purple
-        case .hard: return Color(red: 0.85, green: 0.45, blue: 0.0) // orange
-        case .max: return Color.red
+        case .easy: return Color(hex: 0x00C853)   // easy: 00C853
+        case .moderate: return Color(hex: 0xFF18A6) // moderate: FF18A6
+        case .strong: return Color(hex: 0x8E24AA)  // strong: 8E24AA
+        case .hard: return Color(hex: 0xFF6F00)    // hard: FF6F00
+        case .max: return Color(hex: 0xFF3333)     // max: FF3333
         }
     }
 }

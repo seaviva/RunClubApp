@@ -43,6 +43,8 @@ struct WeekStrip: View {
         // EASY → #00CFFF, MEDIUM → #FFB300, HARD → #FF3366
         guard let template else { return .white }
         switch template {
+        case .rest:
+            return Color.white
         case .easyRun, .longEasy:
             return Color(red: 0.0, green: 0.81, blue: 1.0) // #00CFFF
         case .strongSteady, .pyramid, .kicker:

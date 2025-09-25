@@ -7,12 +7,13 @@
 
 import Foundation
 
-enum RunTemplateType: String, Codable, CaseIterable, Identifiable {
-    case easyRun = "Easy Run"
-    case strongSteady = "Strong & Steady"
+enum RunTemplateType: String, Codable, CaseIterable, Identifiable, Hashable {
+    case rest = "Rest"
+    case easyRun = "Light"
+    case strongSteady = "Tempo"
     case longEasy = "Long & Easy"
-    case shortWaves = "Short Waves"
-    case longWaves = "Long Waves"
+    case shortWaves = "HIIT"
+    case longWaves = "Intervals"
     case pyramid = "Pyramid"
     case kicker = "Kicker"
 
