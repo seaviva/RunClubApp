@@ -12,6 +12,7 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var auth: AuthService
     @EnvironmentObject var crawlCoordinator: CrawlCoordinator
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage("runsPerWeek") private var runsPerWeek: Int = 3
     @AppStorage("preferredDurationCategory") private var preferredDurationRaw: String = DurationCategory.medium.rawValue
     @State private var customTemplate: RunTemplateType?
@@ -65,10 +66,11 @@ struct HomeView: View {
         let isDone = completedDays.contains(dayKey)
         let scheduledTemplate: RunTemplateType? = rec.template
         let defaultTemplate: RunTemplateType? = rec.isRunDay ? scheduledTemplate : .rest
-        let activeTemplate: RunTemplateType? = selectedTemplateCarousel ?? customTemplate ?? defaultTemplate
-        let activeDuration: DurationCategory = customDuration ?? rec.suggestedDurationCategory ?? preferences.preferredDuration
         let isToday = Calendar.current.isDateInToday(selectedDate)
         let isPast = Calendar.current.startOfDay(for: selectedDate) < Calendar.current.startOfDay(for: Date())
+        let isFuture = !isToday && !isPast
+        let activeTemplate: RunTemplateType? = isFuture ? defaultTemplate : (selectedTemplateCarousel ?? customTemplate ?? defaultTemplate)
+        let activeDuration: DurationCategory = customDuration ?? rec.suggestedDurationCategory ?? preferences.preferredDuration
         let isRunDay: Bool = rec.isRunDay || (activeTemplate != nil)
         GeometryReader { proxy in
         ZStack(alignment: .top) {
@@ -80,43 +82,99 @@ struct HomeView: View {
                 .accessibilityHidden(true)
 
             VStack(spacing: 0) {
-                // Header: fixed 50 height, content bottom-aligned
-                ZStack {
-                    HStack {
-                        Button { showingSettings = true } label: {
-                            Image("runclublogo")
-                                .renderingMode(.original)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 24, height: 24)
-                        }
-                        Spacer()
-                        if auth.isAuthorized {
-                            Button { showingMonth = true } label: {
-                                Image("calendarblank")
-                                    .renderingMode(.template)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 24, height: 24)
-                                    .foregroundColor(.white)
-                            }
-                        }
+                //Color.clear.frame(height: max(0,proxy.safeAreaInsets.top - 16))
+                // Header: centered HStack with left logo, middle date, right calendar
+                HStack(spacing: 0) {
+                    Button { showingSettings = true } label: {
+                        Image("runclublogo")
+                            .renderingMode(.original)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
                     }
-                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .frame(width: 44, height: 44, alignment: .center)
+                    .contentShape(Rectangle())
+                    .buttonStyle(.plain)
+
+                    Spacer(minLength: 8)
+
                     Text(Calendar.current.isDateInToday(selectedDate) ? "TODAY" : formattedDate(selectedDate).uppercased())
                         .font(RCFont.light(14))
                         .foregroundColor(.white)
-                        .frame(maxHeight: .infinity, alignment: .bottom)
+                        .frame(maxWidth: .infinity)
+                        .multilineTextAlignment(.center)
+
+                    Spacer(minLength: 8)
+
+                    if auth.isAuthorized {
+                        Button { showingMonth = true } label: {
+                            Image("calendarblank")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(.white)
+                        }
+                        .frame(width: 44, height: 44, alignment: .center)
+                        .contentShape(Rectangle())
+                        .buttonStyle(.plain)
+                    } else {
+                        // keep alignment consistent when unauthorized
+                        Color.clear.frame(width: 48, height: 48)
+                    }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, proxy.safeAreaInsets.top)
-                .frame(height: 24)
+                .padding(.horizontal, 12)
+                .padding(.top, 12)
+                .frame(height: 44, alignment: .center)
 
                 // Main content fills remaining space; bottom-centered
                 if auth.isAuthorized {
                 VStack(spacing: 20) {
-                    // Carousel of templates/rest
-                    if let initial = activeTemplate ?? defaultTemplate {
+                    // When completed: show static name + description (no carousel)
+                    if isDone, let t = activeTemplate ?? defaultTemplate {
+                        VStack(spacing: 12) {
+                            Text(t.rawValue)
+                                .font(RCFont.powerGroteskLight(60))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
+                                .padding(.horizontal, 20)
+                            Text(runDescription(for: t))
+                                .font(RCFont.light(16))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .lineSpacing(6)
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 24)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        .padding(.bottom, 32)
+                    } else if isFuture, let t = defaultTemplate {
+                        // Future day: show only the recommended card, no carousel
+                        VStack(spacing: 12) {
+                            Text("RECOMMENDED")
+                                .font(RCFont.light(14))
+                                .foregroundColor(Color(hex: 0xFFCC33))
+                            Text(t.rawValue)
+                                .font(RCFont.powerGroteskLight(60))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
+                                .padding(.horizontal, 20)
+                            Text(runDescription(for: t))
+                                .font(RCFont.light(16))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .lineSpacing(6)
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 24)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        .padding(.bottom, 32)
+                    } else if let initial = activeTemplate ?? defaultTemplate {
+                        // Carousel of templates/rest (only when not completed)
                         let selection = Binding<RunTemplateType>(
                             get: { selectedTemplateCarousel ?? initial },
                             set: { newVal in selectedTemplateCarousel = newVal; customTemplate = newVal }
@@ -173,41 +231,105 @@ struct HomeView: View {
                 // Bottom controls: buttons bar + CTA, pinned to bottom
                 VStack(spacing: 0) {
                     // Buttons bar (filters + duration)
-                    if auth.isAuthorized && isToday && isRunDay && !completedDays.contains(dayKey) {
-                        HStack(spacing: 16) {
-                            Spacer()
-                            let isRest = (selectedTemplateCarousel ?? activeTemplate) == .rest
-                            let filtersApplied = !customGenres.isEmpty || !customDecades.isEmpty
-                            Button(action: { showingFiltersSheet = true }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "music.note.list").font(.system(size: 16, weight: .regular))
-                                    Text(isRest ? "NA" : (filtersApplied ? "CUSTOM" : "AUTO"))
-                                        .font(RCFont.medium(15))
+                    if auth.isAuthorized && (isRunDay || (!isToday && !isPast)) {
+                        if isDone {
+                            HStack(spacing: 16) {
+                                Spacer()
+                                Button(action: {}) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "music.note.list").font(.system(size: 16, weight: .regular))
+                                        Text("NA")
+                                            .font(RCFont.medium(15))
+                                    }
+                                    .foregroundColor(Color(hex: 0x1FCBFF))
+                                    .padding(.horizontal, 20)
+                                    .frame(height: 48)
+                                    .background(Color(hex: 0x33B1FF, alpha: 0.25))
+                                    .cornerRadius(28)
                                 }
-                                .foregroundColor(Color(hex: 0x1FCBFF))
-                                .padding(.horizontal, 20)
-                                .frame(height: 48)
-                                .background(Color(hex: 0x33B1FF, alpha: 0.25))
-                                .cornerRadius(28)
-                            }
-                            .disabled(isRest)
-                            Button(action: { showingDurationSheet = true }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "timer").font(.system(size: 16, weight: .regular))
-                                    let label = customMinutes != nil ? "~\(customMinutes!)min" : "~\(activeDuration.midpointMinutes)min"
-                                    Text(isRest ? "NA" : label).font(RCFont.medium(15))
+                                .disabled(true)
+                                Button(action: {}) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "timer").font(.system(size: 16, weight: .regular))
+                                        Text("NA").font(RCFont.medium(15))
+                                    }
+                                    .foregroundColor(Color(hex: 0xFF3333))
+                                    .padding(.horizontal, 20)
+                                    .frame(height: 48)
+                                    .background(Color(hex: 0xFF3333, alpha: 0.25))
+                                    .cornerRadius(28)
                                 }
-                                .foregroundColor(Color(hex: 0xFF3333))
-                                .padding(.horizontal, 20)
-                                .frame(height: 48)
-                                .background(Color(hex: 0xFF3333, alpha: 0.25))
-                                .cornerRadius(28)
+                                .disabled(true)
+                                Spacer()
                             }
-                            .disabled(isRest)
-                            Spacer()
+                            .frame(height: 68)
+                        } else if isToday {
+                            HStack(spacing: 16) {
+                                Spacer()
+                                let isRest = (selectedTemplateCarousel ?? activeTemplate) == .rest
+                                let filtersApplied = !customGenres.isEmpty || !customDecades.isEmpty
+                                Button(action: { showingFiltersSheet = true }) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "music.note.list").font(.system(size: 16, weight: .regular))
+                                        Text(isRest ? "NA" : (filtersApplied ? "CUSTOM" : "AUTO"))
+                                            .font(RCFont.medium(15))
+                                    }
+                                    .foregroundColor(Color(hex: 0x1FCBFF))
+                                    .padding(.horizontal, 20)
+                                    .frame(height: 48)
+                                    .background(Color(hex: 0x33B1FF, alpha: 0.25))
+                                    .cornerRadius(28)
+                                }
+                                .disabled(isRest)
+                                Button(action: { showingDurationSheet = true }) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "timer").font(.system(size: 16, weight: .regular))
+                                        let label = customMinutes != nil ? "~\(customMinutes!)min" : "~\(activeDuration.midpointMinutes)min"
+                                        Text(isRest ? "NA" : label).font(RCFont.medium(15))
+                                    }
+                                    .foregroundColor(Color(hex: 0xFF3333))
+                                    .padding(.horizontal, 20)
+                                    .frame(height: 48)
+                                    .background(Color(hex: 0xFF3333, alpha: 0.25))
+                                    .cornerRadius(28)
+                                }
+                                .disabled(isRest)
+                                Spacer()
+                            }
+                            .frame(height: 68)
+                        } else {
+                            // Future day: show disabled buttons to keep layout consistent
+                            HStack(spacing: 16) {
+                                Spacer()
+                                Button(action: {}) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "music.note.list").font(.system(size: 16, weight: .regular))
+                                        Text("NA")
+                                            .font(RCFont.medium(15))
+                                    }
+                                    .foregroundColor(Color(hex: 0x1FCBFF))
+                                    .padding(.horizontal, 20)
+                                    .frame(height: 48)
+                                    .background(Color(hex: 0x33B1FF, alpha: 0.25))
+                                    .cornerRadius(28)
+                                }
+                                .disabled(true)
+                                Button(action: {}) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "timer").font(.system(size: 16, weight: .regular))
+                                        Text("NA").font(RCFont.medium(15))
+                                    }
+                                    .foregroundColor(Color(hex: 0xFF3333))
+                                    .padding(.horizontal, 20)
+                                    .frame(height: 48)
+                                    .background(Color(hex: 0xFF3333, alpha: 0.25))
+                                    .cornerRadius(28)
+                                }
+                                .disabled(true)
+                                Spacer()
+                            }
+                            .frame(height: 68)
                         }
-                        .frame(height: 68)
-                        //.padding(.bottom, 12)
                     }
 
                     // CTA row
@@ -304,9 +426,16 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingSettings) { SettingsView().environmentObject(auth).environmentObject(crawlCoordinator) }
         .sheet(isPresented: $showingMonth) {
-            MonthCalendarSheet(selectedDate: $selectedDate, calendar: .current) { date in
-                schedule.recommendationForToday(preferences: preferences, date: date).isRunDay
-            }
+            MonthCalendarSheet(
+                selectedDate: $selectedDate,
+                calendar: .current,
+                isRunDay: { date in
+                    schedule.recommendationForToday(preferences: preferences, date: date).isRunDay
+                },
+                isCompleted: { date in
+                    completedDays.contains(dayKeyString(for: date))
+                }
+            )
             .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showingPreview) {
@@ -335,6 +464,16 @@ struct HomeView: View {
             } else {
                 Text("No run available")
             }
+        }
+        // Always snap to today when app becomes active or the day changes
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { selectedDate = Date() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            selectedDate = Date()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
+            selectedDate = Date()
         }
         .alert("Generation failed", isPresented: $showError) {
             Button("OK", role: .cancel) {}

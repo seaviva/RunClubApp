@@ -67,8 +67,13 @@ struct MonthCalendarSheet: View {
                                 .contentShape(Rectangle())
                                 .onTapGesture {
                                     if let d = day {
-                                        selectedDate = d
-                                        dismiss()
+                                        let isPast = calendar.startOfDay(for: d) < calendar.startOfDay(for: Date())
+                                        if isPast && !isCompleted(d) {
+                                            // do nothing for past dates without a recorded run
+                                        } else {
+                                            selectedDate = d
+                                            dismiss()
+                                        }
                                     }
                                 }
                                 if col < 6 { Spacer(minLength: 0) }
@@ -113,7 +118,11 @@ struct MonthCalendarSheet: View {
 
     private func colorForDay(_ date: Date?) -> Color {
         guard let d = date else { return Color.white.opacity(0.3) }
-        if isCompleted(d) { return Color(red: 0.0, green: 1.0, blue: 0.4667) }
+        // Completed runs: bright green #00FF00
+        if isCompleted(d) { return Color(red: 0.0, green: 1.0, blue: 0.0) }
+        // Past dates with no recorded run: 25% white
+        let isPast = calendar.startOfDay(for: d) < calendar.startOfDay(for: Date())
+        if isPast { return Color.white.opacity(0.25) }
         let rec = schedule.recommendationForToday(preferences: preferences, date: d)
         guard rec.isRunDay else { return Color.white.opacity(0.6) }
         switch rec.template {
