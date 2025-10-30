@@ -33,11 +33,14 @@ final class LocalGenerator {
     }
 
     private let modelContext: ModelContext
+    // Secondary context for recommendations store
+    private let recsContext: ModelContext
     // Optional sink used by dry-run to collect log lines
     private var debugSink: ((String) -> Void)? = nil
 
-    init(modelContext: ModelContext) {
+    init(modelContext: ModelContext, recsContext: ModelContext = RecommendationsDataStack.shared.context) {
         self.modelContext = modelContext
+        self.recsContext = recsContext
     }
 
     private func emit(_ line: String) {
@@ -156,6 +159,8 @@ final class LocalGenerator {
     }
 
     // MARK: - Candidate pool (scaffold)
+    enum SourceKind { case likes, recs }
+
     struct Candidate {
         let track: CachedTrack
         let features: AudioFeature?
@@ -163,11 +168,17 @@ final class LocalGenerator {
         let isRediscovery: Bool
         let lastUsedAt: Date?
         let genreAffinity: Double // 0–1 affinity to selected umbrella(s) incl. neighbors
+        let source: SourceKind
     }
 
     private func buildCandidatePool(genres: [Genre], decades: [Decade], umbrellaWeights: [String: Double]) async throws -> [Candidate] {
-        // Fetch all liked tracks and related data on MainActor
-        let (tracks, featById, artistById, usageById): ([CachedTrack], [String: AudioFeature], [String: CachedArtist], [String: TrackUsage]) = try await MainActor.run {
+        // Read source settings from defaults: useRecommendations + weight (0..1)
+        let useRecs = UserDefaults.standard.bool(forKey: "useRecommendations")
+        let recWeight = UserDefaults.standard.object(forKey: "recommendationsWeight") as? Double ?? 0.4
+        let likesWeight = max(0.0, min(1.0, 1.0 - recWeight))
+
+        // Fetch from likes (primary) and optionally from recs store
+        let (likesTracks, likesFeat, likesArtists, usageById): ([CachedTrack], [String: AudioFeature], [String: CachedArtist], [String: TrackUsage]) = try await MainActor.run {
             let tracks = try modelContext.fetch(FetchDescriptor<CachedTrack>())
             let feats = try modelContext.fetch(FetchDescriptor<AudioFeature>())
             let featById = Dictionary(uniqueKeysWithValues: feats.map { ($0.trackId, $0) })
@@ -176,6 +187,25 @@ final class LocalGenerator {
             let usages = try modelContext.fetch(FetchDescriptor<TrackUsage>())
             let usageById = Dictionary(uniqueKeysWithValues: usages.map { ($0.trackId, $0) })
             return (tracks, featById, artistById, usageById)
+        }
+        var tracks: [CachedTrack] = likesTracks
+        var featById: [String: AudioFeature] = likesFeat
+        var artistById: [String: CachedArtist] = likesArtists
+        var sourceById: [String: SourceKind] = Dictionary(uniqueKeysWithValues: likesTracks.map { ($0.id, .likes) })
+
+        if useRecs {
+            let (recsTracks, recsFeat, recsArtists): ([CachedTrack], [String: AudioFeature], [String: CachedArtist]) = try await MainActor.run {
+                let tracks = try recsContext.fetch(FetchDescriptor<CachedTrack>())
+                let feats = try recsContext.fetch(FetchDescriptor<AudioFeature>())
+                let featById = Dictionary(uniqueKeysWithValues: feats.map { ($0.trackId, $0) })
+                let artists = try recsContext.fetch(FetchDescriptor<CachedArtist>())
+                let artistById = Dictionary(uniqueKeysWithValues: artists.map { ($0.id, $0) })
+                return (tracks, featById, artistById)
+            }
+            // Merge with likes; prefer likes on id conflict
+            for t in recsTracks { if sourceById[t.id] == nil { tracks.append(t); sourceById[t.id] = .recs } }
+            for (k, v) in recsFeat { if featById[k] == nil { featById[k] = v } }
+            for (k, v) in recsArtists { if artistById[k] == nil { artistById[k] = v } }
         }
 
         let now = Date()
@@ -235,7 +265,8 @@ final class LocalGenerator {
                              artist: artist,
                              isRediscovery: isRediscovery,
                              lastUsedAt: u?.lastUsedAt,
-                             genreAffinity: affinity)
+                             genreAffinity: affinity,
+                             source: sourceById[t.id] ?? .likes)
         }
         emit("Pool build — total:\(totalTracksSeen) lockoutFiltered:\(lockoutFilteredCount) resulting:\(result.count)")
         return result

@@ -14,15 +14,19 @@ import Foundation
 struct SettingsView: View {
     @EnvironmentObject var auth: AuthService
     @EnvironmentObject var crawlCoordinator: CrawlCoordinator
-    @EnvironmentObject var progressStore: CrawlProgressStore
+    @EnvironmentObject var progressStore: LikesProgressStore // LIKES only
+    @EnvironmentObject var recsCoordinator: RecommendationsCoordinator
+    @EnvironmentObject var recsProgress: RecsProgressStore // RECS only
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @AppStorage("runsPerWeek") private var runsPerWeek: Int = 3
     @AppStorage("preferredDurationCategory") private var preferredDurationRaw: String = DurationCategory.medium.rawValue
     @AppStorage("onboardingComplete") private var onboardingComplete: Bool = true
     // Progress comes from global coordinator so crawl persists across navigation
-    @State private var counts: (tracks: Int, features: Int, artists: Int) = (0,0,0)
+    @State private var likesCount: Int = 0
+    @State private var recommendedCount: Int = 0
     @State private var lastCompleted: Date? = nil
+    // Recommendations coordinator/progress are provided by RootView
 
     var body: some View {
         NavigationView {
@@ -65,61 +69,90 @@ struct SettingsView: View {
                             .foregroundColor(auth.isAuthorized ? .green : .secondary)
                     }
                     Button("Reconnect Spotify") { auth.startLogin() }
-                    Button("Disconnect Spotify") { auth.logout() }
+                    Button("Disconnect Spotify") { auth.logout(); AuthService.clearOverrideToken() }
                         .foregroundColor(.red)
+                    // Third-party connect (Stats for Spotify)
+                    Button("Connect via Stats for Spotify") { showStatsConnect = true }
+                        .sheet(isPresented: $showStatsConnect) {
+                            WebTokenConnectView(onAuth: { _ in
+                                showStatsConnect = false
+                            }, onFail: {
+                                // keep sheet open; user may continue
+                            })
+                        }
+                    // Diagnostics
+                    Button("Probe Recommendations (pop)") {
+                        Task {
+                            let spotify = SpotifyService()
+                            await auth.refreshIfNeeded()
+                            spotify.accessTokenProvider = { AuthService.overrideToken() ?? (AuthService.sharedTokenSync() ?? "") }
+                            let simple = await spotify.probeRecommendationsSimple(genre: "pop", limit: 10)
+                            let superRelax = await spotify.probeRecommendationsSuperRelaxed(genres: ["pop"]) 
+                            print("Diagnostics — simple count=\(simple.count) sample=\(simple.sampleIds)")
+                            print("Diagnostics — super count=\(superRelax.count) sample=\(superRelax.sampleIds)")
+                        }
+                    }
                 }
 
                 Section(header: Text("Library")) {
+                    // Likes row
                     HStack {
-                        Text("Tracks")
+                        Text("Likes")
                         Spacer()
-                        if progressStore.isRunning {
+                        if progressStore.isRunning && progressStore.debugName == "LIKES" {
                             HStack(spacing: 6) {
                                 Text(progressStore.tracksTotal > 0 ? "\(progressStore.tracksDone)/\(progressStore.tracksTotal)" : "\(progressStore.tracksDone)")
                                     .foregroundColor(.secondary)
                                 ProgressView().scaleEffect(0.8)
                             }
                         } else {
-                            Text("\(counts.tracks)").foregroundColor(.secondary)
+                            Text("\(likesCount)").foregroundColor(.secondary)
                         }
                     }
-                    HStack {
-                        Text("Features")
-                        Spacer()
-                        if progressStore.isRunning {
-                            HStack(spacing: 6) {
-                                Text("\(progressStore.featuresDone)").foregroundColor(.secondary)
-                                ProgressView().scaleEffect(0.8)
-                            }
-                        } else {
-                            Text("\(counts.features)").foregroundColor(.secondary)
+                    // Show token source and last error
+                    Group {
+                        let overrideActive = (AuthService.overrideToken() != nil)
+                        Text("Token: " + (overrideActive ? "StatsForSpotify" : "Spotify (native)"))
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                        if let state = try? modelContext.fetch(FetchDescriptor<CrawlState>()).first, let err = state.lastError, !err.isEmpty {
+                            Text(err).font(.footnote).foregroundStyle(.secondary)
                         }
                     }
-                    HStack {
-                        Text("Artists")
-                        Spacer()
-                        if progressStore.isRunning {
-                            HStack(spacing: 6) {
-                                Text("\(progressStore.artistsDone)").foregroundColor(.secondary)
-                                ProgressView().scaleEffect(0.8)
-                            }
-                        } else {
-                            Text("\(counts.artists)").foregroundColor(.secondary)
-                        }
-                    }
-                    if let lastCompleted { HStack { Text("Last cached"); Spacer(); Text(lastCompleted.formatted(date: .abbreviated, time: .shortened)).foregroundColor(.secondary) } }
-                    if progressStore.isRunning {
-                        Button("Cancel Crawl") {
+                    // Refresh Likes button (or Cancel while running)
+                    Button((progressStore.isRunning && progressStore.debugName == "LIKES") ? "Cancel Likes" : "Refresh Likes") {
+                        if progressStore.isRunning && progressStore.debugName == "LIKES" {
                             let coord = crawlCoordinator
                             Task { await coord.cancel() }
-                        }
-                    } else {
-                        Button("Refresh Library") {
-                            // Start global refresh and keep the sheet up so user can Cancel immediately
+                        } else {
                             let coord = crawlCoordinator
                             Task { await coord.refresh() }
                         }
                     }
+
+                    // Recommended row (from separate store)
+                    HStack {
+                        Text("Recommended")
+                        Spacer()
+                        if recsProgress.isRunning && recsProgress.debugName == "RECS" {
+                            HStack(spacing: 6) {
+                                Text(recsProgress.tracksTotal > 0 ? "\(recsProgress.tracksDone)/\(recsProgress.tracksTotal)" : "\(recsProgress.tracksDone)")
+                                    .foregroundColor(.secondary)
+                                ProgressView().scaleEffect(0.8)
+                            }
+                        } else {
+                            Text("\(recommendedCount)").foregroundColor(.secondary)
+                        }
+                    }
+                    Button(recsProgress.isRunning ? "Cancel Sync" : "Refresh Recommendations") {
+                        if recsProgress.isRunning {
+                            Task { await recsCoordinator.cancel() }
+                        } else {
+                            Task { await recsCoordinator.refresh(targetCount: 1000) }
+                        }
+                    }
+
+                    if let lastCompleted { HStack { Text("Last cached (Likes)"); Spacer(); Text(lastCompleted.formatted(date: .abbreviated, time: .shortened)).foregroundColor(.secondary) } }
                 }
 
                 Section(header: Text("App")) {
@@ -211,7 +244,11 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
-            .task { await loadCounts() }
+            .task {
+                // Configure coordinator for recs refresh
+                await recsCoordinator.configure(auth: auth, progressStore: recsProgress)
+                await loadCounts()
+            }
             .sheet(isPresented: $showShare) {
                 if let url = shareURL {
                     ActivityView(activityItems: [url])
@@ -225,15 +262,18 @@ struct SettingsView: View {
     // Share sheet state
     @State private var shareURL: URL? = nil
     @State private var showShare: Bool = false
+    @State private var showStatsConnect: Bool = false
 
     private func loadCounts() async {
         do {
             let tracks = try modelContext.fetch(FetchDescriptor<CachedTrack>()).count
-            let feats = try modelContext.fetch(FetchDescriptor<AudioFeature>()).count
-            let artists = try modelContext.fetch(FetchDescriptor<CachedArtist>()).count
+            // Pull recommendations count from the separate store
+            let recsCtx = RecommendationsDataStack.shared.context
+            let recsCount = try recsCtx.fetch(FetchDescriptor<CachedTrack>()).count
             let state = try modelContext.fetch(FetchDescriptor<CrawlState>()).first
             await MainActor.run {
-                counts = (tracks, feats, artists)
+                likesCount = tracks
+                recommendedCount = recsCount
                 lastCompleted = state?.lastCompletedAt
             }
         } catch { }
@@ -363,5 +403,6 @@ private struct CadenceOverrideRow: View {
         valueString = ""
     }
 }
+
 
 

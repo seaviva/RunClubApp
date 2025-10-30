@@ -12,6 +12,8 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var auth: AuthService
     @EnvironmentObject var crawlCoordinator: CrawlCoordinator
+    @EnvironmentObject var recsCoordinator: RecommendationsCoordinator
+    @EnvironmentObject var recsProgress: RecsProgressStore
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("runsPerWeek") private var runsPerWeek: Int = 3
     @AppStorage("preferredDurationCategory") private var preferredDurationRaw: String = DurationCategory.medium.rawValue
@@ -128,7 +130,7 @@ struct HomeView: View {
                 .frame(height: 44, alignment: .center)
 
                 // Main content fills remaining space; bottom-centered
-                if auth.isAuthorized {
+                if (AuthService.overrideToken() != nil) {
                 VStack(spacing: 20) {
                     // When completed: show static name + description (no carousel)
                     if isDone, let t = activeTemplate ?? defaultTemplate {
@@ -222,7 +224,8 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 .padding(.bottom, 16)
                 } else {
-                    Button("Connect Spotify") { auth.startLogin() }
+                    // Use StatsForSpotify connect instead of native PKCE
+                    Button("Connect Spotify") { showingSettings = true }
                         .buttonStyle(.borderedProminent)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                         .padding(.bottom, 32)
@@ -231,7 +234,7 @@ struct HomeView: View {
                 // Bottom controls: buttons bar + CTA, pinned to bottom
                 VStack(spacing: 0) {
                     // Buttons bar (filters + duration)
-                    if auth.isAuthorized && (isRunDay || (!isToday && !isPast)) {
+                    if (AuthService.overrideToken() != nil) && (isRunDay || (!isToday && !isPast)) {
                         if isDone {
                             HStack(spacing: 16) {
                                 Spacer()
@@ -334,7 +337,7 @@ struct HomeView: View {
 
                     // CTA row
                     
-                    if auth.isAuthorized {
+                    if (AuthService.overrideToken() != nil) {
                         HStack(spacing: 16) {
                             if isToday {
                                 if completedDays.contains(dayKey) {
@@ -424,7 +427,7 @@ struct HomeView: View {
             }
             .presentationDetents([.medium, .large])
         }
-        .sheet(isPresented: $showingSettings) { SettingsView().environmentObject(auth).environmentObject(crawlCoordinator) }
+        .sheet(isPresented: $showingSettings) { SettingsView().environmentObject(auth).environmentObject(crawlCoordinator).environmentObject(recsCoordinator).environmentObject(recsProgress) }
         .sheet(isPresented: $showingMonth) {
             MonthCalendarSheet(
                 selectedDate: $selectedDate,
@@ -497,8 +500,8 @@ struct HomeView: View {
     }
 
     private func confirm(preview: PreviewRun) async {
-            guard let token = await auth.accessToken() else { return }
-            spotify.accessTokenProvider = { token }
+            // Use override-first provider to support StatsForSpotify login fully
+            spotify.accessTokenProvider = { AuthService.overrideToken() ?? (AuthService.sharedTokenSync() ?? "") }
             do {
             let url = try await spotify.createConfirmedPlaylist(from: preview)
             let key = dayKeyString(for: selectedDate)

@@ -10,6 +10,8 @@ struct FilterPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var genres: Set<Genre>
     @State private var decades: Set<Decade>
+    @AppStorage("useRecommendations") private var useRecommendations: Bool = true
+    @AppStorage("recommendationsWeight") private var recommendationsWeight: Double = 0.4
     private let originalGenres: Set<Genre>
     private let originalDecades: Set<Decade>
     let onDone: (Set<Genre>, Set<Decade>) -> Void
@@ -84,6 +86,34 @@ struct FilterPickerSheet: View {
                                 )
                                 SheetFilterChip(title: decade.displayName, isSelected: binding)
                             }
+                        }
+
+                        // Recommendations controls
+                        Rectangle().fill(Color.white.opacity(0.15)).frame(height: 1).padding(.top, 28)
+                        HStack {
+                            Text("Use Recommendations")
+                                .font(RCFont.regular(15))
+                            Spacer()
+                            Toggle("", isOn: $useRecommendations)
+                                .labelsHidden()
+                        }
+                        .foregroundColor(.white)
+                        if useRecommendations {
+                            HStack(spacing: 12) {
+                                Text("Likes")
+                                    .font(RCFont.regular(13))
+                                    .foregroundColor(.white.opacity(0.7))
+                                Slider(value: $recommendationsWeight, in: 0...1, step: 0.05)
+                                    .tint(.white)
+                                Text("Recs")
+                                    .font(RCFont.regular(13))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                            let likesPct = Int(round((1 - recommendationsWeight) * 100))
+                            let recsPct = 100 - likesPct
+                            Text("Mix: \(likesPct)% Likes • \(recsPct)% Recs")
+                                .font(RCFont.regular(13))
+                                .foregroundColor(.white.opacity(0.6))
                         }
                     }
                     .padding(.horizontal, 20)

@@ -20,9 +20,16 @@
 		5F6026EE2E537AF6005D7433 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6026ED2E537AF6005D7433 /* SettingsView.swift */; };
 		5F6026F12E537EEC005D7433 /* MonthCalendarSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6026EF2E537EEC005D7433 /* MonthCalendarSheet.swift */; };
 		5F6026F22E537EEC005D7433 /* WeekStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6026F02E537EEC005D7433 /* WeekStrip.swift */; };
-		5F699D5A2E8488000075A2EF /* UIComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699D592E8488000075A2EF /* UIComponents.swift */; };
 		5F699D562E8484640075A2EF /* DurationPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699D542E8484640075A2EF /* DurationPickerSheet.swift */; };
 		5F699D572E8484640075A2EF /* FilterPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699D552E8484640075A2EF /* FilterPickerSheet.swift */; };
+		5F699D5A2E8488000075A2EF /* UIComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699D592E8488000075A2EF /* UIComponents.swift */; };
+		5F699E3D2E8D647D0075A2EF /* RecommendationsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699E382E8D647D0075A2EF /* RecommendationsCoordinator.swift */; };
+		5F699E3E2E8D647D0075A2EF /* RecommendationsCrawler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699E392E8D647D0075A2EF /* RecommendationsCrawler.swift */; };
+		5F699E3F2E8D647D0075A2EF /* RecommendationsDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699E3A2E8D647D0075A2EF /* RecommendationsDataStack.swift */; };
+		5F699E402E8D647D0075A2EF /* RecommendedSongsRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699E3B2E8D647D0075A2EF /* RecommendedSongsRepository.swift */; };
+		5F699E412E8D647D0075A2EF /* SpotifyRecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699E3C2E8D647D0075A2EF /* SpotifyRecommendationService.swift */; };
+		5F699E432E8DA18C0075A2EF /* ProgressStores.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699E422E8DA18C0075A2EF /* ProgressStores.swift */; };
+		5F699E452EABD8A90075A2EF /* WebTokenConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F699E442EABD8A90075A2EF /* WebTokenConnectView.swift */; };
 		5F7AE9C12E71778900FEC001 /* GeneratorMatrixRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F7AE9C02E71778900FEC001 /* GeneratorMatrixRunner.swift */; };
 		5F94FD012E4F8E1900A3F9AE /* SpotifyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FCFF2E4F8CF600A3F9AE /* SpotifyService.swift */; };
 		5F94FD022E4F8E1F00A3F9AE /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FCFE2E4F8CE400A3F9AE /* AuthService.swift */; };
@@ -94,9 +101,16 @@
 		5F6026ED2E537AF6005D7433 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		5F6026EF2E537EEC005D7433 /* MonthCalendarSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthCalendarSheet.swift; sourceTree = "<group>"; };
 		5F6026F02E537EEC005D7433 /* WeekStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekStrip.swift; sourceTree = "<group>"; };
-		5F699D592E8488000075A2EF /* UIComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIComponents.swift; sourceTree = "<group>"; };
 		5F699D542E8484640075A2EF /* DurationPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DurationPickerSheet.swift; sourceTree = "<group>"; };
 		5F699D552E8484640075A2EF /* FilterPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPickerSheet.swift; sourceTree = "<group>"; };
+		5F699D592E8488000075A2EF /* UIComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIComponents.swift; sourceTree = "<group>"; };
+		5F699E382E8D647D0075A2EF /* RecommendationsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationsCoordinator.swift; sourceTree = "<group>"; };
+		5F699E392E8D647D0075A2EF /* RecommendationsCrawler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationsCrawler.swift; sourceTree = "<group>"; };
+		5F699E3A2E8D647D0075A2EF /* RecommendationsDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationsDataStack.swift; sourceTree = "<group>"; };
+		5F699E3B2E8D647D0075A2EF /* RecommendedSongsRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendedSongsRepository.swift; sourceTree = "<group>"; };
+		5F699E3C2E8D647D0075A2EF /* SpotifyRecommendationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyRecommendationService.swift; sourceTree = "<group>"; };
+		5F699E422E8DA18C0075A2EF /* ProgressStores.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStores.swift; sourceTree = "<group>"; };
+		5F699E442EABD8A90075A2EF /* WebTokenConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebTokenConnectView.swift; sourceTree = "<group>"; };
 		5F7AE9C02E71778900FEC001 /* GeneratorMatrixRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratorMatrixRunner.swift; sourceTree = "<group>"; };
 		5F94FCCD2E4F886200A3F9AE /* RunClubAppX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RunClubAppX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F94FCDC2E4F886300A3F9AE /* RunClubTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunClubTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -240,6 +254,12 @@
 		5F94FCFC2E4F8CC400A3F9AE /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				5F699E422E8DA18C0075A2EF /* ProgressStores.swift */,
+				5F699E382E8D647D0075A2EF /* RecommendationsCoordinator.swift */,
+				5F699E392E8D647D0075A2EF /* RecommendationsCrawler.swift */,
+				5F699E3A2E8D647D0075A2EF /* RecommendationsDataStack.swift */,
+				5F699E3B2E8D647D0075A2EF /* RecommendedSongsRepository.swift */,
+				5F699E3C2E8D647D0075A2EF /* SpotifyRecommendationService.swift */,
 				5FECA3EA2E7C5694007D0002 /* RunPreviewService.swift */,
 				5F7AE9C02E71778900FEC001 /* GeneratorMatrixRunner.swift */,
 				5F5FE26A2E5E940D0098B019 /* GeneratorUtils.swift */,
@@ -279,6 +299,7 @@
 		5F94FD312E4FCB4400A3F9AE /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				5F699E442EABD8A90075A2EF /* WebTokenConnectView.swift */,
 				5F699D592E8488000075A2EF /* UIComponents.swift */,
 				5F699D542E8484640075A2EF /* DurationPickerSheet.swift */,
 				5F699D552E8484640075A2EF /* FilterPickerSheet.swift */,
@@ -458,6 +479,7 @@
 				5F699D562E8484640075A2EF /* DurationPickerSheet.swift in Sources */,
 				5F699D572E8484640075A2EF /* FilterPickerSheet.swift in Sources */,
 				5FECA3EB2E7C5694007D0002 /* RunPreviewService.swift in Sources */,
+				5F699E432E8DA18C0075A2EF /* ProgressStores.swift in Sources */,
 				5FECA3E72E7C55FD007D0002 /* RunPreviewSheet.swift in Sources */,
 				5F5FE2652E5CD4F40098B019 /* LibraryCrawler.swift in Sources */,
 				5F1C54202E54CAFB0001A983 /* LoginSplashView.swift in Sources */,
@@ -474,6 +496,12 @@
 				5F94FD1F2E4FCA0000A3F9AE /* DurationCategory.swift in Sources */,
 				5F6026F12E537EEC005D7433 /* MonthCalendarSheet.swift in Sources */,
 				5F6026F22E537EEC005D7433 /* WeekStrip.swift in Sources */,
+				5F699E452EABD8A90075A2EF /* WebTokenConnectView.swift in Sources */,
+				5F699E3D2E8D647D0075A2EF /* RecommendationsCoordinator.swift in Sources */,
+				5F699E3E2E8D647D0075A2EF /* RecommendationsCrawler.swift in Sources */,
+				5F699E3F2E8D647D0075A2EF /* RecommendationsDataStack.swift in Sources */,
+				5F699E402E8D647D0075A2EF /* RecommendedSongsRepository.swift in Sources */,
+				5F699E412E8D647D0075A2EF /* SpotifyRecommendationService.swift in Sources */,
 				5F94FD202E4FCA0000A3F9AE /* UserPreferences.swift in Sources */,
 				5F94FD032E4F8E2400A3F9AE /* SpotifyCredentials.swift in Sources */,
 				5F6026EE2E537AF6005D7433 /* SettingsView.swift in Sources */,
@@ -676,7 +704,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Vendors/Spotify",
 				);
-                MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.StemsLabs.RunClubAppX;
 				PRODUCT_NAME = RunClubAppX;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -727,7 +755,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Vendors/Spotify",
 				);
-                MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.StemsLabs.RunClubAppX;
 				PRODUCT_NAME = RunClubAppX;
 				PROVISIONING_PROFILE_SPECIFIER = "";

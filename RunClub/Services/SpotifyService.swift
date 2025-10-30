@@ -67,6 +67,182 @@ final class SpotifyService {
         let tracks: [Track]
     }
 
+    // Public lightweight DTO for external callers
+    struct RecCandidate {
+        let id: String
+        let uri: String
+        let name: String
+        let popularity: Int
+        let explicit: Bool
+        let durationMs: Int
+        let albumReleaseDate: String
+        let artistId: String
+        let artistName: String
+    }
+
+    // Public wrapper to fetch recommendation candidates for given tempo band and filters.
+    // Maps to a lightweight DTO for consumption by crawlers/services outside this class.
+    func getRecommendationCandidates(minBPM: Double,
+                                     maxBPM: Double,
+                                     genres: [Genre],
+                                     decades: [Decade],
+                                     market: String?) async throws -> [RecCandidate] {
+        let tracks = try await fetchRecommendationCandidates(minBPM: minBPM,
+                                                             maxBPM: maxBPM,
+                                                             genres: genres,
+                                                             decades: decades,
+                                                             market: market)
+        return tracks.map { t in
+            RecCandidate(id: t.id,
+                         uri: t.uri,
+                         name: t.name,
+                         popularity: t.popularity,
+                         explicit: t.explicit,
+                         durationMs: t.duration_ms,
+                         albumReleaseDate: t.album.release_date,
+                         artistId: t.artists.first?.id ?? t.id,
+                         artistName: t.artists.first?.name ?? "?")
+        }
+    }
+
+    // MARK: - Public: User Top Seeds
+    enum TimeRange: String { case short_term, medium_term, long_term }
+
+    func getUserTopArtistIds(limit: Int = 20, timeRange: TimeRange = .medium_term) async throws -> [String] {
+        var comps = URLComponents(string: "https://api.spotify.com/v1/me/top/artists")!
+        comps.queryItems = [
+            .init(name: "limit", value: String(max(1, min(50, limit)))),
+            .init(name: "time_range", value: timeRange.rawValue)
+        ]
+        let data = try await fetch(request(comps.url!), label: "GET /v1/me/top/artists")
+        let res = try JSONDecoder().decode(TopArtistsResponse.self, from: data)
+        return res.items.map { $0.id }
+    }
+
+    func getUserTopTrackIds(limit: Int = 50, timeRange: TimeRange = .medium_term) async throws -> [String] {
+        var comps = URLComponents(string: "https://api.spotify.com/v1/me/top/tracks")!
+        comps.queryItems = [
+            .init(name: "limit", value: String(max(1, min(50, limit)))),
+            .init(name: "time_range", value: timeRange.rawValue)
+        ]
+        let data = try await fetch(request(comps.url!), label: "GET /v1/me/top/tracks")
+        let res = try JSONDecoder().decode(TopTracksResponse.self, from: data)
+        return res.items.map { $0.id }
+    }
+
+    // MARK: - Public: Advanced recommendation candidates (seeds + targets)
+    func getRecommendationCandidatesAdvanced(minBPM: Double,
+                                             maxBPM: Double,
+                                             seedArtists: [String],
+                                             seedTracks: [String],
+                                             seedGenres: [Genre],
+                                             market: String?,
+                                             targetEnergy: Double?,
+                                             targetDanceability: Double?,
+                                             targetValence: Double?,
+                                             targetPopularity: Int?) async throws -> [RecCandidate] {
+        // Build seeds with a hard cap of 5 combined across artists/tracks/genres
+        let shuffledArtists = Array(seedArtists.shuffled())
+        let shuffledTracks = Array(seedTracks.shuffled())
+        let genreTokens: [String] = {
+            guard let s = seedGenreString(from: seedGenres), !s.isEmpty else { return [] }
+            return s.split(separator: ",").map { String($0) }
+        }()
+
+        var remaining = 5
+        let pickedTracks = Array(shuffledTracks.prefix(min(remaining, shuffledTracks.count)))
+        remaining -= pickedTracks.count
+        let pickedArtists = Array(shuffledArtists.prefix(min(remaining, shuffledArtists.count)))
+        remaining -= pickedArtists.count
+        let pickedGenres = Array(genreTokens.prefix(max(0, remaining)))
+
+        func buildQueryItems(minTempo: Double, maxTempo: Double,
+                             includeEnergy: Bool, includeDance: Bool, includeValence: Bool, includePopularity: Bool) -> [URLQueryItem] {
+            var items: [URLQueryItem] = [
+                .init(name: "limit", value: "100"),
+                .init(name: "min_tempo", value: String(Int(minTempo))),
+                .init(name: "target_tempo", value: String(Int((minTempo + maxTempo) / 2))),
+                .init(name: "max_tempo", value: String(Int(maxTempo)))
+            ]
+            if let market { items.append(.init(name: "market", value: market)) }
+            if !pickedArtists.isEmpty { items.append(.init(name: "seed_artists", value: pickedArtists.joined(separator: ","))) }
+            if !pickedTracks.isEmpty { items.append(.init(name: "seed_tracks", value: pickedTracks.joined(separator: ","))) }
+            if !pickedGenres.isEmpty { items.append(.init(name: "seed_genres", value: pickedGenres.joined(separator: ","))) }
+            if pickedArtists.isEmpty && pickedTracks.isEmpty && pickedGenres.isEmpty {
+                items.append(.init(name: "seed_genres", value: "pop"))
+            }
+            // Broad filters: minimum energy/danceability 0.25; minimum popularity 25.
+            if includeEnergy { items.append(.init(name: "min_energy", value: String(format: "%.2f", 0.25))) }
+            if includeDance { items.append(.init(name: "min_danceability", value: String(format: "%.2f", 0.25))) }
+            // Valence intentionally omitted
+            if includePopularity { items.append(.init(name: "min_popularity", value: "25")) }
+            return items
+        }
+
+        func exec(_ items: [URLQueryItem], label: String) async throws -> [RecCandidate] {
+            var comps = URLComponents(string: "https://api.spotify.com/v1/recommendations")!
+            comps.queryItems = items
+            if let url = comps.url { print("Adv Recs URL:", url.absoluteString) }
+            let recData = try await fetch(request(comps.url!), label: label)
+            let recs = try JSONDecoder().decode(RecommendationResponse.self, from: recData)
+            return recs.tracks.map { t in
+                RecCandidate(id: t.id,
+                             uri: t.uri,
+                             name: t.name,
+                             popularity: t.popularity,
+                             explicit: t.explicit,
+                             durationMs: t.duration_ms,
+                             albumReleaseDate: t.album.release_date,
+                             artistId: t.artists.first?.id ?? t.id,
+                             artistName: t.artists.first?.name ?? "?")
+            }
+        }
+
+        // Attempt 1: strict (all hints)
+        do {
+            var items = buildQueryItems(minTempo: minBPM, maxTempo: maxBPM,
+                                        includeEnergy: true, includeDance: true, includeValence: true, includePopularity: true)
+            var result = try await exec(items, label: "GET /v1/recommendations (adv)")
+            if !result.isEmpty { return result }
+
+            // Attempt 2: drop popularity and feature targets
+            items = buildQueryItems(minTempo: minBPM, maxTempo: maxBPM,
+                                    includeEnergy: false, includeDance: false, includeValence: false, includePopularity: false)
+            result = try await exec(items, label: "GET /v1/recommendations (adv,no-hints)")
+            if !result.isEmpty { return result }
+
+            // Attempt 3: widen tempo slightly
+            let widenedLo = max(60, minBPM - 5)
+            let widenedHi = min(220, maxBPM + 5)
+            items = buildQueryItems(minTempo: widenedLo, maxTempo: widenedHi,
+                                    includeEnergy: false, includeDance: false, includeValence: false, includePopularity: false)
+            result = try await exec(items, label: "GET /v1/recommendations (adv,widen)")
+            if !result.isEmpty { return result }
+        } catch {
+            // fallthrough to genre→artist→top-tracks fallback below
+        }
+
+        // Fallback: broaden by genre search → artist top tracks
+        let market = market
+        let genresToUse = (seedGenres.isEmpty ? [.pop] : seedGenres).map { $0.rawValue.lowercased() }
+        var artistIds: [String] = []
+        for g in genresToUse { artistIds.append(contentsOf: (try? await searchArtistIds(for: g, market: market, limit: 20)) ?? []) }
+        artistIds = Array(Array(Set(artistIds)).prefix(20))
+        var tracks: [ArtistTopTracksResponse.Track] = []
+        for aid in artistIds { tracks.append(contentsOf: (try? await fetchTopTracks(for: aid, market: market)) ?? []) }
+        return tracks.map { t in
+            RecCandidate(id: t.id,
+                         uri: t.uri,
+                         name: t.name,
+                         popularity: t.popularity,
+                         explicit: t.explicit,
+                         durationMs: t.duration_ms,
+                         albumReleaseDate: t.album.release_date,
+                         artistId: t.artists.first?.id ?? t.id,
+                         artistName: t.artists.first?.name ?? "?")
+        }
+    }
+
     private struct SeveralTracksResponse: Decodable {
         struct Track: Decodable { let id: String? }
         let tracks: [Track?]
@@ -632,7 +808,7 @@ final class SpotifyService {
         }
     }
 
-    private func fetchArtistsGenresMap(ids: [String]) async throws -> [String: [String]] {
+    func fetchArtistsGenresMap(ids: [String]) async throws -> [String: [String]] {
         var result: [String: [String]] = [:]
         guard !ids.isEmpty else { return result }
         let chunks = stride(from: 0, to: ids.count, by: 50).map { Array(ids[$0..<min($0+50, ids.count)]) }
@@ -1227,6 +1403,55 @@ extension SpotifyService {
         let description = "RunClub · \(preview.template.rawValue) · \(durLabel)"
         let uris = preview.tracks.map { "spotify:track:\($0.id)" }
         return try await createPlaylist(name: name, description: description, isPublic: true, uris: uris)
+    }
+
+    // MARK: - Diagnostics
+    /// Minimal probe to validate recommendations with a single seed genre and no feature hints.
+    /// Returns the count and logs raw body when empty to help diagnose token/account behavior.
+    func probeRecommendationsSimple(genre: String = "pop", limit: Int = 10) async -> (count: Int, sampleIds: [String]) {
+        var comps = URLComponents(string: "https://api.spotify.com/v1/recommendations")!
+        comps.queryItems = [
+            .init(name: "limit", value: String(max(1, min(100, limit)))),
+            .init(name: "seed_genres", value: genre)
+        ]
+        do {
+            let data = try await fetch(request(comps.url!), label: "GET /v1/recommendations (probe)")
+            let recs = try JSONDecoder().decode(RecommendationResponse.self, from: data)
+            let ids = recs.tracks.map { $0.id }
+            print("Probe recs — genre=\(genre) limit=\(limit) -> count=\(ids.count)")
+            return (ids.count, Array(ids.prefix(5)))
+        } catch {
+            // Print raw body if HTTP; otherwise just print error
+            if case let SpotifyServiceError.http(status, body, endpoint) = error {
+                print("Probe recs HTTP error — status=\(status) endpoint=\(endpoint) body=\(body.prefix(300)))")
+            } else {
+                print("Probe recs failed: \(error)")
+            }
+            return (0, [])
+        }
+    }
+
+    /// Super-relaxed call: no market, only seed_genres; optionally adds a second genre.
+    func probeRecommendationsSuperRelaxed(genres: [String] = ["pop"]) async -> (count: Int, sampleIds: [String]) {
+        var comps = URLComponents(string: "https://api.spotify.com/v1/recommendations")!
+        comps.queryItems = [
+            .init(name: "limit", value: "20"),
+            .init(name: "seed_genres", value: genres.joined(separator: ","))
+        ]
+        do {
+            let data = try await fetch(request(comps.url!), label: "GET /v1/recommendations (super)")
+            let recs = try JSONDecoder().decode(RecommendationResponse.self, from: data)
+            let ids = recs.tracks.map { $0.id }
+            print("Probe super — genres=\(genres) -> count=\(ids.count)")
+            return (ids.count, Array(ids.prefix(5)))
+        } catch {
+            if case let SpotifyServiceError.http(status, body, endpoint) = error {
+                print("Probe super HTTP error — status=\(status) endpoint=\(endpoint) body=\(body.prefix(300)))")
+            } else {
+                print("Probe super failed: \(error)")
+            }
+            return (0, [])
+        }
     }
 }
 

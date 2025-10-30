@@ -33,6 +33,10 @@ struct CustomizeRunView: View {
     @State private var durationBoxFrame: CGRect = .zero
     @State private var activeTab: Tab = .run
 
+    // Recommendations settings
+    @AppStorage("useRecommendations") private var useRecommendations: Bool = true
+    @AppStorage("recommendationsWeight") private var recommendationsWeight: Double = 0.4
+
     let onSave: (RunTemplateType, DurationCategory, Set<Genre>, Set<Decade>, String, Int?) -> Void
 
     init(initialTemplate: RunTemplateType,
@@ -243,6 +247,34 @@ struct CustomizeRunView: View {
                     )
                     FilterChip(title: decade.displayName, isSelected: binding)
                 }
+            }
+
+            // Recommendations toggle and weight
+            Rectangle().fill(Color.white.opacity(0.15)).frame(height: 1).padding(.vertical, 8)
+            HStack {
+                Text("Use Recommendations")
+                    .font(RCFont.regular(15))
+                Spacer()
+                Toggle("", isOn: $useRecommendations)
+                    .labelsHidden()
+            }
+            .foregroundColor(.white)
+            if useRecommendations {
+                HStack {
+                    Text("Likes")
+                        .font(RCFont.regular(13))
+                        .foregroundColor(.white.opacity(0.7))
+                    Slider(value: $recommendationsWeight, in: 0...1, step: 0.05)
+                    Text("Recs")
+                        .font(RCFont.regular(13))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                .tint(.white)
+                let likesPct = Int(round((1 - recommendationsWeight) * 100))
+                let recsPct = 100 - likesPct
+                Text("Mix: \(likesPct)% Likes • \(recsPct)% Recs")
+                    .font(RCFont.regular(13))
+                    .foregroundColor(.white.opacity(0.6))
             }
         }
         .padding(.horizontal, 20)

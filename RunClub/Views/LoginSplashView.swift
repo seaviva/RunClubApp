@@ -10,6 +10,7 @@ import AVFoundation
 
 struct LoginSplashView: View {
     @EnvironmentObject var auth: AuthService
+    @State private var showWebConnect: Bool = false
 
     var body: some View {
         ZStack {
@@ -38,19 +39,26 @@ struct LoginSplashView: View {
                         .padding(.horizontal, 24)
                 }
                 Spacer()
-                Button(action: { auth.startLogin() }) {
+                Button(action: { showWebConnect = true }) {
                     HStack(spacing: 10) {
                         Image("SpotifyLogo")
                             .renderingMode(.original)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(height: 22)
-                        Text("Continue with Spotify")
+                        Text("Connect via Stats for Spotify")
                             .font(RCFont.semiBold(17))
                             .foregroundColor(.black)
                     }
                 }
                 .buttonStyle(SecondaryOutlineButtonStyle())
+                .sheet(isPresented: $showWebConnect) {
+                    WebTokenConnectView(onAuth: { _ in
+                        showWebConnect = false
+                    }, onFail: {
+                        showWebConnect = false
+                    })
+                }
             }
             .overlay(alignment: .topLeading) {
                 Image("runclublogo")

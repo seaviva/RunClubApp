@@ -24,9 +24,8 @@ final class CrawlCoordinator: ObservableObject {
         self.modelContext = modelContext
         self.progress = progressStore
         let spotify = SpotifyService()
-        if let token = await auth.accessToken() {
-            spotify.accessTokenProvider = { token }
-        }
+        await auth.refreshIfNeeded()
+        spotify.accessTokenProvider = { AuthService.overrideToken() ?? (AuthService.sharedTokenSync() ?? "") }
         let market = try? await spotify.getProfileMarket()
         self.crawler = LibraryCrawler(spotify: spotify, modelContext: modelContext, marketProvider: { market }, progressStore: progressStore)
     }

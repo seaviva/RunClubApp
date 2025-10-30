@@ -8,13 +8,15 @@
 import Foundation
 import SwiftData
 
-final class CrawlProgressStore: ObservableObject {
+class CrawlProgressStore: ObservableObject {
     @Published var isRunning: Bool = false
     @Published var tracksDone: Int = 0
     @Published var tracksTotal: Int = 0
     @Published var featuresDone: Int = 0
     @Published var artistsDone: Int = 0
     @Published var message: String = ""
+    // Debug source tag to distinguish stores in logs/UI (e.g., LIKES or RECS)
+    var debugName: String = "GENERIC"
 }
 
 actor LibraryCrawler {
@@ -36,6 +38,10 @@ actor LibraryCrawler {
 
     func cancel() {
         isCancelledFlag = true
+        // Immediately update UI state for responsiveness
+        Task { @MainActor [weak progressStore] in
+            progressStore?.isRunning = false
+        }
     }
 
     func refreshFromScratch() async throws {
@@ -69,6 +75,7 @@ actor LibraryCrawler {
                 progressStore?.featuresDone = 0
                 progressStore?.artistsDone = 0
             }
+            if let name = progressStore?.debugName { print("[\(name)] start likes crawl") }
         }
 
         // Load or create crawl state on main actor

@@ -12,7 +12,8 @@ import UserNotifications
 @main
 struct RunClubApp: App {
     @StateObject private var auth = AuthService()
-    @StateObject private var progressStore = CrawlProgressStore()
+    @StateObject private var progressStore = LikesProgressStore()
+    @StateObject private var recsProgressStore = RecsProgressStore()
     private let spotify = SpotifyService() // keep for future injection
     
     var sharedModelContainer: ModelContainer = {
@@ -49,12 +50,9 @@ struct RunClubApp: App {
             RootView()
                 .environmentObject(auth)
                 .environmentObject(progressStore)
+                .environmentObject(recsProgressStore)
                 .onAppear { RootView.sharedAuth = auth }
-                .task {
-                    // Restore saved Spotify credentials and refresh if needed
-                    auth.loadFromKeychain()
-                    await auth.refreshIfNeeded()
-                }
+                .task { /* disable native PKCE restore */ }
                 .onAppear {
                     // Allow notifications to alert while app is foregrounded
                     UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
