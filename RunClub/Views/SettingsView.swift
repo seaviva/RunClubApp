@@ -68,11 +68,12 @@ struct SettingsView: View {
                         Text(auth.isAuthorized ? "Connected" : "Not connected")
                             .foregroundColor(auth.isAuthorized ? .green : .secondary)
                     }
-                    Button("Reconnect Spotify") { auth.startLogin() }
+                    // Use Juky connect flow for (re)connect
+                    Button("Connect Spotify (via Juky)") { showStatsConnect = true }
                     Button("Disconnect Spotify") { auth.logout(); AuthService.clearOverrideToken() }
                         .foregroundColor(.red)
-                    // Third-party connect (Stats for Spotify)
-                    Button("Connect via Stats for Spotify") { showStatsConnect = true }
+                    // Third-party connect (Juky)
+                    Button("Connect via Juky") { showStatsConnect = true }
                         .sheet(isPresented: $showStatsConnect) {
                             WebTokenConnectView(onAuth: { _ in
                                 showStatsConnect = false

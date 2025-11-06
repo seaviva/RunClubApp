@@ -325,8 +325,62 @@ final class SpotifyService {
         return r
     }
 
+    // MARK: - Helpers: Add tracks with chunking (100 per request)
+    private func addTracksChunked(playlistId: String, uris: [String]) async throws {
+        guard !uris.isEmpty else { return }
+        let chunkSize = 100
+        var index = 0
+        while index < uris.count {
+            let end = min(index + chunkSize, uris.count)
+            let chunk = Array(uris[index..<end])
+            let addBody = try JSONSerialization.data(withJSONObject: ["uris": chunk])
+            _ = try await fetch(request(URL(string: "https://api.spotify.com/v1/playlists/\(playlistId)/tracks")!,
+                                  method: "POST",
+                                  body: addBody), label: "POST /v1/playlists/{id}/tracks (chunk)")
+            index = end
+        }
+    }
+
+    // MARK: - Likes (Library) helpers
+    func isTrackLiked(id: String) async throws -> Bool {
+        var comps = URLComponents(string: "https://api.spotify.com/v1/me/tracks/contains")!
+        comps.queryItems = [.init(name: "ids", value: id)]
+        let data = try await fetch(request(comps.url!), label: "GET /v1/me/tracks/contains")
+        if let arr = try? JSONSerialization.jsonObject(with: data) as? [Bool], let first = arr.first { return first }
+        return false
+    }
+
+    func likeTrack(id: String) async throws {
+        var comps = URLComponents(string: "https://api.spotify.com/v1/me/tracks")!
+        comps.queryItems = [.init(name: "ids", value: id)]
+        _ = try await fetch(request(comps.url!, method: "PUT"), label: "PUT /v1/me/tracks")
+    }
+
+    func unlikeTrack(id: String) async throws {
+        var comps = URLComponents(string: "https://api.spotify.com/v1/me/tracks")!
+        comps.queryItems = [.init(name: "ids", value: id)]
+        _ = try await fetch(request(comps.url!, method: "DELETE"), label: "DELETE /v1/me/tracks")
+    }
+
     private func fetch(_ request: URLRequest, label: String) async throws -> Data {
         let (data, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+            // Try to obtain a fresh token from Juky (headless) and retry once
+            _ = await JukyHeadlessRefresher.refreshToken()
+            if let fresh = await AuthService.sharedToken() {
+                var retried = request
+                var headers = retried.allHTTPHeaderFields ?? [:]
+                headers["Authorization"] = "Bearer \(fresh)"
+                retried.allHTTPHeaderFields = headers
+                let (data2, response2) = try await URLSession.shared.data(for: retried)
+                guard let http2 = response2 as? HTTPURLResponse else { return data2 }
+                guard (200...299).contains(http2.statusCode) else {
+                    let body2 = String(data: data2, encoding: .utf8) ?? ""
+                    throw SpotifyServiceError.http(status: http2.statusCode, body: body2, endpoint: label)
+                }
+                return data2
+            }
+        }
         guard let http = response as? HTTPURLResponse else { return data }
         guard (200...299).contains(http.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? ""
@@ -711,12 +765,7 @@ final class SpotifyService {
                                       body: createBody), label: "POST /v1/users/{id}/playlists")
         let pl = try JSONDecoder().decode(PlaylistCreateResponse.self, from: plData)
 
-        if !uris.isEmpty {
-            let addBody = try JSONSerialization.data(withJSONObject: ["uris": uris])
-            _ = try await fetch(request(URL(string: "https://api.spotify.com/v1/playlists/\(pl.id)/tracks")!,
-                                method: "POST",
-                                body: addBody), label: "POST /v1/playlists/{id}/tracks (likes)")
-        }
+        if !uris.isEmpty { try await addTracksChunked(playlistId: pl.id, uris: uris) }
 
         let urlString = pl.external_urls["spotify"] ?? "https://open.spotify.com/playlist/\(pl.id)"
         return URL(string: urlString)!
@@ -742,10 +791,7 @@ final class SpotifyService {
 
         // 3) Add tracks if any
         if !uris.isEmpty {
-            let addBody = try JSONSerialization.data(withJSONObject: ["uris": uris])
-            _ = try await fetch(request(URL(string: "https://api.spotify.com/v1/playlists/\(pl.id)/tracks")!,
-                                  method: "POST",
-                                  body: addBody), label: "POST /v1/playlists/{id}/tracks (local)")
+            try await addTracksChunked(playlistId: pl.id, uris: uris)
 
             // Debug: verify what actually landed in the playlist (helps diagnose missing first/last)
             if let verifyURL = URL(string: "https://api.spotify.com/v1/playlists/\(pl.id)/tracks?fields=items(track(uri)),total") {
@@ -1023,12 +1069,7 @@ final class SpotifyService {
                                       body: createBody), label: "POST /v1/users/{id}/playlists (seg)")
         let pl = try JSONDecoder().decode(PlaylistCreateResponse.self, from: plData)
 
-        if !uris.isEmpty {
-            let addBody = try JSONSerialization.data(withJSONObject: ["uris": uris])
-            _ = try await fetch(request(URL(string: "https://api.spotify.com/v1/playlists/\(pl.id)/tracks")!,
-                                method: "POST",
-                                body: addBody), label: "POST /v1/playlists/{id}/tracks (seg)")
-        }
+        if !uris.isEmpty { try await addTracksChunked(playlistId: pl.id, uris: uris) }
 
         let urlString = pl.external_urls["spotify"] ?? "https://open.spotify.com/playlist/\(pl.id)"
         return URL(string: urlString)!
@@ -1058,12 +1099,7 @@ final class SpotifyService {
         let pl = try JSONDecoder().decode(PlaylistCreateResponse.self, from: plData)
 
         // 4) Add tracks (cap ~15 just to test)
-        let addBody = try JSONSerialization.data(withJSONObject: [
-            "uris": Array(uris.prefix(15))
-        ])
-        _ = try await fetch(request(URL(string: "https://api.spotify.com/v1/playlists/\(pl.id)/tracks")!,
-                            method: "POST",
-                            body: addBody), label: "POST /v1/playlists/{id}/tracks")
+        try await addTracksChunked(playlistId: pl.id, uris: Array(uris.prefix(15)))
 
         // 5) Return the playlist’s web URL
         let urlString = pl.external_urls["spotify"] ?? "https://open.spotify.com/playlist/\(pl.id)"
@@ -1274,20 +1310,14 @@ final class SpotifyService {
 
         let uris = selected.map { $0.uri }
         if !uris.isEmpty {
-            let addBody = try JSONSerialization.data(withJSONObject: ["uris": uris])
-            _ = try await fetch(request(URL(string: "https://api.spotify.com/v1/playlists/\(pl.id)/tracks")!,
-                                method: "POST",
-                                body: addBody), label: "POST /v1/playlists/{id}/tracks")
+            try await addTracksChunked(playlistId: pl.id, uris: uris)
         } else {
             // As a fallback, add up to 15 of the user's recent likes so the playlist isn't empty
             let likesData = try await fetch(request(URL(string: "https://api.spotify.com/v1/me/tracks?limit=15")!), label: "GET /v1/me/tracks (fallback)")
             let likes = try JSONDecoder().decode(SavedTracks.self, from: likesData)
             let likeUris = likes.items.map { $0.track.uri }
             if !likeUris.isEmpty {
-                let addBody = try JSONSerialization.data(withJSONObject: ["uris": likeUris])
-                _ = try await fetch(request(URL(string: "https://api.spotify.com/v1/playlists/\(pl.id)/tracks")!,
-                                    method: "POST",
-                                    body: addBody), label: "POST /v1/playlists/{id}/tracks (fallback)")
+                try await addTracksChunked(playlistId: pl.id, uris: likeUris)
             }
         }
 

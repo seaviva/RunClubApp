@@ -46,7 +46,7 @@ struct LoginSplashView: View {
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(height: 22)
-                        Text("Connect via Stats for Spotify")
+                        Text("Connect via Juky")
                             .font(RCFont.semiBold(17))
                             .foregroundColor(.black)
                     }

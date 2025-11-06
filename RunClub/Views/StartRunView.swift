@@ -23,6 +23,7 @@ struct StartRunView: View {
 
     @State private var hasStarted = false
     @State private var showSummary = false
+    @State private var showPlaybackAlert = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -44,6 +45,14 @@ struct StartRunView: View {
                 .presentationDetents([.large])
         }
         .interactiveDismissDisabled(true)
+        .onChange(of: spotify.playbackError) { _, newVal in
+            showPlaybackAlert = (newVal != nil)
+        }
+        .alert("Playback Issue", isPresented: $showPlaybackAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(spotify.playbackError ?? "Unknown error")
+        }
         .background(Color.black.ignoresSafeArea())
     }
 
@@ -259,9 +268,12 @@ struct StartRunView: View {
                     let name = label(for: e)
                     return .init(index: idx, name: name, effort: e, durationSeconds: max(1, durations[idx]))
                 }
-                await orchestrator.start(phases: phases)
-                await spotify.playPlaylist(uri: playlistURI)
-                hasStarted = true
+                // Ensure playback is activated and started before orchestrator to keep cues aligned
+                await spotify.ensureActiveDeviceAndPlay(uri: playlistURI)
+                if spotify.isPlaying {
+                    await orchestrator.start(phases: phases)
+                    hasStarted = true
+                }
             } catch {
                 // TODO: surface error
             }

@@ -9,20 +9,16 @@
 import Foundation
 import Combine
 import UIKit
-#if canImport(SpotifyiOS)
-import SpotifyiOS
-#endif
 
 @MainActor
 final class SpotifyPlaybackController: NSObject, ObservableObject {
-    enum Availability { case appRemote, webAPI, appOnly, unavailable }
-
-    @Published private(set) var availability: Availability = .unavailable
     @Published private(set) var isPlaying: Bool = false
     @Published private(set) var currentTrack: (title: String, artist: String, durationMs: Int)?
     @Published private(set) var nextTrack: (title: String, artist: String, durationMs: Int)?
     @Published private(set) var currentImageURL: URL?
     @Published private(set) var currentTrackProgressMs: Int = 0
+    @Published private(set) var currentTrackId: String?
+    @Published private(set) var playbackError: String?
 
     var onPlaybackEnded: (() -> Void)?
 
@@ -31,31 +27,14 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
     private var lastAppRemoteTrackURI: String = ""
     private var triggeredEndRefresh: Bool = false
 
-#if canImport(SpotifyiOS)
-    // App Remote instance (only when Spotify SDK is available)
-    private var appRemoteInstance: SPTAppRemote?
-    private static weak var currentController: SpotifyPlaybackController?
-#endif
+    private var lastPlaylistURI: String = ""
 
     override init() {
         super.init()
-        refreshAvailability()
-#if canImport(SpotifyiOS)
-        SpotifyPlaybackController.currentController = self
-#endif
+        // Web API only
     }
 
-    func refreshAvailability() {
-        #if canImport(SpotifyiOS)
-        if let url = URL(string: "spotify://"), UIApplication.shared.canOpenURL(url) {
-            availability = .appRemote
-            return
-        }
-        #endif
-        availability = .webAPI
-    }
-
-    func connectIfNeeded() async { refreshAvailability() }
+    func connectIfNeeded() async { }
 
     // Prepare playback context early: preload playlist head and seed now-playing metadata.
     // Intentionally avoids foregrounding Spotify or initiating an App Remote connect to prevent app switching.
@@ -68,79 +47,24 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
     }
 
     func playPlaylist(uri: String) async {
-        await connectIfNeeded()
-        print("[SpotifyPlayback] availability=\(availability)")
-        switch availability {
-        case .appRemote:
-            #if canImport(SpotifyiOS)
-            await connectAppRemoteIfNeeded()
-            appRemotePlay(uri: uri)
-            isPlaying = true
-            // Seed metadata immediately via Web API to avoid initial nil currentTrack
-            await refreshNowPlaying()
-            kickstartProgressRefresh()
-            startProgressTimer()
-            #endif
-        case .webAPI:
-            await playViaWebAPI(uri: uri)
-            isPlaying = true
-        case .appOnly:
-            openInSpotify(uri: uri)
-            isPlaying = true
-        case .unavailable:
-            // Nothing we can do programmatically
-            isPlaying = false
-        }
+        await ensureActiveDeviceAndPlay(uri: uri)
     }
 
     func pause() {
-        switch availability {
-        case .appRemote:
-            #if canImport(SpotifyiOS)
-            appRemoteInstance?.playerAPI?.pause(nil)
-            isPlaying = false
-            #endif
-        case .webAPI:
-            Task { await pauseViaWebAPI() }
-            isPlaying = false
-        case .appOnly, .unavailable:
-            // No control in fallback
-            break
-        }
+        Task { await pauseViaWebAPI() }
+        isPlaying = false
         stopProgressTimer()
     }
 
     func resume() {
-        switch availability {
-        case .appRemote:
-            #if canImport(SpotifyiOS)
-            appRemoteInstance?.playerAPI?.resume(nil)
-            isPlaying = true
-            #endif
-        case .webAPI:
-            Task { await resumeViaWebAPI() }
-            isPlaying = true
-        case .appOnly, .unavailable:
-            // No control in fallback
-            break
-        }
+        Task { await resumeViaWebAPI() }
+        isPlaying = true
         startProgressTimer()
     }
 
     func stop() {
-        switch availability {
-        case .appRemote:
-            #if canImport(SpotifyiOS)
-            appRemoteInstance?.playerAPI?.pause(nil)
-            isPlaying = false
-            #endif
-        case .webAPI:
-            Task { await pauseViaWebAPI() }
-            isPlaying = false
-        case .appOnly, .unavailable:
-            // No control in fallback
-            break
-        }
+        Task { await pauseViaWebAPI() }
+        isPlaying = false
         stopProgressTimer()
     }
 
@@ -208,6 +132,61 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
     }
 
     // MARK: - Web API playback control
+    private struct DevicesEnvelope: Decodable { struct Device: Decodable { let id: String?; let is_active: Bool?; let is_restricted: Bool?; let name: String?; let type: String? }; let devices: [Device] }
+
+    private func getDevices() async -> [DevicesEnvelope.Device] {
+        guard let u = URL(string: "https://api.spotify.com/v1/me/player/devices") else { return [] }
+        var req = URLRequest(url: u)
+        if let token = await AuthService.sharedToken() { req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        guard let (data, response) = try? await URLSession.shared.data(for: req), (response as? HTTPURLResponse)?.statusCode == 200 else { return [] }
+        if let env = try? JSONDecoder().decode(DevicesEnvelope.self, from: data) { return env.devices } else { return [] }
+    }
+
+    private func transferPlayback(to deviceId: String, play: Bool) async {
+        guard let u = URL(string: "https://api.spotify.com/v1/me/player") else { return }
+        var req = URLRequest(url: u)
+        req.httpMethod = "PUT"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token = await AuthService.sharedToken() { req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        let body: [String: Any] = ["device_ids": [deviceId], "play": play]
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        if let (data, resp) = try? await URLSession.shared.data(for: req), let http = resp as? HTTPURLResponse {
+            if http.statusCode == 403 { await MainActor.run { self.playbackError = "Spotify Premium is required to control playback." } }
+            if !(200...299).contains(http.statusCode) {
+                let _ = data // ignore body
+            }
+        }
+    }
+
+    func ensureActiveDeviceAndPlay(uri: String) async {
+        await connectIfNeeded()
+        lastAppRemoteTrackURI = ""
+        func pickDevice(_ list: [DevicesEnvelope.Device]) -> DevicesEnvelope.Device? {
+            if let active = list.first(where: { ($0.is_active ?? false) && ($0.is_restricted != true) }) { return active }
+            if let phone = list.first(where: { ($0.type ?? "").lowercased() == "smartphone" && ($0.is_restricted != true) }) { return phone }
+            if let comp = list.first(where: { ($0.type ?? "").lowercased() == "computer" && ($0.is_restricted != true) }) { return comp }
+            return list.first(where: { $0.is_restricted != true })
+        }
+        var devices = await getDevices()
+        var target = pickDevice(devices)
+        if target == nil {
+            if let url = URL(string: "spotify://") { UIApplication.shared.open(url, options: [:], completionHandler: nil) }
+            for _ in 0..<12 {
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                devices = await getDevices()
+                target = pickDevice(devices)
+                if target != nil { break }
+            }
+        }
+        guard let t = target, let deviceId = t.id else { await MainActor.run { self.playbackError = "No Spotify device available. Open Spotify, then try again." }; return }
+        if !(t.is_active ?? false) {
+            await transferPlayback(to: deviceId, play: true)
+            try? await Task.sleep(nanoseconds: 300_000_000)
+        }
+        await playViaWebAPI(uri: uri)
+        isPlaying = true
+        await MainActor.run { self.playbackError = nil }
+    }
     private func playViaWebAPI(uri: String) async {
         guard let u = URL(string: "https://api.spotify.com/v1/me/player/play") else { return }
         var body: [String: Any] = [:]
@@ -221,7 +200,12 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if let token = await AuthService.sharedToken() { req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
         req.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        _ = try? await URLSession.shared.data(for: req)
+        if let (data, resp) = try? await URLSession.shared.data(for: req), let http = resp as? HTTPURLResponse {
+            if http.statusCode == 403 { await MainActor.run { self.playbackError = "Spotify Premium is required to control playback." } }
+            if !(200...299).contains(http.statusCode) {
+                let _ = data // ignore body
+            }
+        }
         await refreshNowPlaying()
         await MainActor.run { self.startProgressTimer() }
     }
@@ -255,6 +239,7 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
                     struct ImageObj: Decodable { let url: String }
                     let images: [ImageObj]?
                 }
+                let id: String?
                 let name: String
                 let duration_ms: Int?
                 let artists: [Artist]?
@@ -279,6 +264,7 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
             let newSignature = "\(incomingTitle)|\(incomingArtist)|\(duration)"
             let didChange = (newSignature != lastTrackSignature)
             currentTrack = (incomingTitle, incomingArtist, duration)
+            currentTrackId = item.id
             if let urlStr = item.album?.images?.first?.url, let url = URL(string: urlStr) {
                 currentImageURL = url
             } else { currentImageURL = nil }
@@ -347,128 +333,5 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
         return nil
     }
 }
-
-#if canImport(SpotifyiOS)
-// MARK: - App Remote integration
-extension SpotifyPlaybackController: SPTAppRemoteDelegate, SPTAppRemotePlayerStateDelegate {
-    private var appRemoteClientID: String { Config.clientID }
-    private var appRemoteRedirectURI: String { Config.redirectURI }
-
-    private func makeAppRemote() -> SPTAppRemote {
-        let configuration = SPTConfiguration(clientID: appRemoteClientID, redirectURL: URL(string: appRemoteRedirectURI)!)
-        let remote = SPTAppRemote(configuration: configuration, logLevel: .debug)
-        remote.connectionParameters.accessToken = nil
-        remote.delegate = self
-        return remote
-    }
-
-    private func appRemotePlay(uri: String) {
-        if appRemoteInstance?.isConnected == true {
-            appRemoteInstance?.playerAPI?.play(uri, callback: { _, _ in })
-            appRemoteInstance?.playerAPI?.subscribe(toPlayerState: { [weak self] _, error in
-                if error == nil { self?.appRemoteInstance?.playerAPI?.delegate = self }
-            })
-            // Also seed now-playing via Web API quickly to cover any delegate delay
-            Task {
-                await self.refreshNowPlaying()
-                self.kickstartProgressRefresh()
-            }
-            // Fetch immediate state to seed metadata and progress
-            appRemoteInstance?.playerAPI?.getPlayerState { [weak self] result, _ in
-                if let state = result as? SPTAppRemotePlayerState {
-                    self?.handle(state: state)
-                }
-            }
-        } else {
-            // One-time wake: this will open Spotify, start playback, and redirect back
-            appRemoteInstance?.authorizeAndPlayURI(uri)
-            // Opportunistic seed after a short delay while waiting for redirect/connection
-            Task {
-                try? await Task.sleep(nanoseconds: 500_000_000)
-                await self.refreshNowPlaying()
-                self.kickstartProgressRefresh()
-            }
-        }
-    }
-
-    private func setAppRemoteToken(_ token: String) {
-        if appRemoteInstance == nil { appRemoteInstance = makeAppRemote() }
-        appRemoteInstance?.connectionParameters.accessToken = token
-    }
-
-    private func connectAppRemoteIfNeeded() async {
-        if appRemoteInstance == nil { appRemoteInstance = makeAppRemote() }
-        guard let token = await AuthService.sharedToken() else { return }
-        setAppRemoteToken(token)
-        if appRemoteInstance?.isConnected != true {
-            _ = appRemoteInstance?.connect()
-        }
-    }
-
-    // MARK: SPTAppRemoteDelegate
-    nonisolated func appRemoteDidEstablishConnection(_ appRemote: SPTAppRemote) {
-        Task { @MainActor in
-        // Fetch initial state
-        appRemote.playerAPI?.getPlayerState { [weak self] result, _ in
-            if let state = result as? SPTAppRemotePlayerState {
-                self?.handle(state: state)
-            }
-        }
-        appRemote.playerAPI?.subscribe(toPlayerState: { [weak self] _, error in
-            if error == nil { appRemote.playerAPI?.delegate = self }
-        })
-        }
-    }
-
-    nonisolated func appRemote(_ appRemote: SPTAppRemote, didFailConnectionAttemptWithError error: Error?) {
-        // Fallback to Web API on failure
-        Task { @MainActor in self.availability = .webAPI }
-    }
-
-    nonisolated func appRemote(_ appRemote: SPTAppRemote, didDisconnectWithError error: Error?) {
-        // Keep web api as fallback
-        Task { @MainActor in self.availability = .webAPI }
-    }
-
-    // MARK: SPTAppRemotePlayerStateDelegate
-    nonisolated func playerStateDidChange(_ playerState: SPTAppRemotePlayerState) {
-        Task { @MainActor in self.handle(state: playerState) }
-    }
-
-    private func handle(state: SPTAppRemotePlayerState) {
-        isPlaying = !state.isPaused
-        let title = state.track.name
-        let artist = state.track.artist.name
-        let durationMs = Int(state.track.duration)
-        currentTrack = (title, artist, durationMs)
-        // Seed progress from App Remote state (seconds -> ms)
-        currentTrackProgressMs = Int(state.playbackPosition * 1000)
-        if isPlaying {
-            startProgressTimer()
-        } else {
-            stopProgressTimer()
-        }
-        // Spotify App Remote does not expose next-track metadata directly; we'll leave nextTrack nil.
-        // If track changed, fetch full metadata (artwork) via Web API
-        let uri = state.track.uri
-        if uri != lastAppRemoteTrackURI {
-            lastAppRemoteTrackURI = uri
-            triggeredEndRefresh = false
-            Task { await refreshNowPlaying() }
-        }
-    }
-
-    // MARK: - URL callback handling (authorizeAndPlayURI)
-    static func handleRedirectURL(_ url: URL) {
-        guard let controller = SpotifyPlaybackController.currentController,
-              let app = controller.appRemoteInstance else { return }
-        let params = app.authorizationParameters(from: url)
-        if let token = params?[SPTAppRemoteAccessTokenKey] {
-            app.connectionParameters.accessToken = token
-            _ = app.connect()
-        }
-    }
-}
-#endif
 
 

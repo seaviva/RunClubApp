@@ -85,39 +85,29 @@ extension AuthService: ASWebAuthenticationPresentationContextProviding {
     }
 }
 
-// MARK: - Shared token helper for services needing Web API
-extension AuthService {
-    static func sharedToken() async -> String? {
-        await MainActor.run { RootView.sharedAuth?.credentials?.accessToken }
-    }
-}
+// (Removed: legacy sharedToken helper to avoid ambiguity)
 
 // MARK: - Third-party override token storage (StatsForSpotify)
 extension AuthService {
     private static let overrideTokenKey = "spotify_override_access_token"
     private static let overrideTokenExpiresKey = "spotify_override_access_expires_at"
+    private static let overrideRefreshTokenKey = "spotify_override_refresh_token"
 
     /// Synchronous accessor for use in request closures.
     static func sharedTokenSync() -> String? {
         RootView.sharedAuth?.credentials?.accessToken
     }
 
-    /// Returns an override access token if present (no refresh semantics).
+    /// Returns an override access token if present (may be expired).
     static func overrideToken() -> String? {
         guard let data = Keychain.get(overrideTokenKey), let s = String(data: data, encoding: .utf8), !s.isEmpty else { return nil }
-        // Optional expiry gate
-        if let expData = Keychain.get(overrideTokenExpiresKey),
-           let expStr = String(data: expData, encoding: .utf8),
-           let interval = TimeInterval(expStr) {
-            let expiresAt = Date(timeIntervalSince1970: interval)
-            if Date() >= expiresAt { return nil }
-        }
         return s
     }
 
-    /// Stores an override access token and optional expiry timestamp.
-    static func setOverrideToken(_ token: String, expiresAt: Date?) {
-        Keychain.set(Data(token.utf8), key: overrideTokenKey)
+    /// Stores override tokens and optional expiry timestamp.
+    static func setOverrideTokens(accessToken: String, refreshToken: String?, expiresAt: Date?) {
+        Keychain.set(Data(accessToken.utf8), key: overrideTokenKey)
+        if let refreshToken { Keychain.set(Data(refreshToken.utf8), key: overrideRefreshTokenKey) }
         if let expiresAt {
             Keychain.set(Data(String(expiresAt.timeIntervalSince1970).utf8), key: overrideTokenExpiresKey)
         }
@@ -128,7 +118,27 @@ extension AuthService {
     static func clearOverrideToken() {
         Keychain.set(Data(), key: overrideTokenKey)
         Keychain.set(Data(), key: overrideTokenExpiresKey)
+        Keychain.set(Data(), key: overrideRefreshTokenKey)
         UserDefaults.standard.set(false, forKey: "has_override_token")
+    }
+
+    /// Async: returns a usable access token. Prefers override (Juky). If missing/expired, tries headless fetch.
+    static func sharedToken() async -> String? {
+        if let tok = validOverrideToken() { return tok }
+        _ = await JukyHeadlessRefresher.refreshToken()
+        if let tok = validOverrideToken() { return tok }
+        // fallback to any native creds if present
+        return RootView.sharedAuth?.credentials?.accessToken
+    }
+
+    private static func validOverrideToken() -> String? {
+        guard let s = Keychain.get(overrideTokenKey).flatMap({ String(data: $0, encoding: .utf8) }), !s.isEmpty else { return nil }
+        if let expData = Keychain.get(overrideTokenExpiresKey),
+           let expStr = String(data: expData, encoding: .utf8), let interval = TimeInterval(expStr) {
+            let expiresAt = Date(timeIntervalSince1970: interval)
+            if Date() >= expiresAt { return nil }
+        }
+        return s
     }
 }
 

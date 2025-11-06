@@ -22,16 +22,28 @@ final class WebTokenMessageHandler: NSObject, WKScriptMessageHandler {
            let type = obj["type"] as? String {
             switch type {
             case "AUTH_DATA":
-                if let s = obj["data"] as? String, let authData = s.data(using: .utf8) {
+                // Support two shapes:
+                // 1) data is a stringified JSON with access_token (legacy)
+                // 2) data is an object with accessToken/refreshToken/expiresAt|expiresIn (Juky)
+                if let dict = obj["data"] as? [String: Any] {
+                    let access = (dict["accessToken"] as? String)
+                    let refresh = dict["refreshToken"] as? String
+                    // expiresAt as epoch seconds or ISO string; or expiresIn seconds
+                    var expiresAt: Date? = nil
+                    if let exp = dict["expiresAt"] as? Double { expiresAt = Date(timeIntervalSince1970: exp) }
+                    else if let expStr = dict["expiresAt"] as? String, let d = Double(expStr) { expiresAt = Date(timeIntervalSince1970: d) }
+                    else if let ttl = dict["expiresIn"] as? Double { expiresAt = Date().addingTimeInterval(ttl) }
+                    if let token = access {
+                        AuthService.setOverrideTokens(accessToken: token, refreshToken: refresh, expiresAt: expiresAt)
+                        onAuth?(token)
+                    } else { onFailAuth?() }
+                } else if let s = obj["data"] as? String, let authData = s.data(using: .utf8) {
                     if let json = try? JSONSerialization.jsonObject(with: authData) as? [String: Any],
                        let token = json["access_token"] as? String {
+                        AuthService.setOverrideTokens(accessToken: token, refreshToken: nil, expiresAt: nil)
                         onAuth?(token)
-                    } else {
-                        onFailAuth?()
-                    }
-                } else {
-                    onFailAuth?()
-                }
+                    } else { onFailAuth?() }
+                } else { onFailAuth?() }
             case "NOT_LOGGED_IN":
                 onNotLoggedIn?()
             case "FAIL_AUTH":
@@ -56,8 +68,8 @@ struct WebTokenConnectView: UIViewRepresentable {
         let shimScript = WKUserScript(source: shim, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         contentController.addUserScript(shimScript)
 
-        // Inject the friend's script with small additions: force logout first and poll for spAuth
-        let webviewURL = "https://www.statsforspotify.com/track/recent"
+        // Inject Juky script to retrieve tokens from IndexedDB and guide login flow
+        let webviewURL = "https://web.juky.app"
         let scriptSource = """
         const WEBVIEW_URL = '\(webviewURL)';
         const sendMessage = (type, data) => {
@@ -69,59 +81,52 @@ struct WebTokenConnectView: UIViewRepresentable {
             return element.textContent.trim().includes(text);
           });
         };
-        // Always force a fresh Stats session once per sheet presentation
-        if (!window.__RC_FORCED_LOGOUT__) {
-          window.__RC_FORCED_LOGOUT__ = true;
-          if (location.host === 'www.statsforspotify.com' && !location.pathname.startsWith('/logout')) {
-            location.href = 'https://www.statsforspotify.com/logout';
-          }
-        }
         document.documentElement.style.opacity = 0;
         document.documentElement.style.backgroundColor = '#121212';
         document.body.style.opacity = 0;
-        function tryEmitAuth() {
-          try {
-            const authData = window.localStorage.getItem('spAuth');
-            if (authData) { sendMessage('AUTH_DATA', authData); return true; }
-          } catch (e) {}
-          return false;
-        }
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
           const pageURL = new URL(window.location.href);
-          // After logout, bounce to target page
-          if (pageURL.host === 'www.statsforspotify.com' && pageURL.pathname.startsWith('/logout')) {
-            setTimeout(() => { window.location.href = WEBVIEW_URL; }, 600);
-            return;
-          }
-          if (pageURL.host === 'www.statsforspotify.com') {
+          if (pageURL.host === 'web.juky.app') {
             document.documentElement.style.opacity = 0;
-            if (!tryEmitAuth()) {
-              sendMessage('FAIL_AUTH', {});
-              setTimeout(() => { window.location.href = WEBVIEW_URL; }, 1000);
-              return;
-            }
+            try {
+              const db = await new Promise((resolve, reject) => {
+                const request = window.indexedDB.open('SpotifyTokensDatabase');
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+              });
+              if (db.objectStoreNames.length > 0) {
+                const transaction = db.transaction(['spotifyTokens']);
+                const objectStore = transaction.objectStore('spotifyTokens');
+                const res = await new Promise((resolve, reject) => {
+                  const storeResult = objectStore.getAll();
+                  storeResult.onsuccess = () => resolve(storeResult.result);
+                  storeResult.onerror = () => reject(storeResult.error);
+                });
+                if (res.length > 0) {
+                  sendMessage('AUTH_DATA', res[0]);
+                  return;
+                }
+              }
+            } catch (e) {}
+            // Prompt user to continue
+            const cws = findAllByText('Continue with Spotify')[0];
+            if (cws) { cws.click(); }
+            sendMessage('NOT_LOGGED_IN', {});
           } else {
             document.documentElement.style.opacity = 1;
             document.body.style.opacity = 1;
+            // Minimal UI cleanup (keep permissions visible)
             const loginForm = document.querySelector('form');
-            if (loginForm) { loginForm.nextSibling && (loginForm.nextSibling.style.display = 'none'); }
+            if (loginForm && loginForm.nextSibling) { loginForm.nextSibling.style.display = 'none'; }
             const buttonsList = document.querySelector('ul');
             if (buttonsList) { buttonsList.style.display = 'none'; }
             const separator = document.querySelector('hr');
             if (separator) { separator.style.display = 'none'; }
             const signupLink = document.querySelector('a[href*="/login/signup"]') ?? document.getElementById('sign-up-link');
-            if (signupLink) { signupLink.parentElement && (signupLink.parentElement.style.display = 'none'); }
+            if (signupLink && signupLink.parentElement) { signupLink.parentElement.style.display = 'none'; }
             const termsLink = document.querySelector('a[href*="policies.google"]');
-            if (termsLink) { termsLink.parentElement && (termsLink.parentElement.style.pointerEvents = 'none'); }
-            const replacedElements = findAllByText('Stats for Spotify');
-            replacedElements.forEach(element => { element.innerHTML = element.innerHTML.replaceAll('Stats for Spotify', 'Lowkey'); });
+            if (termsLink && termsLink.parentElement) { termsLink.parentElement.style.pointerEvents = 'none'; }
             sendMessage('NOT_LOGGED_IN', {});
-            // Poll for auth appearing after redirect completes
-            let attempts = 0;
-            const iv = setInterval(() => {
-              attempts++;
-              if (tryEmitAuth() || attempts > 150) { clearInterval(iv); }
-            }, 200);
           }
         });
         """
@@ -133,7 +138,8 @@ struct WebTokenConnectView: UIViewRepresentable {
         config.preferences.javaScriptEnabled = true
         let handler = context.coordinator.handler
         handler.onAuth = { token in
-            AuthService.setOverrideToken(token, expiresAt: nil)
+            // Backward-compatible: if given a single token string
+            AuthService.setOverrideTokens(accessToken: token, refreshToken: nil, expiresAt: nil)
             onAuth(token)
         }
         handler.onNotLoggedIn = { /* no-op */ }
