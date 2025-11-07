@@ -168,7 +168,7 @@ struct WebTokenConnectView: UIViewRepresentable {
 
         let config = WKWebViewConfiguration()
         config.userContentController = contentController
-        config.preferences.javaScriptEnabled = true
+        config.defaultWebpagePreferences.allowsContentJavaScript = true
         let coordinator = context.coordinator
         let handler = coordinator.handler
         handler.onAuth = { token in

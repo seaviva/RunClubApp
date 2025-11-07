@@ -127,7 +127,7 @@ struct OnboardingFlowView: View {
                 if tempRunsPerWeek == nil { tempRunsPerWeek = 3 }
                 runsWheelSelection = tempRunsPerWeek ?? 3
             }
-            .onChange(of: runsWheelSelection) { newValue in
+            .onChange(of: runsWheelSelection, initial: false) { _, newValue in
                 tempRunsPerWeek = newValue
             }
             Spacer()

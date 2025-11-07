@@ -1,0 +1,27 @@
+# Cursor Guidelines for RunClub
+
+- **Documentation**
+  - Add `///` doc comments to every public method, property, and type that is consumed outside its declaring file.
+  - Summaries go on the first line; add parameter/throws/returns notes only when they carry non-obvious semantics.
+- **Concurrency**
+  - Keep network and long-running tasks off the main actor. Hop back to `@MainActor` only when reading or mutating UI-facing state.
+  - Prefer `async`/`await` with `Task` cancellation support; avoid raw `DispatchQueue` unless interacting with third-party APIs.
+- **Services & Dependency Injection**
+  - New services belong under `Services/` with clear `MARK` groupings (`// MARK: - Public API`, `// MARK: - Private helpers`, etc.).
+  - Inject dependencies into views via environment objects or dedicated initialisers. Do not reach for singletons beyond `AuthService` (token access).
+  - When touching persistence, route changes through repositories (`RecommendedSongsRepository`, future backend clients) so the store layer remains swappable.
+- **Spotify API usage**
+  - Consolidate HTTP calls inside `SpotifyService` or specialised helpers. Use lightweight DTOs and keep decoding structs `private` unless shared.
+  - Always handle 401s by calling `AuthService.sharedToken()` before retrying.
+- **Error Handling & Logging**
+  - Bubble errors with context. For recoverable paths, log via `print("[Category] message")` to aid console filtering.
+  - Never swallow errors silently; wrap them in domain-specific enums when behaviour diverges.
+- **SwiftData**
+  - Use `ModelContext` injections, not implicit globals. Keep fetch descriptors small and memoise expensive queries when re-used.
+- **Testing**
+  - Add unit coverage in `RunClubTests/` for new services or algorithms. UI changes should include snapshot or functional tests when feasible.
+- **Formatting**
+  - Follow SwiftFormat defaults: 2-space indentation, trailing commas on multi-line literals, and grouped imports (Foundation, then SDKs, then modules).
+- **PR Hygiene**
+  - Update `README.md` and this rules file when evolving architecture or conventions.
+  - Ensure `swift test` or the provided `xcodebuild` command passes and run `read_lints` on touched files before finishing work.
