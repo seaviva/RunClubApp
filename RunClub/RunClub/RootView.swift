@@ -12,6 +12,7 @@ import SwiftData
 struct RootView: View {
     @EnvironmentObject var auth: AuthService
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage("onboardingComplete") private var onboardingComplete: Bool = false
     @AppStorage("has_override_token") private var hasOverrideToken: Bool = false
     @StateObject private var crawlCoordinator = CrawlCoordinator()
@@ -19,11 +20,14 @@ struct RootView: View {
     @State private var showCompletionToast: Bool = false
     @State private var completionText: String = ""
     // Add recommendations coordinator + use shared progress from environment
-    @StateObject private var recsCoordinator = RecommendationsCoordinator()
-    @EnvironmentObject var recsProgress: RecsProgressStore
+    // Recommendations removed
+    // Playlists
+    @StateObject private var playlistsCoordinator = PlaylistsCoordinator()
+    @EnvironmentObject var playlistsProgress: PlaylistsProgressStore
     // Toast dismissal state (does not cancel the job)
     @State private var hideLikesToast: Bool = false
     @State private var hideRecsToast: Bool = false
+    @State private var hidePlaylistsToast: Bool = false
 
     var body: some View {
         Group {
@@ -32,12 +36,13 @@ struct RootView: View {
                 LoginSplashView()
             } else if !onboardingComplete {
                 OnboardingFlowView(onDone: { onboardingComplete = true })
+                    .environmentObject(playlistsCoordinator)
             } else {
                 ZStack(alignment: .top) {
                     HomeView()
                         .environmentObject(crawlCoordinator)
                         .environmentObject(progressStore)
-                        .environmentObject(recsCoordinator)
+                        .environmentObject(playlistsCoordinator)
                 }
                 // Overlay the toast(s) without affecting layout; allow swipe-to-hide
                 .overlay(alignment: .top) {
@@ -49,14 +54,14 @@ struct RootView: View {
                             .onAppear { print("[LIKES_TOAST] running=\(progressStore.isRunning) done=\(progressStore.tracksDone) total=\(progressStore.tracksTotal) id=\(ObjectIdentifier(progressStore))") }
                                 .transition(.move(edge: .top).combined(with: .opacity))
                         }
-                        if recsProgress.isRunning && !hideRecsToast {
-                            CrawlToast(title: "Syncing recommendations…", progress: recsProgress, onCancel: {
-                                Task { await recsCoordinator.cancel() }
-                            }, onDismiss: { hideRecsToast = true })
-                            .onAppear { print("[RECS_TOAST] running=\(recsProgress.isRunning) done=\(recsProgress.tracksDone) total=\(recsProgress.tracksTotal) id=\(ObjectIdentifier(recsProgress))") }
+                        if playlistsProgress.isRunning && !hidePlaylistsToast {
+                            CrawlToast(title: "Syncing playlists…", progress: playlistsProgress, onCancel: {
+                                Task { await playlistsCoordinator.cancel() }
+                            }, onDismiss: { hidePlaylistsToast = true })
+                            .onAppear { print("[PL_TOAST] running=\(playlistsProgress.isRunning) done=\(playlistsProgress.tracksDone) total=\(playlistsProgress.tracksTotal) id=\(ObjectIdentifier(playlistsProgress))") }
                                 .transition(.move(edge: .top).combined(with: .opacity))
                         }
-                        if showCompletionToast && !(progressStore.isRunning || recsProgress.isRunning) {
+                        if showCompletionToast && !(progressStore.isRunning) {
                             CompletionToast(text: completionText)
                                 .transition(.move(edge: .top).combined(with: .opacity))
                         }
@@ -64,24 +69,26 @@ struct RootView: View {
                     }
                     .padding(.top, 12)
                     .animation(.easeInOut, value: progressStore.isRunning)
-                    .animation(.easeInOut, value: recsProgress.isRunning)
+                    .animation(.easeInOut, value: playlistsProgress.isRunning)
                 }
             }
         }
-        .onAppear { progressStore.debugName = "LIKES"; recsProgress.debugName = "RECS" }
-        .onChange(of: recsProgress.isRunning) { running in
-            print("[RECS_STATE] running=\(running) likesId=\(ObjectIdentifier(progressStore)) recsId=\(ObjectIdentifier(recsProgress)))")
+        .onAppear { progressStore.debugName = "LIKES"; playlistsProgress.debugName = "PLAYLISTS" }
+        .onChange(of: hasOverrideToken) { newVal in
+            print("[AUTH] has_override_token changed -> \(newVal)")
         }
-        .task(id: auth.isAuthorized) {
-            let isAuthorizedEffective = auth.isAuthorized || hasOverrideToken
+        // Recommendations removed
+        .task(id: (auth.isAuthorized || hasOverrideToken)) {
+            let isAuthorizedEffective = (auth.isAuthorized || hasOverrideToken)
             guard isAuthorizedEffective else { return }
             await crawlCoordinator.configure(auth: auth, modelContext: modelContext, progressStore: progressStore)
             await crawlCoordinator.startIfNeeded()
-            // Configure and kick off recommendations in parallel (only if empty)
-            await recsCoordinator.configure(auth: auth, progressStore: recsProgress)
-            await recsCoordinator.startIfNeeded(targetCount: 1000)
-            // Scheduled refresh: once per week start a background recommendations refresh
-            scheduleWeeklyRecsRefresh()
+            // Recommendations path removed
+            // Configure playlists and start a catalog refresh (non-blocking)
+            await playlistsCoordinator.configure(auth: auth, progressStore: playlistsProgress, likesContext: modelContext)
+            await playlistsCoordinator.refreshCatalog()
+            scheduleWeeklyPlaylistsRefresh()
+            // Recommendations refresh scheduling removed
         }
         .onChange(of: progressStore.isRunning) { running in
             if running { hideLikesToast = false }
@@ -94,6 +101,15 @@ struct RootView: View {
                     }
                     try? await Task.sleep(nanoseconds: 3_000_000_000)
                     await MainActor.run { withAnimation { showCompletionToast = false } }
+                }
+            }
+        }
+        .onChange(of: scenePhase) { phase in
+            // Auto-resume mid-run on foreground if offsets indicate partial progress
+            if phase == .active {
+                Task {
+                    await crawlCoordinator.startIfNeeded()
+                    await playlistsCoordinator.refreshCatalog()
                 }
             }
         }
@@ -117,9 +133,26 @@ private struct CrawlToast: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(RCFont.medium(14))
-                Text(progress.tracksTotal > 0 ? "\(progress.tracksDone)/\(progress.tracksTotal)" : "\(progress.tracksDone)")
-                    .font(RCFont.regular(13))
-                    .foregroundColor(.white.opacity(0.7))
+                if !progress.message.isEmpty {
+                    Text(progress.message)
+                        .font(RCFont.regular(12))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(progress.tracksTotal > 0 ? "Tracks \(progress.tracksDone)/\(progress.tracksTotal)" : "Tracks \(progress.tracksDone)")
+                    if progress.featuresDone > 0 || progress.artistsDone > 0 {
+                        HStack(spacing: 8) {
+                            if progress.featuresDone > 0 {
+                                Text("Features \(progress.featuresDone)")
+                            }
+                            if progress.artistsDone > 0 {
+                                Text("• Artists \(progress.artistsDone)")
+                            }
+                        }
+                    }
+                }
+                .font(RCFont.regular(13))
+                .foregroundColor(.white.opacity(0.7))
             }
             Spacer()
             Button(action: { onCancel() }) {
@@ -173,15 +206,18 @@ private struct CompletionToast: View {
     }
 }
 
-// MARK: - Weekly recs refresh scheduling (lightweight)
+// MARK: - Weekly playlists refresh scheduling
 extension RootView {
-    private func scheduleWeeklyRecsRefresh() {
-        let key = "recs_last_refresh"
+    private func scheduleWeeklyPlaylistsRefresh() {
+        let key = "playlists_last_refresh"
         let now = Date()
         let last = UserDefaults.standard.object(forKey: key) as? Date
         let sevenDays: TimeInterval = 7 * 24 * 3600
         if last == nil || now.timeIntervalSince(last!) > sevenDays {
-            Task { await recsCoordinator.refresh(targetCount: 300) }
+            Task {
+                await playlistsCoordinator.refreshCatalog()
+                await playlistsCoordinator.refreshSelected()
+            }
             UserDefaults.standard.set(now, forKey: key)
         }
     }

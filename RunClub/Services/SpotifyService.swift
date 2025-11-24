@@ -198,48 +198,15 @@ final class SpotifyService {
             }
         }
 
-        // Attempt 1: strict (all hints)
+        // Strict: single attempt with hard filters; no relaxations or fallbacks
+        let items = buildQueryItems(minTempo: minBPM, maxTempo: maxBPM,
+                                    includeEnergy: true, includeDance: true, includeValence: true, includePopularity: true)
         do {
-            var items = buildQueryItems(minTempo: minBPM, maxTempo: maxBPM,
-                                        includeEnergy: true, includeDance: true, includeValence: true, includePopularity: true)
-            var result = try await exec(items, label: "GET /v1/recommendations (adv)")
-            if !result.isEmpty { return result }
-
-            // Attempt 2: drop popularity and feature targets
-            items = buildQueryItems(minTempo: minBPM, maxTempo: maxBPM,
-                                    includeEnergy: false, includeDance: false, includeValence: false, includePopularity: false)
-            result = try await exec(items, label: "GET /v1/recommendations (adv,no-hints)")
-            if !result.isEmpty { return result }
-
-            // Attempt 3: widen tempo slightly
-            let widenedLo = max(60, minBPM - 5)
-            let widenedHi = min(220, maxBPM + 5)
-            items = buildQueryItems(minTempo: widenedLo, maxTempo: widenedHi,
-                                    includeEnergy: false, includeDance: false, includeValence: false, includePopularity: false)
-            result = try await exec(items, label: "GET /v1/recommendations (adv,widen)")
-            if !result.isEmpty { return result }
+            let result = try await exec(items, label: "GET /v1/recommendations (adv,strict)")
+            return result
         } catch {
-            // fallthrough to genre→artist→top-tracks fallback below
-        }
-
-        // Fallback: broaden by genre search → artist top tracks
-        let market = market
-        let genresToUse = (seedGenres.isEmpty ? [.pop] : seedGenres).map { $0.rawValue.lowercased() }
-        var artistIds: [String] = []
-        for g in genresToUse { artistIds.append(contentsOf: (try? await searchArtistIds(for: g, market: market, limit: 20)) ?? []) }
-        artistIds = Array(Array(Set(artistIds)).prefix(20))
-        var tracks: [ArtistTopTracksResponse.Track] = []
-        for aid in artistIds { tracks.append(contentsOf: (try? await fetchTopTracks(for: aid, market: market)) ?? []) }
-        return tracks.map { t in
-            RecCandidate(id: t.id,
-                         uri: t.uri,
-                         name: t.name,
-                         popularity: t.popularity,
-                         explicit: t.explicit,
-                         durationMs: t.duration_ms,
-                         albumReleaseDate: t.album.release_date,
-                         artistId: t.artists.first?.id ?? t.id,
-                         artistName: t.artists.first?.name ?? "?")
+            // On error, return empty (caller decides when to stop)
+            return []
         }
     }
 
@@ -301,6 +268,70 @@ final class SpotifyService {
             let items: [Item]
         }
         let artists: Artists
+    }
+
+    // MARK: - Playlists API shapes
+    private struct UserPlaylistsResponse: Decodable {
+        struct Playlist: Decodable {
+            struct Owner: Decodable { let id: String?; let display_name: String? }
+            struct Tracks: Decodable { let total: Int? }
+            struct Image: Decodable { let url: String? }
+            let id: String?
+            let name: String?
+            let owner: Owner?
+            let collaborative: Bool?
+            let `public`: Bool?
+            let images: [Image]?
+            let snapshot_id: String?
+            let tracks: Tracks?
+        }
+        let items: [Playlist]
+        let next: String?
+        let total: Int?
+    }
+
+    private struct PlaylistTracksPageResponse: Decodable {
+        struct Item: Decodable {
+            let added_at: String?
+            struct Track: Decodable {
+                struct Artist: Decodable { let id: String?; let name: String? }
+                struct Album: Decodable { let name: String?; let release_date: String? }
+                let id: String?
+                let uri: String?
+                let name: String?
+                let duration_ms: Int?
+                let artists: [Artist]?
+                let album: Album?
+                let popularity: Int?
+                let explicit: Bool?
+                let is_local: Bool?
+            }
+            let track: Track?
+        }
+        let items: [Item]
+        let next: String?
+        let total: Int?
+    }
+
+    private struct RecentlyPlayedResponse: Decodable {
+        struct Item: Decodable {
+            let played_at: String?
+            struct Track: Decodable {
+                struct Artist: Decodable { let id: String?; let name: String? }
+                struct Album: Decodable { let name: String?; let release_date: String? }
+                let id: String?
+                let uri: String?
+                let name: String?
+                let duration_ms: Int?
+                let artists: [Artist]?
+                let album: Album?
+                let popularity: Int?
+                let explicit: Bool?
+                let is_local: Bool?
+            }
+            let track: Track?
+        }
+        let items: [Item]
     }
 
     // MARK: - Helpers
@@ -365,25 +396,35 @@ final class SpotifyService {
     private func fetch(_ request: URLRequest, label: String) async throws -> Data {
         let (data, response) = try await URLSession.shared.data(for: request)
         if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+            print("Spotify fetch 401 — \(label). Attempting headless refresh…")
             // Try to obtain a fresh token from Juky (headless) and retry once
             _ = await JukyHeadlessRefresher.refreshToken()
             if let fresh = await AuthService.sharedToken() {
+                print("Spotify fetch 401 — obtained refreshed token, retrying: \(label)")
                 var retried = request
                 var headers = retried.allHTTPHeaderFields ?? [:]
                 headers["Authorization"] = "Bearer \(fresh)"
                 retried.allHTTPHeaderFields = headers
                 let (data2, response2) = try await URLSession.shared.data(for: retried)
                 guard let http2 = response2 as? HTTPURLResponse else { return data2 }
-                guard (200...299).contains(http2.statusCode) else {
+                if !(200...299).contains(http2.statusCode) {
                     let body2 = String(data: data2, encoding: .utf8) ?? ""
+                    if (http2.statusCode == 401) {
+                        await MainActor.run {
+                            AuthService.clearOverrideToken()
+                        }
+                        print("Spotify fetch 401 — override token cleared; please reconnect via Juky")
+                    }
                     throw SpotifyServiceError.http(status: http2.statusCode, body: body2, endpoint: label)
                 }
                 return data2
             }
+            print("Spotify fetch 401 — refresh failed: \(label)")
         }
         guard let http = response as? HTTPURLResponse else { return data }
         guard (200...299).contains(http.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? ""
+            print("Spotify fetch error — status=\(http.statusCode) \(label) body=\(body.prefix(300))")
             throw SpotifyServiceError.http(status: http.statusCode, body: body, endpoint: label)
         }
         return data
@@ -495,6 +536,151 @@ final class SpotifyService {
         return me.country
     }
 
+    // MARK: - Public: Playlists (list, tracks, recently played)
+    struct PlaylistOut {
+        let id: String
+        let name: String
+        let ownerId: String
+        let ownerName: String
+        let isOwner: Bool
+        let isPublic: Bool
+        let collaborative: Bool
+        let imageURL: String?
+        let totalTracks: Int
+        let snapshotId: String?
+    }
+
+    /// Fetches all of the user's playlists (owned and followed).
+    func getAllUserPlaylists() async throws -> [PlaylistOut] {
+        var result: [PlaylistOut] = []
+        var nextURL: URL? = URL(string: "https://api.spotify.com/v1/me/playlists?limit=50")
+        while let url = nextURL {
+            var comps = URLComponents(url: url, resolvingAgainstBaseURL: false) ?? URLComponents()
+            var items = comps.queryItems ?? []
+            if !items.contains(where: { $0.name == "fields" }) {
+                items.append(.init(name: "fields", value: "items(id,name,owner(display_name,id),collaborative,public,images(url),snapshot_id,tracks(total)),next,total"))
+                comps.queryItems = items
+            }
+            let data = try await fetch(request(comps.url!), label: "GET /v1/me/playlists")
+            let page = try JSONDecoder().decode(UserPlaylistsResponse.self, from: data)
+            for p in page.items {
+                guard let id = p.id, let name = p.name else { continue }
+                let ownerId = p.owner?.id ?? ""
+                let ownerName = p.owner?.display_name ?? ""
+                let isPublic = p.public ?? false
+                let collab = p.collaborative ?? false
+                let imageURL = p.images?.first?.url
+                let total = p.tracks?.total ?? 0
+                let snap = p.snapshot_id
+                result.append(.init(id: id,
+                                    name: name,
+                                    ownerId: ownerId,
+                                    ownerName: ownerName,
+                                    isOwner: false,
+                                    isPublic: isPublic,
+                                    collaborative: collab,
+                                    imageURL: imageURL,
+                                    totalTracks: total,
+                                    snapshotId: snap))
+            }
+            if let next = page.next, let u = URL(string: next) {
+                nextURL = u
+            } else {
+                nextURL = nil
+            }
+        }
+        return result
+    }
+
+    /// Pages tracks for a given playlist ID.
+    func getPlaylistTracksPage(playlistId: String, limit: Int, offset: Int, market: String?) async throws -> (items: [SimplifiedTrackItem], nextOffset: Int?, total: Int?) {
+        var comps = URLComponents(string: "https://api.spotify.com/v1/playlists/\(playlistId)/tracks")!
+        var q: [URLQueryItem] = [
+            .init(name: "limit", value: String(max(1, min(100, limit)))),
+            .init(name: "offset", value: String(max(0, offset)))
+        ]
+        if let market { q.append(.init(name: "market", value: market)) }
+        q.append(.init(name: "fields", value: "items(added_at,track(id,name,duration_ms,explicit,popularity,is_local,artists(id,name),album(name,release_date))),next,total"))
+        comps.queryItems = q
+        var data: Data!
+        var attempt = 0
+        while true {
+            do {
+                data = try await fetch(request(comps.url!), label: "GET /v1/playlists/{id}/tracks")
+                break
+            } catch let SpotifyServiceError.http(status, _, _) where status == 429 {
+                attempt += 1
+                let backoffMs = UInt64(min(60_000, 2_000 * (1 << max(0, attempt - 1))))
+                await sleepMilliseconds(backoffMs)
+                continue
+            }
+        }
+        let page = try JSONDecoder().decode(PlaylistTracksPageResponse.self, from: data)
+        var out: [SimplifiedTrackItem] = []
+        for item in page.items {
+            guard let t = item.track else { continue }
+            guard t.is_local != true else { continue }
+            guard let id = t.id, let name = t.name else { continue }
+            let artistId = t.artists?.first?.id ?? id
+            let artistName = t.artists?.first?.name ?? "Unknown"
+            let duration = t.duration_ms ?? 0
+            let albumName = t.album?.name ?? ""
+            let releaseYear = year(from: t.album?.release_date ?? "")
+            let popularity = t.popularity
+            let explicit = t.explicit ?? false
+            let addedAt = parseISODate(item.added_at) ?? Date()
+            out.append(.init(trackId: id,
+                             name: name,
+                             artistId: artistId,
+                             artistName: artistName,
+                             durationMs: duration,
+                             albumName: albumName,
+                             albumReleaseYear: releaseYear,
+                             popularity: popularity,
+                             explicit: explicit,
+                             addedAt: addedAt))
+        }
+        var nextOffset: Int? = nil
+        if let next = page.next, let u = URLComponents(string: next), let offStr = u.queryItems?.first(where: { $0.name == "offset" })?.value, let offInt = Int(offStr) {
+            nextOffset = offInt
+        } else if let total = page.total, (offset + page.items.count) < total {
+            nextOffset = offset + page.items.count
+        }
+        return (out, nextOffset, page.total)
+    }
+
+    /// Fetch up to 50 recently played tracks and map into SimplifiedTrackItem.
+    func getRecentlyPlayed(limit: Int = 50, market: String?) async throws -> [SimplifiedTrackItem] {
+        var comps = URLComponents(string: "https://api.spotify.com/v1/me/player/recently-played")!
+        comps.queryItems = [.init(name: "limit", value: String(max(1, min(50, limit))))]
+        let data = try await fetch(request(comps.url!), label: "GET /v1/me/player/recently-played")
+        let res = try JSONDecoder().decode(RecentlyPlayedResponse.self, from: data)
+        var out: [SimplifiedTrackItem] = []
+        for item in res.items {
+            guard let t = item.track, t.is_local != true else { continue }
+            guard let id = t.id, let name = t.name else { continue }
+            let artistId = t.artists?.first?.id ?? id
+            let artistName = t.artists?.first?.name ?? "Unknown"
+            let duration = t.duration_ms ?? 0
+            let albumName = t.album?.name ?? ""
+            let releaseYear = year(from: t.album?.release_date ?? "")
+            let popularity = t.popularity
+            let explicit = t.explicit ?? false
+            let addedAt = parseISODate(item.played_at) ?? Date()
+            out.append(.init(trackId: id,
+                             name: name,
+                             artistId: artistId,
+                             artistName: artistName,
+                             durationMs: duration,
+                             albumName: albumName,
+                             albumReleaseYear: releaseYear,
+                             popularity: popularity,
+                             explicit: explicit,
+                             addedAt: addedAt))
+        }
+        return out
+    }
+
     // MARK: - Crawler helpers (non-breaking additions)
 
     private struct SavedTracksPage: Decodable {
@@ -592,6 +778,13 @@ final class SpotifyService {
             .init(name: "offset", value: String(max(0, offset)))
         ]
         if let market { q.append(.init(name: "market", value: market)) }
+        // Optionally trim response payload to required fields
+        if Config.useFieldsForMeTracks {
+            q.append(.init(
+                name: "fields",
+                value: "items(added_at,track(id,name,duration_ms,explicit,popularity,is_local,artists(id,name),album(name,release_date))),next,total"
+            ))
+        }
         comps.queryItems = q
         var data: Data!
         var attempt = 0
@@ -640,8 +833,6 @@ final class SpotifyService {
             // Fallback when next is missing but total indicates more pages
             nextOffset = offset + page.items.count
         }
-        // throttle ~2–3 req/sec
-        await sleepMilliseconds(400)
         return (out, nextOffset, page.total)
     }
 
@@ -675,7 +866,6 @@ final class SpotifyService {
                                    genres: a.genres,
                                    popularity: a.popularity)
             }
-            await sleepMilliseconds(400)
         }
         return map
     }
@@ -726,50 +916,7 @@ final class SpotifyService {
         return results
     }
 
-    private func generateFromLikesPlaylist(name: String,
-                                           template: RunTemplateType,
-                                           durationCategory: DurationCategory) async throws -> URL {
-        // 1) Who am I?
-        let meData = try await fetch(request(URL(string: "https://api.spotify.com/v1/me")!), label: "GET /v1/me")
-        let me = try JSONDecoder().decode(Me.self, from: meData)
-
-        // 2) Pull up to 200 liked tracks
-        var liked = try await fetchAllLikedTracks()
-        // Filter by <= 6 min
-        liked = liked.filter { ($0.duration_ms ?? 0) <= 6 * 60 * 1000 }
-
-        // 3) Fit duration bounds with randomness and per-artist cap
-        let (minSeconds, maxSeconds) = durationBoundsSeconds(for: template, category: durationCategory)
-        var totalSeconds = 0
-        var uris: [String] = []
-        var perArtistCount: [String: Int] = [:]
-        for track in liked.shuffled() {
-            let secs = (track.duration_ms ?? 0) / 1000
-            guard totalSeconds + secs <= maxSeconds else { continue }
-            let artistId = track.artists?.first?.id ?? track.id
-            if (perArtistCount[artistId] ?? 0) >= 2 { continue }
-            uris.append(track.uri)
-            perArtistCount[artistId, default: 0] += 1
-            totalSeconds += secs
-            if totalSeconds >= minSeconds { break }
-        }
-
-        // 4) Create playlist and add tracks
-        let createBody = try JSONSerialization.data(withJSONObject: [
-            "name": name,
-            "description": "RunClub · \(template.rawValue) · \(durationCategory.displayName)",
-            "public": true
-        ])
-        let plData = try await fetch(request(URL(string: "https://api.spotify.com/v1/users/\(me.id)/playlists")!,
-                                      method: "POST",
-                                      body: createBody), label: "POST /v1/users/{id}/playlists")
-        let pl = try JSONDecoder().decode(PlaylistCreateResponse.self, from: plData)
-
-        if !uris.isEmpty { try await addTracksChunked(playlistId: pl.id, uris: uris) }
-
-        let urlString = pl.external_urls["spotify"] ?? "https://open.spotify.com/playlist/\(pl.id)"
-        return URL(string: urlString)!
-    }
+    
 
     // MARK: - Public: Create playlist helper for LocalGenerator
     /// Creates a public or private playlist with the given URIs and returns the Spotify web URL.
@@ -898,18 +1045,7 @@ final class SpotifyService {
         }
     }
 
-    private func durationBoundsSeconds(for template: RunTemplateType, category: DurationCategory) -> (Int, Int) {
-        switch template {
-        case .rest:
-            return (0, 0)
-        case .longEasy:
-            // Use 1.5× midpoint with ±2 min window, but cap >6min tracks separately
-            let target = Int(Double(category.midpointMinutes) * 1.5) * 60
-            return (max(target - 120, category.minMinutes * 60), target + 120)
-        default:
-            return (category.minMinutes * 60, category.maxMinutes * 60)
-        }
-    }
+    
 
     // MARK: - Candidates (Recommendations with robust fallbacks, no audio-features)
     private func fetchRecommendationCandidates(minBPM: Double,
@@ -960,120 +1096,7 @@ final class SpotifyService {
     }
 
     // MARK: - Segmented generator for Waves/Pyramid/Kicker
-    private func generateSegmentedRunPlaylist(name: String,
-                                              template: RunTemplateType,
-                                              durationCategory: DurationCategory,
-                                              genres: [Genre],
-                                              decades: [Decade]) async throws -> URL {
-        let meData = try await fetch(request(URL(string: "https://api.spotify.com/v1/me")!), label: "GET /v1/me")
-        let me = try JSONDecoder().decode(Me.self, from: meData)
-        let (minSeconds, maxSeconds) = durationBoundsSeconds(for: template, category: durationCategory)
-        let market = me.country
-
-        // Define BPM bands for segments
-        let easy: (Double, Double) = (130, 150)
-        let steady: (Double, Double) = (150, 165)
-        let high: (Double, Double) = (170, 185)
-
-        // Build segment pattern
-        var pattern: [(Double, Double)] = []
-        switch template {
-        case .shortWaves:
-            pattern = [easy, high]
-        case .longWaves:
-            pattern = [easy, easy, high, high]
-        case .pyramid:
-            pattern = [easy, steady, high, steady, easy]
-        case .kicker:
-            pattern = [steady, steady, steady, high, high, high]
-        default:
-            pattern = [easy]
-        }
-
-        // Pre-fetch candidates for each unique band
-        var bandToCandidates: [String: [RecommendationResponse.Track]] = [:]
-        func key(_ b: (Double, Double)) -> String { "\(Int(b.0))_\(Int(b.1))" }
-        for band in Set(pattern.map { key($0) }) {
-            let parts = band.split(separator: "_")
-            let lo = Double(parts[0]) ?? 130
-            let hi = Double(parts[1]) ?? 150
-            let tracks = try await fetchRecommendationCandidates(minBPM: lo, maxBPM: hi, genres: genres, decades: decades, market: market)
-            bandToCandidates[band] = tracks
-        }
-
-        // Selection loop: iterate pattern until we fill duration
-        var uris: [String] = []
-        var totalSeconds = 0
-        var seenTrackIds = Set<String>()
-        var perArtistCount: [String: Int] = [:]
-        var lastArtistId: String? = nil
-        var recentArtistIds: [String] = [] // keep last 2 to improve variety
-
-        func appendTrack(_ t: RecommendationResponse.Track) -> Bool {
-            guard !seenTrackIds.contains(t.id) else { return false }
-            let secs = t.duration_ms / 1000
-            guard secs <= 6 * 60 else { return false }
-            guard totalSeconds + secs <= maxSeconds else { return false }
-            let artistId = t.artists.first?.id ?? t.id
-            if let last = lastArtistId, last == artistId { return false } // avoid back-to-back same artist
-            if recentArtistIds.contains(artistId) { return false } // avoid repeating within last 2
-            if (perArtistCount[artistId] ?? 0) >= 2 { return false }
-            uris.append(t.uri)
-            seenTrackIds.insert(t.id)
-            perArtistCount[artistId, default: 0] += 1
-            totalSeconds += secs
-            lastArtistId = artistId
-            recentArtistIds.append(artistId)
-            if recentArtistIds.count > 2 { recentArtistIds.removeFirst() }
-            return true
-        }
-
-        var idx = 0
-        while totalSeconds < minSeconds {
-            let band = pattern[idx % pattern.count]
-            let k = key(band)
-            var tracks = bandToCandidates[k] ?? []
-            var added = false
-            for t in tracks.shuffled() {
-                if appendTrack(t) { added = true; break }
-            }
-            if !added {
-                // Try to widen BPM window for this band and retry
-                let widenedLo = max(60, band.0 - 5)
-                let widenedHi = min(220, band.1 + 5)
-                let widened = try await fetchRecommendationCandidates(minBPM: widenedLo, maxBPM: widenedHi, genres: genres, decades: decades, market: market)
-                // Merge new unique candidates
-                let existingIds = Set(tracks.map { $0.id })
-                let merged = tracks + widened.filter { !existingIds.contains($0.id) }
-                bandToCandidates[k] = merged
-                for t in merged.shuffled() {
-                    if appendTrack(t) { added = true; break }
-                }
-                if !added {
-                    // move to next band to keep progress
-                    idx += 1
-                    continue
-                }
-            }
-            idx += 1
-        }
-
-        // Create playlist
-        let createBody = try JSONSerialization.data(withJSONObject: [
-            "name": name,
-            "description": "RunClub · \(template.rawValue) · \(durationCategory.displayName)",
-            "public": true
-        ])
-        let plData = try await fetch(request(URL(string: "https://api.spotify.com/v1/users/\(me.id)/playlists")!,
-                                      method: "POST",
-                                      body: createBody), label: "POST /v1/users/{id}/playlists (seg)")
-        let pl = try JSONDecoder().decode(PlaylistCreateResponse.self, from: plData)
-
-        if !uris.isEmpty { try await addTracksChunked(playlistId: pl.id, uris: uris) }
-
-        let urlString = pl.external_urls["spotify"] ?? "https://open.spotify.com/playlist/\(pl.id)"
-        return URL(string: urlString)!
-    }
+    
 
     // MARK: - Public: simple smoke test
     /// Creates a private playlist from your recent liked tracks and returns its web URL.
@@ -1108,222 +1131,7 @@ final class SpotifyService {
 
     // MARK: - Public: Generation (MVP Easy/Steady)
     /// Generates a playlist for Easy Run or Strong & Steady honoring hard filters, BPM, popularity, and duration bounds.
-    func generateSimpleRunPlaylist(name: String,
-                                   template: RunTemplateType,
-                                   durationCategory: DurationCategory,
-                                   genres: [Genre],
-                                   decades: [Decade]) async throws -> URL {
-        // If segmented template, use segmented pipeline (no audio-features dependency)
-        if [.shortWaves, .longWaves, .pyramid, .kicker].contains(template) {
-            return try await generateSegmentedRunPlaylist(name: name,
-                                                         template: template,
-                                                         durationCategory: durationCategory,
-                                                         genres: genres,
-                                                         decades: decades)
-        }
-        guard let (minBPM, maxBPM) = bpmRange(for: template) else {
-            return try await generateFromLikesPlaylist(name: name, template: template, durationCategory: durationCategory)
-        }
-
-        // 1) Me for userId and market
-        let meData = try await fetch(request(URL(string: "https://api.spotify.com/v1/me")!), label: "GET /v1/me")
-        let me = try JSONDecoder().decode(Me.self, from: meData)
-
-        let bounds = durationBoundsSeconds(for: template, category: durationCategory)
-        let (minSeconds, maxSeconds) = bounds
-
-        // 2) Recommendations (ensure at least one seed)
-        var queryItems: [URLQueryItem] = [
-            .init(name: "limit", value: "100"),
-            .init(name: "min_tempo", value: String(Int(minBPM))),
-            .init(name: "target_tempo", value: String(Int((minBPM + maxBPM) / 2))),
-            .init(name: "max_tempo", value: String(Int(maxBPM)))
-        ]
-        if let market = me.country { queryItems.append(.init(name: "market", value: market)) }
-        var haveSeed = false
-        // Prefer at least one genre seed (user-selected)
-        let userGenreSeeds = seedGenreString(from: genres)
-        if let seedGenres = userGenreSeeds { queryItems.append(.init(name: "seed_genres", value: seedGenres)); haveSeed = true }
-        if !haveSeed {
-            // Try top artists and tracks as seeds
-            if let topArtistsSeed = try? await fetchTopArtistsSeed(limit: 2), !topArtistsSeed.isEmpty {
-                queryItems.append(.init(name: "seed_artists", value: topArtistsSeed))
-                haveSeed = true
-            }
-        }
-        if !haveSeed {
-            if let topTracksSeed = try? await fetchTopTracksSeed(limit: 2), !topTracksSeed.isEmpty {
-                queryItems.append(.init(name: "seed_tracks", value: topTracksSeed))
-                haveSeed = true
-            }
-        }
-        if !haveSeed {
-            // Fallback: liked tracks as seeds
-            if let likedSeed = try? await fetchLikedTracksSeed(limit: 2), !likedSeed.isEmpty {
-                queryItems.append(.init(name: "seed_tracks", value: likedSeed))
-                haveSeed = true
-            }
-        }
-        // Always ensure at least one genre seed exists; add safe default if user provided none
-        if userGenreSeeds == nil {
-            queryItems.append(.init(name: "seed_genres", value: "pop"))
-        }
-        var comps = URLComponents(string: "https://api.spotify.com/v1/recommendations")!
-        comps.queryItems = queryItems
-        if let url = comps.url { print("Recommendations URL:", url.absoluteString) }
-        var recs: RecommendationResponse
-        do {
-            let recData = try await fetch(request(comps.url!), label: "GET /v1/recommendations")
-            recs = try JSONDecoder().decode(RecommendationResponse.self, from: recData)
-        } catch {
-            // Fallback path if recommendations fail: build candidates from genre → artists → top tracks;
-            // if audio-features later 403 (permission), or we still fail to assemble, fallback to likes-based generator
-            print("Recommendations failed, building via search:", error.localizedDescription)
-            let market = me.country
-            var artistIds: [String] = []
-            let genresToUse = (genres.isEmpty ? [.pop] : genres).map { $0.rawValue.lowercased() }
-            for g in genresToUse {
-                let ids = (try? await searchArtistIds(for: g, market: market, limit: 20)) ?? []
-                artistIds.append(contentsOf: ids)
-            }
-            artistIds = Array(Array(Set(artistIds)).prefix(20))
-            var tracks: [ArtistTopTracksResponse.Track] = []
-            for aid in artistIds {
-                let tops = (try? await fetchTopTracks(for: aid, market: market)) ?? []
-                tracks.append(contentsOf: tops)
-            }
-            let converted = tracks.map { t in
-                RecommendationResponse.Track(id: t.id,
-                                              uri: t.uri,
-                                              name: t.name,
-                                              popularity: t.popularity,
-                                              explicit: t.explicit,
-                                              duration_ms: t.duration_ms,
-                                              album: .init(release_date: t.album.release_date),
-                                              artists: t.artists.map { .init(id: $0.id, name: $0.name) })
-            }
-            recs = RecommendationResponse(tracks: converted)
-        }
-
-        // 3) Hard filter: decades and track duration <= 6min
-        let decadeRanges = decadeYearRange(decades)
-        func passesDecades(_ year: Int?) -> Bool {
-            guard !decadeRanges.isEmpty else { return true }
-            guard let y = year else { return false }
-            return decadeRanges.contains(where: { (lo, hi) in (lo...hi).contains(y) })
-        }
-
-        var candidateTracks = recs.tracks.filter { t in
-            t.popularity >= 40 && t.duration_ms <= 6 * 60 * 1000 && passesDecades(year(from: t.album.release_date))
-        }
-
-        // 4) Audio features for tempo validation
-        let ids = candidateTracks.map { $0.id }
-        var selected: [RecommendationResponse.Track] = []
-        var featuresById: [String: Double] = [:]
-        if !ids.isEmpty {
-            var featComps = URLComponents(string: "https://api.spotify.com/v1/audio-features")!
-            featComps.queryItems = [.init(name: "ids", value: ids.joined(separator: ","))]
-            do {
-                let featData = try await fetch(request(featComps.url!), label: "GET /v1/audio-features (batch)")
-                let feats = try JSONDecoder().decode(AudioFeaturesResponse.self, from: featData)
-                for f in feats.audio_features { if let f = f { featuresById[f.id] = f.tempo } }
-            } catch let SpotifyServiceError.http(status, _, endpoint) where endpoint.contains("/v1/audio-features") && status == 403 {
-                // If audio-features is not permitted, immediately fallback to likes-based generator
-                return try await generateFromLikesPlaylist(name: name, template: template, durationCategory: durationCategory)
-            }
-        }
-
-        // 5) Greedy fill within bounds, avoid duplicates and cap per artist
-        var totalSeconds = 0
-        var seenTrackIds = Set<String>()
-        var perArtistCount: [String: Int] = [:]
-
-        func tempoOk(_ id: String) -> Bool {
-            guard let tempo = featuresById[id] else { return false }
-            return tempo >= minBPM && tempo <= maxBPM
-        }
-
-        for track in candidateTracks.shuffled() {
-            guard !seenTrackIds.contains(track.id) else { continue }
-            guard tempoOk(track.id) else { continue }
-            let artistId = track.artists.first?.id ?? track.id
-            if (perArtistCount[artistId] ?? 0) >= 2 { continue }
-            let secs = track.duration_ms / 1000
-            if totalSeconds + secs > maxSeconds { continue }
-            selected.append(track)
-            seenTrackIds.insert(track.id)
-            perArtistCount[artistId, default: 0] += 1
-            totalSeconds += secs
-            if totalSeconds >= minSeconds { break }
-        }
-
-        // If underfilled, relax popularity and widen tempo slightly, try again
-        if totalSeconds < minSeconds {
-            // Retry with lower popularity and wider BPM
-            var retryItems = queryItems
-            retryItems.removeAll { $0.name == "min_tempo" || $0.name == "max_tempo" }
-            retryItems.append(.init(name: "min_tempo", value: String(Int(minBPM - 5))))
-            retryItems.append(.init(name: "max_tempo", value: String(Int(maxBPM + 5))))
-            var retryComps = URLComponents(string: "https://api.spotify.com/v1/recommendations")!
-            retryComps.queryItems = retryItems
-            let recData2 = try await fetch(request(retryComps.url!), label: "GET /v1/recommendations (retry)")
-            let recs2 = try JSONDecoder().decode(RecommendationResponse.self, from: recData2)
-            let more = recs2.tracks.filter { t in t.popularity >= 20 && t.duration_ms <= 6 * 60 * 1000 && passesDecades(year(from: t.album.release_date)) }
-            candidateTracks.append(contentsOf: more)
-            for track in candidateTracks.shuffled() {
-                guard totalSeconds < minSeconds else { break }
-                guard !seenTrackIds.contains(track.id) else { continue }
-                if featuresById[track.id] == nil {
-                    var featComps = URLComponents(string: "https://api.spotify.com/v1/audio-features")!
-                    featComps.queryItems = [.init(name: "ids", value: track.id)]
-                    do {
-                        let featData2 = try await fetch(request(featComps.url!), label: "GET /v1/audio-features (single)")
-                        let feats2 = try JSONDecoder().decode(AudioFeaturesResponse.self, from: featData2)
-                        if let t = feats2.audio_features.first??.tempo { featuresById[track.id] = t }
-                    } catch let SpotifyServiceError.http(status, _, endpoint) where endpoint.contains("/v1/audio-features") && status == 403 {
-                        return try await generateFromLikesPlaylist(name: name, template: template, durationCategory: durationCategory)
-                    }
-                }
-                guard let ttempo = featuresById[track.id], ttempo >= (minBPM - 5) && ttempo <= (maxBPM + 5) else { continue }
-                let artistId = track.artists.first?.id ?? track.id
-                if (perArtistCount[artistId] ?? 0) >= 2 { continue }
-                let secs = track.duration_ms / 1000
-                if totalSeconds + secs > maxSeconds { continue }
-                selected.append(track)
-                seenTrackIds.insert(track.id)
-                perArtistCount[artistId, default: 0] += 1
-                totalSeconds += secs
-            }
-        }
-
-        // 6) Create playlist (public) and add tracks
-        let createBody = try JSONSerialization.data(withJSONObject: [
-            "name": name,
-            "description": "RunClub · \(template.rawValue) · \(durationCategory.displayName)",
-            "public": true
-        ])
-        let plData = try await fetch(request(URL(string: "https://api.spotify.com/v1/users/\(me.id)/playlists")!,
-                                  method: "POST",
-                                  body: createBody), label: "POST /v1/users/{id}/playlists")
-        let pl = try JSONDecoder().decode(PlaylistCreateResponse.self, from: plData)
-
-        let uris = selected.map { $0.uri }
-        if !uris.isEmpty {
-            try await addTracksChunked(playlistId: pl.id, uris: uris)
-        } else {
-            // As a fallback, add up to 15 of the user's recent likes so the playlist isn't empty
-            let likesData = try await fetch(request(URL(string: "https://api.spotify.com/v1/me/tracks?limit=15")!), label: "GET /v1/me/tracks (fallback)")
-            let likes = try JSONDecoder().decode(SavedTracks.self, from: likesData)
-            let likeUris = likes.items.map { $0.track.uri }
-            if !likeUris.isEmpty {
-                try await addTracksChunked(playlistId: pl.id, uris: likeUris)
-            }
-        }
-
-        let urlString = pl.external_urls["spotify"] ?? "https://open.spotify.com/playlist/\(pl.id)"
-        return URL(string: urlString)!
-    }
+    
 
     // MARK: - Public helpers
     func currentUserId() async throws -> String {
@@ -1426,9 +1234,7 @@ extension SpotifyService {
 
     /// Confirm and create a playlist from preview tracks
     func createConfirmedPlaylist(from preview: PreviewRun) async throws -> URL {
-        let durLabel: String = {
-            if let m = preview.customMinutes { return "\(m) min" } else { return preview.duration.displayName }
-        }()
+        let durLabel = "\(preview.runMinutes) min"
         let name = "RunClub · \(preview.template.rawValue) · \(durLabel) · \(Date().formatted(date: .numeric, time: .omitted))"
         let description = "RunClub · \(preview.template.rawValue) · \(durLabel)"
         let uris = preview.tracks.map { "spotify:track:\($0.id)" }

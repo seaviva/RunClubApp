@@ -11,9 +11,15 @@ import UserNotifications
 
 @main
 struct RunClubApp: App {
+    init() {
+        // Seed the Playlists SwiftData store from bundled resources on first run (idempotent)
+        PlaylistsStoreSeeder.seedIfNeeded()
+        // Seed/update the Third Source store from bundled resources before containers initialize
+        ThirdSourceStoreSeeder.seedOrUpdateIfNeeded()
+    }
     @StateObject private var auth = AuthService()
     @StateObject private var progressStore = LikesProgressStore()
-    @StateObject private var recsProgressStore = RecsProgressStore()
+    @StateObject private var playlistsProgressStore = PlaylistsProgressStore()
     private let spotify = SpotifyService() // keep for future injection
     
     var sharedModelContainer: ModelContainer = {
@@ -50,7 +56,7 @@ struct RunClubApp: App {
             RootView()
                 .environmentObject(auth)
                 .environmentObject(progressStore)
-                .environmentObject(recsProgressStore)
+                .environmentObject(playlistsProgressStore)
                 .onAppear { RootView.sharedAuth = auth }
                 .task { /* disable native PKCE restore */ }
                 .onAppear {

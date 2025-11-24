@@ -12,6 +12,7 @@ enum Config {
     static let scopes = [
         "user-read-email","user-read-private",
         "user-library-read","user-library-modify","user-top-read",
+        "playlist-read-private","playlist-read-collaborative",
         "playlist-modify-public","playlist-modify-private",
         // Playback control + metadata for in-app start/pause/resume and track info
         "user-modify-playback-state","user-read-playback-state","user-read-currently-playing",
@@ -27,4 +28,11 @@ enum Config {
     // Juky integration constants
     static let jukyWebURL = "https://web.juky.app"
     static let jukyWebViewUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1"
+
+    // Ingestion tuning
+    // Remove unconditional sleeps; rely on 429-aware backoff
+    static let useFieldsForMeTracks: Bool = true
+    static let likesPagePrefetchDepth: Int = 3 // triple-buffer by default
+    static let featuresMaxConcurrency: Int = 20
+    static let reccoResolveBatchSize: Int = 200 // logical target (split into API-supported chunks internally)
 }
