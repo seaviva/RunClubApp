@@ -173,21 +173,13 @@ struct WebTokenConnectView: UIViewRepresentable {
         let coordinator = context.coordinator
         let handler = coordinator.handler
 
-        // When auth succeeds, make sure we both store tokens (for legacy shapes)
-        // and immediately stop/hide the web view before notifying the caller.
         handler.onAuth = { token in
             // Backward-compatible: if given a single token string
             AuthService.setOverrideTokens(accessToken: token, refreshToken: nil, expiresAt: nil)
-            print("[AUTH] WebTokenConnectView.onAuth token length=\(token.count)")
-            DispatchQueue.main.async {
-                coordinator.webView?.stopLoading()
-                coordinator.webView?.isHidden = true
-                onAuth(token)
-            }
+            onAuth(token)
         }
 
         handler.onNotLoggedIn = {
-            print("[AUTH] WebTokenConnectView.onNotLoggedIn")
             coordinator.showDocument()
         }
 
