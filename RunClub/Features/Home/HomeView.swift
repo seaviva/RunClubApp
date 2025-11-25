@@ -12,6 +12,7 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var auth: AuthService
     @EnvironmentObject var crawlCoordinator: CrawlCoordinator
+    @EnvironmentObject var progressStore: LikesProgressStore
     @EnvironmentObject var playlistsCoordinator: PlaylistsCoordinator
     @EnvironmentObject var playlistsProgress: PlaylistsProgressStore
     @Environment(\.scenePhase) private var scenePhase
@@ -43,12 +44,10 @@ struct HomeView: View {
     private let spotify = SpotifyService()
     @State private var showingLog: Bool = false
 
-    // Order templates for the Home carousel. Rest is last unless it's the recommended item.
+    // Order templates for the Home carousel.
     private func templateCarouselOrder(recommended: RunTemplateType?) -> [RunTemplateType] {
-        var base = RunTemplateType.allCases.filter { $0 != .rest }
-        base.append(.rest)
+        let base = RunTemplateType.allCases
         guard let rec = recommended else { return base }
-        if rec == .rest { return [.rest] + base.filter { $0 != .rest } }
         return [rec] + base.filter { $0 != rec }
     }
 
@@ -69,16 +68,12 @@ struct HomeView: View {
                 //Color.clear.frame(height: max(0,proxy.safeAreaInsets.top - 16))
                 // Header: centered HStack with left logo, middle title, right log button
                 HStack(spacing: 0) {
-                    Button { showingSettings = true } label: {
-                        Image("runclublogo")
-                            .renderingMode(.original)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 20, height: 20)
-                    }
-                    .frame(width: 44, height: 44, alignment: .center)
-                    .contentShape(Rectangle())
-                    .buttonStyle(.plain)
+                    Image("runclublogo")
+                        .renderingMode(.original)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 20, height: 20)
+                        .frame(width: 44, height: 44, alignment: .center)
 
                     Spacer(minLength: 8)
 
@@ -90,17 +85,36 @@ struct HomeView: View {
 
                     Spacer(minLength: 8)
 
-                    Button { showingLog = true } label: {
-                        Image("calendarblank")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 24, height: 24)
-                            .foregroundColor(.white)
+                    HStack(spacing: 0) {
+                        Button { showingLog = true } label: {
+                            Image("calendarblank")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(.white)
+                        }
+                        .frame(width: 44, height: 44, alignment: .center)
+                        .contentShape(Rectangle())
+                        .buttonStyle(.plain)
+
+                        Button { showingSettings = true } label: {
+                            if progressStore.isRunning || playlistsProgress.isRunning {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.9)
+                            } else {
+                                Image(systemName: "line.3.horizontal")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 20, height: 20)
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .frame(width: 44, height: 44, alignment: .center)
+                        .contentShape(Rectangle())
+                        .buttonStyle(.plain)
                     }
-                    .frame(width: 44, height: 44, alignment: .center)
-                    .contentShape(Rectangle())
-                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 12)
@@ -154,12 +168,11 @@ struct HomeView: View {
                     if (AuthService.overrideToken() != nil) {
                             HStack(spacing: 16) {
                                 Spacer()
-                                let isRest = selectedTemplate == .rest
                                 let filtersApplied = !customGenres.isEmpty || !customDecades.isEmpty
                                 Button(action: { showingFiltersSheet = true }) {
                                     HStack(spacing: 8) {
                                         Image(systemName: "music.note.list").font(.system(size: 16, weight: .regular))
-                                        Text(isRest ? "NA" : (filtersApplied ? "CUSTOM" : "AUTO"))
+                                        Text(filtersApplied ? "CUSTOM" : "AUTO")
                                             .font(RCFont.medium(15))
                                     }
                                     .foregroundColor(Color(hex: 0x1FCBFF))
@@ -168,12 +181,11 @@ struct HomeView: View {
                                     .background(Color(hex: 0x33B1FF, alpha: 0.25))
                                     .cornerRadius(28)
                                 }
-                                .disabled(isRest)
                                 Button(action: { showingDurationSheet = true }) {
                                     HStack(spacing: 8) {
                                         Image(systemName: "timer").font(.system(size: 16, weight: .regular))
                                         let label = "~\(runMinutes)min"
-                                        Text(isRest ? "NA" : label).font(RCFont.medium(15))
+                                        Text(label).font(RCFont.medium(15))
                                     }
                                     .foregroundColor(Color(hex: 0xFF3333))
                                     .padding(.horizontal, 20)
@@ -181,7 +193,6 @@ struct HomeView: View {
                                     .background(Color(hex: 0xFF3333, alpha: 0.25))
                                     .cornerRadius(28)
                                 }
-                                .disabled(isRest)
                                 Spacer()
                             }
                             .frame(height: 68)
@@ -207,7 +218,7 @@ struct HomeView: View {
                                     .fixedSize(horizontal: true, vertical: false)
                             }
                             .buttonStyle(SecondaryOutlineButtonStyle())
-                            .disabled(selectedTemplate == .rest || isGenerating)
+                            .disabled(isGenerating)
                             Spacer(minLength: 0)
                         }
                         .padding(.top, 8)
@@ -247,6 +258,7 @@ struct HomeView: View {
             SettingsView()
                 .environmentObject(auth)
                 .environmentObject(crawlCoordinator)
+                .environmentObject(progressStore)
                 .environmentObject(playlistsCoordinator)
                 .environmentObject(playlistsProgress)
         }
@@ -347,8 +359,6 @@ struct HomeView: View {
 
     private func runDescription(for template: RunTemplateType) -> String {
         switch template {
-        case .rest:
-            return "A day to focus on other stuff - do some yoga, strength exercises, a long walk with your furry friend, or just take a really nice long nap."
         case .easyRun:
             return "A relaxed, steady-paced run with low-energy tracks to keep you comfortable from start to finish. Perfect for recovery or getting moving without pushing too hard."
         case .strongSteady:
@@ -368,9 +378,8 @@ struct HomeView: View {
 
     // Map a template to a background asset name located under Assets `templateimages`.
     private func templateBackgroundAssetName(for template: RunTemplateType?) -> String {
-        guard let t = template else { return "rest" }
+        guard let t = template else { return "light" }
         switch t {
-        case .rest: return "rest"
         case .easyRun: return "light"
         case .strongSteady: return "tempo"
         case .longEasy: return "longeasy"
@@ -407,26 +416,6 @@ private struct RecommendationCard: View {
                 .font(.title3).bold()
             Text("\(minutes) min")
                 .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color.gray.opacity(0.12))
-        .cornerRadius(12)
-    }
-}
-
-private struct RestCard: View {
-    let title: String
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.headline)
-            Text("Rest")
-                .font(.title3).bold()
-            Text("A day to focus on other stuff - do some yoga, strength exercises, or just take a really nice long nap.")
-                .font(RCFont.regular(16))
-                .foregroundColor(.secondary)
-                .lineSpacing(8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()

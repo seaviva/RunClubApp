@@ -88,10 +88,8 @@ Key highlights of the current architecture:
 #### RunClub/Features/Generation
 - `LocalGenerator.swift`: Local generator; selects tracks and enforces minutes ±2m.
 - `RunPreviewService.swift`: Builds `PreviewRun` for the preview sheet.
-- `GeneratorUtils.swift`: Generator utilities and helpers.
 - `GenreUmbrellaService.swift`: Umbrella-genre mapping logic.
 - `SpotifyRecommendationService.swift`: Integration with Spotify recommendations.
-- `GeneratorMatrixRunner.swift`: Dev tool to sweep templates × minutes.
 - `ReccoBeatsService.swift`: External audio-features provider wrapper.
 
 #### RunClub/Features/Settings

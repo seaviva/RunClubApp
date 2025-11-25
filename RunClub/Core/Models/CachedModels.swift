@@ -136,28 +136,6 @@ final class CrawlState {
     }
 }
 
-// MARK: - Run generation support
-
-enum PaceBucket: String, Codable, CaseIterable {
-    case A, B, C, D
-}
-
-@Model
-final class UserRunPrefs {
-    var paceBucketRaw: String
-    var customCadenceSPM: Double?
-
-    var paceBucket: PaceBucket {
-        get { PaceBucket(rawValue: paceBucketRaw) ?? .B }
-        set { paceBucketRaw = newValue.rawValue }
-    }
-
-    init(paceBucket: PaceBucket = .B, customCadenceSPM: Double? = nil) {
-        self.paceBucketRaw = paceBucket.rawValue
-        self.customCadenceSPM = customCadenceSPM
-    }
-}
-
 @Model
 final class TrackUsage {
     @Attribute(.unique) var trackId: String

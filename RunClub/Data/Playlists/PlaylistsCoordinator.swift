@@ -29,7 +29,15 @@ final class PlaylistsCoordinator: ObservableObject {
         // Ensure synthetic Recently Played exists in catalog (unselected by default)
         let ctx = PlaylistsDataStack.shared.context
         let existing = try? ctx.fetch(FetchDescriptor<CachedPlaylist>(predicate: #Predicate { $0.id == "recently-played" })).first
-        if existing == nil {
+        if let rp = existing {
+            // Ensure metadata stays in sync with product expectations
+            rp.name = "Recently Played (last 50)"
+            // Before any sync, show 50 to mirror the API limit / UX intent.
+            if rp.totalTracks == 0 {
+                rp.totalTracks = 50
+            }
+            try? ctx.save()
+        } else {
             let p = CachedPlaylist(id: "recently-played",
                                    name: "Recently Played (last 50)",
                                    ownerId: "",
@@ -38,7 +46,7 @@ final class PlaylistsCoordinator: ObservableObject {
                                    isPublic: false,
                                    collaborative: false,
                                    imageURL: nil,
-                                   totalTracks: 0,
+                                   totalTracks: 50, // Display 50 tracks pre-sync to match "last 50" semantics.
                                    snapshotId: nil,
                                    selectedForSync: false, // user opts in explicitly
                                    lastSyncedAt: nil,

@@ -4,7 +4,7 @@ Scope: Authoritative specification for run template structure and the local play
 
 
 ### High-level goals:
-	•	Anchors to the runner, not the song library. Pace buckets → cadence anchor → tempo bands; accepts ½×/2× tempo, so it works across genres and personal cadence (less fragile than pure BPM).  ￼
+	•	Uses template-tier tempo windows instead of user pace. Fixed BPM bands per effort tier still accept ½×/2× tempo so songs across genres can “feel” right without collecting cadence data.  ￼
 	•	Builds runs as effort curves, not crude blocks. Warm-up/cooldown are reserved; Pyramid/Steady/Waves are granular and ordered; Easy/Long Easy avoid surges.  ￼
 	•	Reduces repetition and boosts variety. 10-day lockout, artist spacing, genre/decade diversity bonus, and a rediscovery target (liked but unused ≥60 days) so playlists feel fresh.  ￼
 	•	Fits duration reliably. It reserves WU/CD minutes, biases by template (Easy → shorter; Pyramid/Steady/Kicker → longer), then trims/extends edges to land within ±60s.  ￼
@@ -22,8 +22,8 @@ Scope: Authoritative specification for run template structure and the local play
 ### How the algorithm works (simple but accurate):
   Step 1 — Understand today’s run.
     You choose a template (e.g., Long Waves). The app reserves 7–10 min warm-up and 5–8 min cool-down, then builds an effort curve (a target intensity per song) for the part in the middle. For example, Long Waves = EASY, EASY, HARD, HARD, repeated.  ￼
-  Step 2 — Translate your pace into tempo targets.
-    Your onboarding pace bucket maps to a cadence anchor (e.g., 165 steps/min). The app turns each effort slot into a tempo window relative to that anchor (EASY ≈ 0.9–1.0× anchor; HARD ≈ 1.05–1.10×) and also accepts half-time/double-time tempos (so ~82 or ~330 BPM can still “feel” right).  ￼
+  Step 2 — Translate the template into tempo targets.
+    Each effort tier has a predefined BPM window (e.g., EASY ≈ 150–165 BPM, HARD ≈ 168–186 BPM). Slots inherit those ranges so the generator keeps intensity curves consistent, and it still accepts half-time/double-time tempos (so ~82 or ~330 BPM can “feel” right).  ￼
   Step 3 — Build a candidate pool.
     From your liked tracks cache (with ReccoBeats features), it applies your genre/decade filters, tosses out anything used in the last 10 days, and tags rediscovery tracks (not used ≥60 days).  ￼
   Step 4 — Score each song for the current slot.
@@ -40,8 +40,6 @@ Scope: Authoritative specification for run template structure and the local play
 
 
 ### Inputs and Preferences
-- Pace bucket (A–D) collected via onboarding/settings; until then default to B.
-  - A → 158 SPM; B → 165 SPM; C → 172 SPM; D → 178 SPM.
 - Filters (hard includes): genres (via artist genres), decades (via album year).
 - Explicit: allowed.
 - Recency lockout: 10 days (RunClub usage, not Spotify plays).
@@ -52,11 +50,10 @@ Scope: Authoritative specification for run template structure and the local play
 - AudioFeature(trackId, tempo?, energy?, danceability?, valence?, loudness?, key?, mode?, timeSignature?)
 - CachedArtist(id, name, genres:[String], popularity?)
 - TrackUsage(trackId, lastUsedAt, usedCount) — new, RunClub-only usage state
-- UserRunPrefs(paceBucket: A|B|C|D; default B) — new
 
 ### Effort tiers (5-tier) and tempo targets
 - Tiers: Easy, Moderate, Strong, Hard, Max. Each slot specifies a tier and target effort (0–1). Warm‑up and Cooldown are Easy.
-- Use pace bucket’s cadence anchor (SPM) to define tier tempo windows; accept ½× and 2× multiples as valid tempo matches.
+- Each tier maps to a fixed BPM window; accept ½× and 2× multiples as valid tempo matches.
   - Easy: wider window; tolerance ≈ ±15 BPM; targetEffort ≈ 0.35
   - Moderate: ±12 BPM; targetEffort ≈ 0.48
   - Strong: ±10 BPM; targetEffort ≈ 0.60
@@ -95,7 +92,7 @@ Scope: Authoritative specification for run template structure and the local play
 
 ### Scoring and Selection
 - EffortIndex = tier‑weighted blend (tempo/energy/dance) with tier‑specific weights (e.g., Easy 0.65/0.25/0.10; Strong 0.60/0.30/0.10). Tier sets tempo tolerance, minimum tempoFit gates, and energy shaping (Easy caps high energy; higher tiers have soft energy floors).
-  - tempoFit = closeness to tier window using min distance to anchor, ½×, or 2×; if tempo missing, use proxy (0.6×energy+0.4×danceability).
+  - tempoFit = closeness to the tier BPM window using min distance to the window, ½×, or 2×; if tempo missing, use proxy (0.6×energy+0.4×danceability).
 - SlotFit = 1 − |EffortIndex − targetEffort|
 - Final Score (per slot) = 0.60×SlotFit + 0.10×(1 − RecencyPenalty) + 0.10×ArtistSpacing + 0.10×Diversity + 0.08×GenreAffinity + 0.02×PersonalAffinity
   - RecencyPenalty grows as track nears 10‑day boundary (0 when far in past; capped to avoid over‑penalizing rediscovery).
@@ -124,7 +121,6 @@ Scope: Authoritative specification for run template structure and the local play
 - Log metrics for iteration: tempo‑fit %, rediscovery %, artist spacing (avg minutes), 10‑day compliance, per‑track scores.
 
 ### Defaults and Fallback
-- Pace bucket default: B (165 SPM) until onboarding/settings capture user input.
 - Algorithm operates entirely on SwiftData cache. Remote fallbacks (e.g., Spotify recommendations) are not used in this local path; only consider remote if the local pool is empty after relaxations.
 
 

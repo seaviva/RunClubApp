@@ -7,7 +7,6 @@
 
 import SwiftUI
 import SwiftData
-import UIKit
 import Foundation
 
 struct SettingsView: View {
@@ -28,251 +27,188 @@ struct SettingsView: View {
     @State private var playlistsFeaturesCount: Int = 0
     @State private var selectedPlaylistsCount: Int = 0
     @State private var lastCompleted: Date? = nil
+    @State private var playlistsLastSync: Date? = nil
+    @State private var showStatsConnect: Bool = false
+    @State private var showDurationPicker: Bool = false
+    @State private var showPlaylistSelection: Bool = false
 
     var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Preferences")) {
-                    Picker("Default run length", selection: $defaultRunMinutes) {
-                        ForEach(Array(stride(from: 20, through: 90, by: 5)), id: \.self) { m in
-                            Text("\(m) min").tag(m)
-                        }
-                    }
-                    HStack {
-                        Text("Pace bucket")
-                        Spacer()
-                        PaceBucketPicker()
-                    }
-                    CadenceOverrideRow()
-                }
-
-                Section(header: Text("Spotify")) {
-                    HStack {
-                        Text("Status")
-                        Spacer()
-                        let isConnected = auth.isAuthorized || (AuthService.overrideToken() != nil)
-                        Text(isConnected ? "Connected" : "Not connected")
-                            .foregroundColor(isConnected ? .green : .secondary)
-                    }
-                    if (auth.isAuthorized || (AuthService.overrideToken() != nil)) {
-                        Button("Disconnect Spotify") {
-                            auth.logout()
-                            AuthService.clearOverrideToken()
-                        }
-                        .foregroundColor(.red)
-                    } else {
-                        Button("Connect via Juky") { showStatsConnect = true }
-                        .sheet(isPresented: $showStatsConnect) {
-                            WebTokenConnectView(onAuth: { _ in
-                                showStatsConnect = false
-                            }, onFail: {
-                                // keep sheet open; user may continue
-                            })
-                        }
-                    }
-                }
-
-                // Data Source: Likes
-                Section(header: Text("Data Source: Likes")) {
-                    HStack {
-                        Text("Likes")
-                        Spacer()
-                        if progressStore.isRunning && progressStore.debugName == "LIKES" {
-                            HStack(spacing: 6) {
-                                Text(progressStore.tracksTotal > 0 ? "\(progressStore.featuresDone)/\(progressStore.tracksTotal)" : "\(progressStore.featuresDone)")
-                                    .foregroundColor(.secondary)
-                                ProgressView().scaleEffect(0.8)
+        NavigationStack {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+            
+            VStack(alignment: .leading, spacing: 0) {
+                // Header
+                Text("SETTINGS")
+                    .font(RCFont.light(14))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 20)
+                    .padding(.bottom, 24)
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        // MARK: - Default Preferences
+                        SettingsSection(title: "DEFAULT PREFERENCES") {
+                            SettingsRow(label: "LENGTH", value: "\(defaultRunMinutes) MIN", showChevron: true) {
+                                showDurationPicker = true
                             }
-                        } else {
-                            Text("\(likesFeaturesCount)/\(likesCount)").foregroundColor(.secondary)
-                        }
-                    }
-                    Button((progressStore.isRunning && progressStore.debugName == "LIKES") ? "Cancel Likes" : "Refresh Likes") {
-                        if progressStore.isRunning && progressStore.debugName == "LIKES" {
-                            let coord = crawlCoordinator
-                            Task { await coord.cancel() }
-                        } else {
-                            let coord = crawlCoordinator
-                            Task { await coord.refresh() }
-                        }
-                    }
-                    let dur = UserDefaults.standard.double(forKey: "likesIngestDurationSec")
-                    let tps = UserDefaults.standard.double(forKey: "likesIngestTPS")
-                    if dur > 0 {
-                        HStack {
-                            Text("Likes ingest")
-                            Spacer()
-                            Text("\(Int(dur))s • \(String(format: "%.2f", tps)) t/s")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    if let lastCompleted { HStack { Text("Last cached (Likes)"); Spacer(); Text(lastCompleted.formatted(date: .abbreviated, time: .shortened)).foregroundColor(.secondary) } }
-                }
-
-                // Data Source: Playlists
-                Section(header: Text("Data Source: Playlists")) {
-                    NavigationLink {
-                        PlaylistSelectionView()
-                    } label: {
-                        HStack {
-                            Text("Selected playlists")
-                            Spacer()
-                            Text("\(selectedPlaylistsCount)").foregroundColor(.secondary)
-                        }
-                    }
-                    HStack {
-                        Text("Songs (playlists)")
-                        Spacer()
-                        if playlistsProgress.isRunning {
-                            HStack(spacing: 6) {
-                                Text(playlistsProgress.tracksTotal > 0 ? "\(playlistsProgress.featuresDone)/\(playlistsProgress.tracksTotal)" : "\(playlistsProgress.featuresDone)")
-                                    .foregroundColor(.secondary)
-                                ProgressView().scaleEffect(0.8)
+                            SettingsRow(label: "FILTERS", value: "NONE", showChevron: true) {
+                                // TODO: Open filters picker
                             }
-                        } else {
-                            Text("\(playlistsFeaturesCount)/\(playlistsCount)").foregroundColor(.secondary)
                         }
-                    }
-                    if playlistsProgress.isRunning {
-                        Text(playlistsProgress.message)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                    Button(playlistsProgress.isRunning ? "Cancel Sync" : "Sync Selected") {
-                        if playlistsProgress.isRunning {
-                            Task { await playlistsCoordinator.cancel() }
-                        } else {
-                            Task {
-                                print("[SETTINGS] Sync Selected tapped")
-                                await MainActor.run {
-                                    playlistsProgress.message = "Starting playlists sync…"
-                                    playlistsProgress.isRunning = true
+                        
+                        // MARK: - Songs - Likes
+                        SettingsSection(title: "SONGS - LIKES") {
+                            let likesRunning = progressStore.isRunning && progressStore.debugName == "LIKES"
+                            if likesRunning {
+                                // Show tracksDone during sync for real-time feedback (matches toast)
+                                SettingsRowWithProgress(
+                                    label: "TRACKS",
+                                    value: progressStore.tracksTotal > 0 ? "\(progressStore.tracksDone)/\(progressStore.tracksTotal)" : "\(progressStore.tracksDone)"
+                                )
+                                SettingsRowWithAction(
+                                    label: progressStore.message.isEmpty ? "Syncing..." : progressStore.message,
+                                    actionLabel: "CANCEL",
+                                    actionIcon: "x",
+                                    isCancel: true
+                                ) {
+                                    let coord = crawlCoordinator
+                                    Task { await coord.cancel() }
                                 }
-                                await playlistsCoordinator.configure(auth: auth, progressStore: playlistsProgress, likesContext: modelContext)
-                                await playlistsCoordinator.refreshCatalog()
-                                await playlistsCoordinator.refreshSelected()
-                                await loadCounts()
+                            } else {
+                                // Show enriched count when idle (featuresDone from DB)
+                                SettingsRow(label: "TRACKS", value: "\(likesFeaturesCount)/\(likesCount)")
+                                SettingsRowWithAction(
+                                    label: lastCompleted != nil ? "Sync'd \(lastCompleted!.formatted(date: .numeric, time: .shortened))" : "Not synced",
+                                    actionLabel: "REFRESH",
+                                    actionIcon: "refresh",
+                                    isCancel: false
+                                ) {
+                                    let coord = crawlCoordinator
+                                    Task { await coord.refresh() }
+                                }
                             }
                         }
-                    }
-                }
-
-                Section(header: Text("App")) {
-                    Button("Reload Third Source from Bundle") {
-                        ThirdSourceStoreSeeder.markForceReload()
-                        playlistsProgress.message = "Third source will reload on next launch"
-                    }
-                    Button("Reset Onboarding") { onboardingComplete = false }
-                    if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
-                       let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String {
-                        HStack {
-                            Text("Version")
-                            Spacer()
-                            Text("\(version) (\(build))")
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-
-                Section {
-                    Button("Run Generator Matrix (dev)") {
-                        let gen = LocalGenerator(modelContext: modelContext)
-                        let spotify = SpotifyService()
-                        Task {
-                            if let tok = await auth.accessToken() { spotify.accessTokenProvider = { tok } }
-                            var failures: [String] = []
-                            var rows: [String] = []
-                            var details: [String] = []
-                            for template in RunTemplateType.allCases {
-                                for minutes in [20, 30, 45, 60] {
-                                    do {
-                                        let r = try await gen.generateDryRun(template: template,
-                                                                              runMinutes: minutes,
-                                                                              genres: [], decades: [],
-                                                                              spotify: spotify)
-                                        if !(r.totalSeconds >= r.minSeconds && r.totalSeconds <= r.maxSeconds) {
-                                            failures.append("bounds \(template.rawValue)-\(minutes) mins secs=\(r.totalSeconds) range=[\(r.minSeconds),\(r.maxSeconds)]")
+                        
+                        // MARK: - Songs - Playlists
+                        SettingsSection(title: "SONGS - PLAYLISTS") {
+                            SettingsRowNav(label: "SELECTED PLAYLISTS", value: "\(selectedPlaylistsCount)") {
+                                showPlaylistSelection = true
+                            }
+                            
+                            if playlistsProgress.isRunning {
+                                // Show tracksDone during sync for real-time feedback (matches toast)
+                                SettingsRowWithProgress(
+                                    label: "TRACKS",
+                                    value: playlistsProgress.tracksTotal > 0 ? "\(playlistsProgress.tracksDone)/\(playlistsProgress.tracksTotal)" : "\(playlistsProgress.tracksDone)"
+                                )
+                                SettingsRowWithAction(
+                                    label: playlistsProgress.message.isEmpty ? "Syncing..." : playlistsProgress.message,
+                                    actionLabel: "CANCEL",
+                                    actionIcon: "x",
+                                    isCancel: true
+                                ) {
+                                    Task { await playlistsCoordinator.cancel() }
+                                }
+                            } else {
+                                // Show enriched count when idle (featuresDone from DB)
+                                SettingsRow(label: "TRACKS", value: "\(playlistsFeaturesCount)/\(playlistsCount)")
+                                SettingsRowWithAction(
+                                    label: playlistsLastSync != nil ? "Sync'd \(playlistsLastSync!.formatted(date: .numeric, time: .shortened))" : "Not synced",
+                                    actionLabel: "REFRESH",
+                                    actionIcon: "refresh",
+                                    isCancel: false
+                                ) {
+                                    Task {
+                                        print("[SETTINGS] Sync Selected tapped")
+                                        await MainActor.run {
+                                            playlistsProgress.message = "Starting playlists sync…"
+                                            playlistsProgress.isRunning = true
                                         }
-                                        var perArtist: [String: Int] = [:]
-                                        var backToBackOk = true
-                                        for (i, aid) in r.artistIds.enumerated() {
-                                            perArtist[aid, default: 0] += 1
-                                            if i > 0 && r.artistIds[i-1] == aid { backToBackOk = false }
-                                        }
-                                        if perArtist.values.contains(where: { $0 > 2 }) { failures.append("artist-cap \(template.rawValue)-\(minutes)") }
-                                        if !backToBackOk { failures.append("back-to-back \(template.rawValue)-\(minutes)") }
-                                        rows.append("\(template.rawValue),\(minutes),\(r.trackIds.count),\(r.totalSeconds)")
-                                        details.append("\n# \(template.rawValue) — \(minutes) min (tracks=\(r.trackIds.count) secs=\(r.totalSeconds) range=[\(r.minSeconds),\(r.maxSeconds)] market=\(r.market) unplayable=\(r.preflightUnplayable) swapped=\(r.swapped) removed=\(r.removed))")
-                                        details.append(contentsOf: r.debugLines)
-                                    } catch {
-                                        failures.append("exception \(template.rawValue)-\(minutes): \(error)")
+                                        await playlistsCoordinator.configure(auth: auth, progressStore: playlistsProgress, likesContext: modelContext)
+                                        await playlistsCoordinator.refreshCatalog()
+                                        await playlistsCoordinator.refreshSelected()
+                                        await loadCounts()
                                     }
                                 }
                             }
-                            print("GeneratorMatrix: template,duration,tracks,seconds")
-                            for r in rows { print(r) }
-                            if failures.isEmpty { print("GeneratorMatrix: ALL OK") }
-                            else { print("GeneratorMatrix FAILURES (\(failures.count)):\n\(failures.joined(separator: "\n"))") }
-                            let header = "template,duration,tracks,seconds"
-                            var csv = ([header] + rows).joined(separator: "\n")
-                            if !failures.isEmpty {
-                                csv += "\n\nFAILURES (\(failures.count))\n" + failures.joined(separator: "\n")
+                        }
+                        
+                        // MARK: - App
+                        SettingsSection(title: "APP") {
+                            if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
+                               let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String {
+                                SettingsRow(label: "VERSION", value: "\(version) (\(build))")
                             }
-                            if !details.isEmpty {
-                                csv += "\n\nDETAILS\n" + details.joined(separator: "\n")
-                            }
-                            let df = DateFormatter()
-                            df.dateFormat = "yyyyMMdd_HHmmss"
-                            let filename = "GeneratorMatrix_\(df.string(from: Date())).csv"
-                            if let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-                                let url = docs.appendingPathComponent(filename)
-                                do {
-                                    try csv.write(to: url, atomically: true, encoding: .utf8)
-                                    print("GeneratorMatrix: saved to \(url.path)")
-                                    await MainActor.run {
-                                        shareURL = url
-                                        showShare = true
-                                    }
-                                } catch {
-                                    print("GeneratorMatrix: save failed: \(error)")
+                            
+                            let isConnected = auth.isAuthorized || (AuthService.overrideToken() != nil)
+                            SettingsRow(label: "SPOTIFY", value: isConnected ? "CONNECTED" : "NOT CONNECTED", valueColor: isConnected ? .green : nil)
+                            
+                            if isConnected {
+                                SettingsRowButton(label: "LOGOUT / DISCONNECT SPOTIFY", isDestructive: true) {
+                                    auth.logout()
+                                    AuthService.clearOverrideToken()
+                                }
+                            } else {
+                                SettingsRowButton(label: "CONNECT VIA JUKY") {
+                                    showStatsConnect = true
                                 }
                             }
                         }
+                        
+                        // MARK: - Dev
+                        SettingsSection(title: "DEV") {
+                            SettingsRowButton(label: "RESET ONBOARDING") {
+                                onboardingComplete = false
+                            }
+                            SettingsRowButton(label: "RELOAD THIRD SOURCE") {
+                                ThirdSourceStoreSeeder.markForceReload()
+                                playlistsProgress.message = "Third source will reload on next launch"
+                            }
+                        }
                     }
-                    .foregroundColor(.secondary)
-                }
-            }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .task {
-                await playlistsCoordinator.configure(auth: auth, progressStore: playlistsProgress, likesContext: modelContext)
-                await loadCounts()
-            }
-            .onChange(of: playlistsProgress.isRunning) { running in
-                if !running {
-                    Task { await loadCounts() }
-                }
-            }
-            .onChange(of: progressStore.isRunning) { running in
-                if !running {
-                    Task { await loadCounts() }
-                }
-            }
-            .sheet(isPresented: $showShare) {
-                if let url = shareURL {
-                    ActivityView(activityItems: [url])
-                } else {
-                    Text("No report to share")
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 40)
                 }
             }
         }
+        .navigationBarHidden(true)
+        .sheet(isPresented: $showStatsConnect) {
+            WebTokenConnectView(onAuth: { _ in
+                showStatsConnect = false
+            }, onFail: {
+                // keep sheet open; user may continue
+            })
+        }
+        .sheet(isPresented: $showDurationPicker) {
+            DurationPickerSheet(initialMinutes: defaultRunMinutes) { newValue in
+                if let minutes = newValue {
+                    defaultRunMinutes = minutes
+                }
+            }
+            .presentationDetents([.height(300)])
+        }
+        .task {
+            await playlistsCoordinator.configure(auth: auth, progressStore: playlistsProgress, likesContext: modelContext)
+            await loadCounts()
+        }
+        .onChange(of: playlistsProgress.isRunning) { running in
+            if !running {
+                playlistsLastSync = Date()
+                Task { await loadCounts() }
+            }
+        }
+        .onChange(of: progressStore.isRunning) { running in
+            if !running {
+                Task { await loadCounts() }
+            }
+        }
+        .navigationDestination(isPresented: $showPlaylistSelection) {
+            PlaylistSelectionView()
+        }
+        }
     }
-
-    // Share sheet state
-    @State private var shareURL: URL? = nil
-    @State private var showShare: Bool = false
-    @State private var showStatsConnect: Bool = false
 
     private func loadCounts() async {
         do {
@@ -291,128 +227,185 @@ struct SettingsView: View {
                 playlistsFeaturesCount = plFeatures
                 selectedPlaylistsCount = selCount
                 lastCompleted = state?.lastCompletedAt
+                // If playlists have been synced but we don't have a date, show a placeholder
+                if playlistsLastSync == nil && plFeatures > 0 {
+                    playlistsLastSync = Date()
+                }
             }
         } catch { }
     }
 }
 
-private struct ActivityView: UIViewControllerRepresentable {
-    let activityItems: [Any]
-    let applicationActivities: [UIActivity]? = nil
+// MARK: - Settings Components
 
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
-
-private struct PaceBucketPicker: View {
-    @Environment(\.modelContext) private var modelContext
-    @State private var current: PaceBucket = .B
-
+private struct SettingsSection<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+    
     var body: some View {
-        Menu(currentLabel) {
-            ForEach([PaceBucket.A, .B, .C, .D], id: \.self) { bucket in
-                Button(bucketLabel(bucket)) { set(bucket) }
+        VStack(alignment: .leading, spacing: 0) {
+            Text(title)
+                .font(RCFont.light(13))
+                .foregroundColor(.white.opacity(0.4))
+                .padding(.bottom, 8)
+            
+            VStack(alignment: .leading, spacing: 1) {
+                content
             }
-        }
-        .onAppear { load() }
-    }
-
-    private var currentLabel: String {
-        switch current {
-        case .A: return "> 11:00 / mi"
-        case .B: return "9:30–11:00 / mi"
-        case .C: return "8:00–9:30 / mi"
-        case .D: return "< 8:00 / mi"
-        }
-    }
-
-    private func bucketLabel(_ b: PaceBucket) -> String { (b == current ? "• " : "") + currentLabelFor(b) }
-    private func currentLabelFor(_ b: PaceBucket) -> String {
-        switch b {
-        case .A: return "> 11:00 / mi"
-        case .B: return "9:30–11:00 / mi"
-        case .C: return "8:00–9:30 / mi"
-        case .D: return "< 8:00 / mi"
-        }
-    }
-
-    private func load() {
-        if let prefs = try? modelContext.fetch(FetchDescriptor<UserRunPrefs>()).first {
-            current = prefs.paceBucket
-        } else {
-            let prefs = UserRunPrefs(paceBucket: .B)
-            modelContext.insert(prefs)
-            try? modelContext.save()
-            current = .B
-        }
-    }
-
-    private func set(_ b: PaceBucket) {
-        if let prefs = try? modelContext.fetch(FetchDescriptor<UserRunPrefs>()).first {
-            prefs.paceBucket = b
-            try? modelContext.save()
-            current = b
-        } else {
-            let prefs = UserRunPrefs(paceBucket: b)
-            modelContext.insert(prefs)
-            try? modelContext.save()
-            current = b
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
 }
 
-private struct CadenceOverrideRow: View {
-    @Environment(\.modelContext) private var modelContext
-    @State private var valueString: String = ""
-    @State private var current: Double? = nil
-
+private struct SettingsRow: View {
+    let label: String
+    var value: String? = nil
+    var valueColor: Color? = nil
+    var showChevron: Bool = false
+    var action: (() -> Void)? = nil
+    
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading) {
-                Text("Cadence (SPM)")
-                Text(currentLabel).font(.footnote).foregroundStyle(.secondary)
-            }
+        let content = HStack {
+            Text(label)
+                .font(RCFont.regular(16))
+                .foregroundColor(.white)
             Spacer()
-            TextField("auto", text: $valueString)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .frame(width: 72)
-                .onSubmit { save() }
-            Button("Reset") { reset() }
+            if let value {
+                Text(value)
+                    .font(RCFont.regular(16))
+                    .foregroundColor(valueColor ?? .white.opacity(0.5))
+            }
+            if showChevron {
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+            }
         }
-        .onAppear { load() }
-        .onChange(of: valueString) { _, _ in }
-    }
-
-    private var currentLabel: String {
-        if let cur = current { return "Using \(Int(cur)) SPM" }
-        return "Auto from pace bucket"
-    }
-
-    private func load() {
-        if let prefs = try? modelContext.fetch(FetchDescriptor<UserRunPrefs>()).first {
-            current = prefs.customCadenceSPM
-            valueString = prefs.customCadenceSPM.map { String(Int($0)) } ?? ""
-        }
-    }
-
-    private func save() {
-        guard let prefs = try? modelContext.fetch(FetchDescriptor<UserRunPrefs>()).first else { return }
-        if let v = Double(valueString), v > 80, v < 220 {
-            prefs.customCadenceSPM = v
-            try? modelContext.save()
-            current = v
+        .padding(.horizontal, 16)
+        .frame(height: 52)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(0.1))
+        
+        if let action {
+            Button(action: action) { content }
+                .buttonStyle(.plain)
+        } else {
+            content
         }
     }
+}
 
-    private func reset() {
-        guard let prefs = try? modelContext.fetch(FetchDescriptor<UserRunPrefs>()).first else { return }
-        prefs.customCadenceSPM = nil
-        try? modelContext.save()
-        current = nil
-        valueString = ""
+private struct SettingsRowNav: View {
+    let label: String
+    let value: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(label)
+                    .font(RCFont.regular(16))
+                    .foregroundColor(.white)
+                Spacer()
+                Text(value)
+                    .font(RCFont.regular(16))
+                    .foregroundColor(.white.opacity(0.5))
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+            }
+            .padding(.horizontal, 16)
+            .frame(height: 52)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white.opacity(0.1))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct SettingsRowWithProgress: View {
+    let label: String
+    let value: String
+    
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(RCFont.regular(16))
+                .foregroundColor(.white)
+            Spacer()
+            HStack(spacing: 8) {
+                Text(value)
+                    .font(RCFont.regular(16))
+                    .foregroundColor(.white.opacity(0.5))
+                ProgressView()
+                    .scaleEffect(0.8)
+                    .tint(.white.opacity(0.5))
+            }
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 52)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(0.1))
+    }
+}
+
+private struct SettingsRowWithAction: View {
+    let label: String
+    let actionLabel: String
+    var actionIcon: String? = nil
+    var isCancel: Bool = false
+    let action: () -> Void
+    
+    private var actionColor: Color { isCancel ? .red : .blue }
+    
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(RCFont.regular(16))
+                .foregroundColor(.white.opacity(0.5))
+            Spacer()
+            Button(action: action) {
+                HStack(spacing: 6) {
+                    Text(actionLabel)
+                        .font(RCFont.regular(16))
+                        .foregroundColor(actionColor)
+                    if let actionIcon {
+                        Image(actionIcon)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 18, height: 18)
+                            .foregroundColor(actionColor)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 52)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(0.1))
+    }
+}
+
+private struct SettingsRowButton: View {
+    let label: String
+    var isDestructive: Bool = false
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(label)
+                    .font(RCFont.regular(16))
+                    .foregroundColor(isDestructive ? .red : .white)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .frame(height: 52)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white.opacity(0.1))
+        }
+        .buttonStyle(.plain)
     }
 }

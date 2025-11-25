@@ -26,9 +26,9 @@ struct OnboardingFlowView: View {
                 .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Screen content - fills available space, anchored to top
+                    // Screen content - fills available space
                     stepView(for: currentStepIndex)
-                        .frame(maxHeight: .infinity, alignment: .top)
+                        .frame(maxHeight: .infinity)
            
                     // Dots
                     dotsIndicator(current: currentStepIndex, total: totalSteps)
@@ -71,6 +71,8 @@ struct OnboardingFlowView: View {
     // Generic layout for the three onboarding screens
     private func onboardingScreen(imageName: String, title: String, subtitle: String) -> some View {
         VStack(spacing: 0) {
+            Spacer()
+            
             // Main image
             onboardingImage(imageName)
             
@@ -78,7 +80,7 @@ struct OnboardingFlowView: View {
             Text(title)
                 .font(RCFont.medium(34))
                 .foregroundColor(.white)
-                .padding(.top, 64)
+                .padding(.top, 12)
             
             // Subtext
             Text(subtitle)

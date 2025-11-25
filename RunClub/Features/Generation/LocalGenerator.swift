@@ -446,11 +446,6 @@ final class LocalGenerator {
         let decadeFilterNames = decades.map { $0.displayName }.joined(separator: ", ")
         emit("LocalGen config — template:\(template.rawValue) run:\(runMinutes)m segmentsPlanned:[wu:\(planDurMins.wu)m main:\(planDurMins.core)m cd:\(planDurMins.cd)m] filters:genres=[\(genreFilterNames.isEmpty ? "none" : genreFilterNames)] decades=[\(decadeFilterNames.isEmpty ? "none" : decadeFilterNames)]")
 
-        var anchorSPM = PaceUtils.cadenceAnchorSPM(for: await fetchPaceBucket())
-        if let prefs = try? await MainActor.run(resultType: UserRunPrefs?.self, body: { try modelContext.fetch(FetchDescriptor<UserRunPrefs>()).first }),
-           let custom = prefs.customCadenceSPM {
-            anchorSPM = custom
-        }
         // Build umbrella weights for selected only first; broaden to neighbors if pool is thin
         let selectedIds: [String] = genres.map { GenreUmbrellaBridge.umbrellaId(for: $0) }
         let selOnlyWeights = GenreUmbrellaService.shared.selectedWithNeighborsWeights(selectedIds: selectedIds, neighborWeight: 0.0)
@@ -645,7 +640,7 @@ final class LocalGenerator {
                 for c in available {
                     // Cross-run artist cooldown: skip if used within 3 days
                     if let lu = artistLastUsed[c.track.artistId], now.timeIntervalSince(lu) < threeDays { continue }
-                    let base = score(candidate: c, anchorSPM: anchorSPM, slot: slot)
+                    let base = score(candidate: c, slot: slot)
                     // GATE: require minimum tempo fit for this effort level
                     if base.tempoFit < tempoFitThreshold(for: slot.effort) { continue }
                     // WU/CD min track length and fairness gating when behind
@@ -679,7 +674,7 @@ final class LocalGenerator {
                 for c in available {
                     var neighborSlot = slot
                     neighborSlot = Slot(effort: neighborEffort, targetEffort: slot.targetEffort)
-                    let base = score(candidate: c, anchorSPM: anchorSPM, slot: neighborSlot)
+                    let base = score(candidate: c, slot: neighborSlot)
                     let bonus = computeBonuses(for: c, base: base, context: ctx, rediscoveryTargetBias: rediscoveryBias)
                     let total = base.baseScore + bonus
                     if base.slotFit >= 0.70 { rescored.append((c, total)) }
@@ -702,7 +697,7 @@ final class LocalGenerator {
                 for c in available {
                     var neighborSlot = slot
                     neighborSlot = Slot(effort: secondEffort, targetEffort: slot.targetEffort)
-                    let base = score(candidate: c, anchorSPM: anchorSPM, slot: neighborSlot)
+                    let base = score(candidate: c, slot: neighborSlot)
                     let bonus = computeBonuses(for: c, base: base, context: ctx, rediscoveryTargetBias: rediscoveryBias)
                     let total = base.baseScore + bonus
                     if base.slotFit >= 0.65 { rescored2.append((c, total)) }
@@ -723,7 +718,7 @@ final class LocalGenerator {
                         .filter { c in !selected.contains(where: { $0.track.id == c.track.id }) && (perArtistCount[c.track.artistId] ?? 0) < 2 && (recentArtists.last != c.track.artistId) && (c.source == .recs || c.source == .third) }
                 }
                 for c in available {
-                    let base = score(candidate: c, anchorSPM: anchorSPM, slot: slot)
+                    let base = score(candidate: c, slot: slot)
                     if base.tempoFit < tempoFitThreshold(for: slot.effort) { continue }
                     let bonus = computeBonuses(for: c, base: base, context: ctx, rediscoveryTargetBias: rediscoveryBias)
                     let total = base.baseScore + bonus
@@ -760,7 +755,7 @@ final class LocalGenerator {
                         }
                 }
                 for c in available {
-                    let base = score(candidate: c, anchorSPM: anchorSPM, slot: slot)
+                    let base = score(candidate: c, slot: slot)
                     if base.tempoFit < tempoFitThreshold(for: slot.effort) { continue }
                     let bonus = computeBonuses(for: c, base: base, context: ctx, rediscoveryTargetBias: rediscoveryBias)
                     let total = base.baseScore + bonus
@@ -821,7 +816,7 @@ final class LocalGenerator {
                 if slot.effort == .max { maxSelected += 1 }
                 if slot.effort == .hard { hardSelected += 1 }
                 // Per-slot debug log for sequencing validation
-                let b = score(candidate: choice, anchorSPM: anchorSPM, slot: slot)
+                let b = score(candidate: choice, slot: slot)
                 let tempoStr = String(format: "%.0f", choice.features?.tempo ?? 0)
                 let energyStr = String(format: "%.2f", choice.features?.energy ?? 0.0)
                 let danceStr = String(format: "%.2f", choice.features?.danceability ?? 0.0)
@@ -862,7 +857,7 @@ final class LocalGenerator {
             }
 
             // Metrics
-            let base = score(candidate: choice, anchorSPM: anchorSPM, slot: slot)
+            let base = score(candidate: choice, slot: slot)
             metricTempoFitSum += base.tempoFit
             metricSlotFitSum += base.slotFit
             metricCount += 1
@@ -909,7 +904,7 @@ final class LocalGenerator {
                     let rediscoveryBias = max(0.0, min(1.0, Double(targetRediscovery - chosenRediscovery) / Double(targetRediscovery)))
                     for c in available {
                         if let lu = artistLastUsed[c.track.artistId], now.timeIntervalSince(lu) < threeDays { continue }
-                        let base = score(candidate: c, anchorSPM: anchorSPM, slot: slot)
+                        let base = score(candidate: c, slot: slot)
                         if base.tempoFit < tempoFitThreshold(for: slot.effort) { continue }
                         let bonus = computeBonuses(for: c, base: base, context: ctx, rediscoveryTargetBias: rediscoveryBias)
                         let total = base.baseScore + bonus
@@ -926,7 +921,7 @@ final class LocalGenerator {
                     if secs <= 6 * 60 && secondsSoFar + secs <= maxSeconds {
                         add(choice)
                         chosenEfforts.append(slot.effort)
-                        let b = score(candidate: choice, anchorSPM: anchorSPM, slot: slot)
+                        let b = score(candidate: choice, slot: slot)
                         let tempoStr = String(format: "%.0f", choice.features?.tempo ?? 0)
                         let energyStr = String(format: "%.2f", choice.features?.energy ?? 0.0)
                         let danceStr = String(format: "%.2f", choice.features?.danceability ?? 0.0)
@@ -958,7 +953,7 @@ final class LocalGenerator {
                                   "aff=\(String(format: "%.2f", choice.genreAffinity)) " +
                                   "redis=\(choice.isRediscovery) neighbor=false lockoutBreak=false filter=\(filt) src=\(srcStr) genres=\(genresStr)"
                         emit(line)
-                        let base = score(candidate: choice, anchorSPM: anchorSPM, slot: slot)
+                        let base = score(candidate: choice, slot: slot)
                         metricTempoFitSum += base.tempoFit
                         metricSlotFitSum += base.slotFit
                         metricCount += 1
@@ -995,7 +990,7 @@ final class LocalGenerator {
                                        artistLastUsed: artistLastUsed)
                 let rediscoveryBias = max(0.0, min(1.0, Double(targetRediscovery - chosenRediscovery) / Double(targetRediscovery)))
                 for c in available {
-                    let base = score(candidate: c, anchorSPM: anchorSPM, slot: slot)
+                    let base = score(candidate: c, slot: slot)
                     if base.tempoFit < tempoFitThreshold(for: slot.effort) { continue }
                     let bonus = computeBonuses(for: c, base: base, context: ctx, rediscoveryTargetBias: rediscoveryBias)
                     let total = base.baseScore + bonus
@@ -1022,7 +1017,7 @@ final class LocalGenerator {
                 if secs <= 6 * 60 && secondsSoFar + secs <= maxSeconds {
                     add(choice)
                     chosenEfforts.append(.easy)
-                    let b = score(candidate: choice, anchorSPM: anchorSPM, slot: slot)
+                    let b = score(candidate: choice, slot: slot)
                     let tempoStr = String(format: "%.0f", choice.features?.tempo ?? 0)
                     let energyStr = String(format: "%.2f", choice.features?.energy ?? 0.0)
                     let danceStr = String(format: "%.2f", choice.features?.danceability ?? 0.0)
@@ -1052,7 +1047,7 @@ final class LocalGenerator {
                               "redis=\(choice.isRediscovery) neighbor=false lockoutBreak=false filter=\(filterDesignation(for: choice, usedNeighborWeights: false)) src=\(srcStr) genres=\(genresStr)"
                     emit(line)
                     // Metrics updates
-                    let base = score(candidate: choice, anchorSPM: anchorSPM, slot: slot)
+                    let base = score(candidate: choice, slot: slot)
                     metricTempoFitSum += base.tempoFit
                     metricSlotFitSum += base.slotFit
                     metricCount += 1
@@ -1209,17 +1204,8 @@ final class LocalGenerator {
         let targetEffort: Double // 0–1
     }
 
-    private func fetchPaceBucket() async -> PaceBucket {
-        // Try to fetch a single UserRunPrefs record; default to .B if none exists
-        if let prefs = try? await MainActor.run(resultType: UserRunPrefs?.self, body: { try modelContext.fetch(FetchDescriptor<UserRunPrefs>()).first }) {
-            return prefs.paceBucket
-        }
-        return .B
-    }
-
     // Template-specific duration plan (minutes). Baselines chosen per spec; small flexibility occurs later.
     private func durationPlan(for template: RunTemplateType, minutes: Int) -> (total: Int, wu: Int, core: Int, cd: Int) {
-        if template == .rest { return (0,0,0,0) }
         let total = max(1, minutes)
         // Bucketed warmup/cooldown policy with ±1 minute tolerance handled at selection time
         let wu: Int
@@ -1242,8 +1228,6 @@ final class LocalGenerator {
 
     private func buildEffortTimeline(template: RunTemplateType,
                                      minutes: Int) -> [Slot] {
-        // Rest day: no effort timeline
-        if template == .rest { return [] }
         // Use template-specific duration plan; core minutes map to slot count (~1 slot ≈ 4 min).
         let planMins = durationPlan(for: template, minutes: minutes)
         let wu = planMins.wu
@@ -1264,8 +1248,6 @@ final class LocalGenerator {
         // Middle by template (approximate to minute buckets of ~4 min per slot)
         let m = max(1, middle / 4)
         switch template {
-        case .rest:
-            break
         case .easyRun:
             // Mostly Easy; allow ≤20% low-end Moderate in middle
             let modCount = min(max(0, Int(round(Double(m) * 0.2))), max(0, m - 1))
@@ -1358,7 +1340,6 @@ final class LocalGenerator {
                                      wuSlots: Int,
                                      coreSlots: Int,
                                      cdSlots: Int) -> [Slot] {
-        if template == .rest { return [] }
         func slots(of effort: EffortTier, count: Int, target: Double) -> [Slot] {
             guard count > 0 else { return [] }
             return (0..<count).map { _ in Slot(effort: effort, targetEffort: target) }
@@ -1369,8 +1350,6 @@ final class LocalGenerator {
         // Core by template using coreSlots as the count 'm'
         let m = max(0, coreSlots)
         switch template {
-        case .rest:
-            break
         case .easyRun:
             let modCount = min(max(0, Int(round(Double(m) * 0.2))), max(0, m - 1))
             let pre = max(0, (m - modCount) / 2)
@@ -1499,9 +1478,56 @@ final class LocalGenerator {
         }
     }
 
-    // Bridge for future migration from 3-level EffortLevel to 5-tier EffortTier
-    private func mapEffortLevelToTier(_ e: EffortLevel) -> EffortTier {
-        switch e { case .easy: return .easy; case .steady: return .strong; case .hard: return .hard }
+    // MARK: - Tempo scoring helpers (now independent of user pace)
+    private func tempoWindow(for tier: EffortTier) -> (min: Double, max: Double) {
+        switch tier {
+        case .easy:
+            return (150, 165)
+        case .moderate:
+            return (155, 170)
+        case .strong:
+            return (160, 178)
+        case .hard:
+            return (168, 186)
+        case .max:
+            return (172, 190)
+        }
+    }
+
+    private func tempoFitScore(for tier: EffortTier,
+                               tempoBPM: Double?,
+                               energy: Double?,
+                               danceability: Double?) -> Double {
+        if let tempo = tempoBPM {
+            let window = tempoWindow(for: tier)
+            let dist = bestTempoMatchDistance(tempoBPM: tempo, window: window)
+            if dist <= 0 { return 1.0 }
+            let tolerance = tierSpec(for: tier).tempoToleranceBPM
+            return max(0.0, 1.0 - (dist / tolerance))
+        }
+        let energyVal = max(0.0, min(1.0, energy ?? 0.5))
+        let danceVal = max(0.0, min(1.0, danceability ?? 0.5))
+        return max(0.0, min(1.0, 0.6 * energyVal + 0.4 * danceVal)) * 0.9
+    }
+
+    private func bestTempoMatchDistance(tempoBPM: Double,
+                                        window: (min: Double, max: Double)) -> Double {
+        let candidates = [tempoBPM, tempoBPM * 0.5, tempoBPM * 2.0]
+        var best = Double.greatestFiniteMagnitude
+        for candidate in candidates {
+            let distance = distanceToTempoWindow(candidate: candidate, window: window)
+            if distance < best {
+                best = distance
+            }
+        }
+        return best
+    }
+
+    private func distanceToTempoWindow(candidate: Double,
+                                       window: (min: Double, max: Double)) -> Double {
+        if candidate < window.min { return window.min - candidate }
+        if candidate > window.max { return candidate - window.max }
+        return 0
     }
 
     // MARK: - Scoring core (EffortIndex, SlotFit)
@@ -1513,20 +1539,14 @@ final class LocalGenerator {
     }
 
     private func score(candidate: Candidate,
-                       anchorSPM: Double,
                        slot: Slot) -> ScoreComponents {
         let energy = clamp01(candidate.features?.energy)
         let dance = clamp01(candidate.features?.danceability)
         let tempoBPM = candidate.features?.tempo
-        // Map 5-tier to 3-level window for now; use tier tolerance
-        let tol = tierSpec(for: slot.effort).tempoToleranceBPM
-        let effort3: EffortLevel = mapTierToEffortLevel(slot.effort)
-        let tempoFit = PaceUtils.tempoFitScore(tempoBPM: tempoBPM,
-                                               energy: energy,
-                                               danceability: dance,
-                                               anchorSPM: anchorSPM,
-                                               effort: effort3,
-                                               toleranceBPM: tol)
+        let tempoFit = tempoFitScore(for: slot.effort,
+                                     tempoBPM: tempoBPM,
+                                     energy: energy,
+                                     danceability: dance)
         // Tier-specific weights
         let spec = tierSpec(for: slot.effort)
         let (wTempo, wEnergy, wDance) = spec.weights
@@ -1553,10 +1573,6 @@ final class LocalGenerator {
     private func tempoFitThreshold(for effort: EffortTier) -> Double {
         let spec = tierSpec(for: effort)
         return spec.tempoFitMinimum
-    }
-
-    private func mapTierToEffortLevel(_ t: EffortTier) -> EffortLevel {
-        switch t { case .easy: return .easy; case .moderate: return .steady; case .strong: return .steady; case .hard: return .hard; case .max: return .hard }
     }
 
     private func clamp01(_ v: Double?) -> Double? {

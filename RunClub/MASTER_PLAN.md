@@ -18,7 +18,6 @@
   - Long: 45–60 min (midpoint default 53).
 - **Long & Easy rule**: 1.5× the selected duration category (respecting lower/upper derived bounds).
 - **Storage**: `AppStorage` keys (e.g., `runsPerWeek`, `preferredDurationCategory`, `onboardingComplete`).
- - **Pace bucket (planned)**: A–D (default B until onboarding exists). Maps to a cadence anchor (SPM) used by the local generator; see `ALGORITHM_SPEC.md`.
 
 ## Duration Handling
 - **Hard bounds**: Do not exceed the duration bracket bounds for the selected category, except when explicitly specified by a template rule (e.g., Long & Easy 1.5×).
@@ -29,7 +28,7 @@
 - **Waves note**: “Short Waves” and “Long Waves” describe interval pattern length, not strictly the total duration.
 
 ## Template Archetypes and Segment Logic
-Definitions encode how playlist effort should flow (tiered effort per slot using a 5‑tier system: Easy, Moderate, Strong, Hard, Max). Tempo targets are derived from the runner’s cadence anchor, not fixed BPM. See `ALGORITHM_SPEC.md` for tier curves and slot windows.
+Definitions encode how playlist effort should flow (tiered effort per slot using a 5‑tier system: Easy, Moderate, Strong, Hard, Max). Tempo targets now use fixed BPM windows per tier (see `ALGORITHM_SPEC.md` for window ranges and slot rules).
 
 - **Easy Run**: Mostly Easy; allow ≤20% low‑end Moderate in middle; WU/CD Easy.
 
@@ -46,7 +45,7 @@ Definitions encode how playlist effort should flow (tiered effort per slot using
 - **Kicker**: Moderate/Strong base; final ramp to Hard then Max; at most 1 Max and ≤2 Hard; for short runs end at Hard only; WU/CD Easy.
 
 Notes:
-- See `ALGORITHM_SPEC.md` for slot windows (cadence‑relative), relaxations, and scoring.
+- See `ALGORITHM_SPEC.md` for slot windows, relaxations, and scoring.
 
 ### Template Duration Targets (minutes → WU/Core/CD)
 - **Easy Run** (leans short)
@@ -138,7 +137,6 @@ Notes: Local generation is SwiftData‑first; legacy Spotify recommendations pat
 
 ## Data Structures (planned)
 - `UserPreferences`: `runsPerWeek`, `preferredDurationCategory`.
-- `UserRunPrefs`: `paceBucket` (A–D; default B).
 - `TrackUsage`: `trackId`, `lastUsedAt`, `usedCount`.
 - `RunTemplateType`: enum of templates.
 - Local selection operates on SwiftData joins of `CachedTrack` + `AudioFeature` + `CachedArtist`.

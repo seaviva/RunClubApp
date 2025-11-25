@@ -25,6 +25,8 @@ actor LibraryCrawler {
     private let marketProvider: () -> String?
     private weak var progressStore: CrawlProgressStore?
     private var isCancelledFlag: Bool = false
+    // Keep track of any in-flight prefetch tasks so we can cancel them on demand
+    private var prefetchQueue: [(offset: Int, task: Task<(items: [SpotifyService.SimplifiedTrackItem], nextOffset: Int?, total: Int?), Error>)] = []
 
     init(spotify: SpotifyService,
          modelContext: ModelContext,
@@ -38,6 +40,11 @@ actor LibraryCrawler {
 
     func cancel() {
         isCancelledFlag = true
+        // Cancel any in-flight prefetches immediately to stop background paging
+        for pair in prefetchQueue {
+            pair.task.cancel()
+        }
+        prefetchQueue.removeAll()
         // Immediately update UI state for responsiveness
         Task { @MainActor [weak progressStore] in
             progressStore?.isRunning = false
@@ -112,7 +119,9 @@ actor LibraryCrawler {
 
         // Crawl pages with bounded prefetch depth
         var prefetchedPage: (items: [SpotifyService.SimplifiedTrackItem], nextOffset: Int?, total: Int?)? = nil
-        var prefetchQueue: [(offset: Int, task: Task<(items: [SpotifyService.SimplifiedTrackItem], nextOffset: Int?, total: Int?), Error>)] = []
+        // Ensure any stale tasks from previous runs are cancelled
+        for pair in prefetchQueue { pair.task.cancel() }
+        prefetchQueue.removeAll()
         pagingLoop: while true {
             if isCancelledFlag { break }
             do {
@@ -151,10 +160,7 @@ actor LibraryCrawler {
                 // Seed the queue starting from the immediate next offset
                 if let baseNext = page.nextOffset, !isCancelledFlag {
                     // remove finished tasks
-                    prefetchQueue.removeAll(where: { pair in
-                        // tasks are awaited when consumed; keep pending
-                        return false
-                    })
+                    prefetchQueue.removeAll(where: { $0.task.isCancelled })
                     let depth = max(1, Config.likesPagePrefetchDepth)
                     // Schedule offsets baseNext, baseNext+50, baseNext+100, ...
                     var wantOffsets: [Int] = []
@@ -256,6 +262,10 @@ actor LibraryCrawler {
             // Removed per-page delay to improve throughput; RB client handles 429 backoff
             if !isCancelledFlag { /* no-op */ }
         }
+
+        // Regardless of outcome, ensure no dangling prefetches remain
+        for pair in prefetchQueue { pair.task.cancel() }
+        prefetchQueue.removeAll()
 
         let cancelledAtEnd = isCancelledFlag
         let ps = self.progressStore

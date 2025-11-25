@@ -32,7 +32,7 @@ struct LoginSplashView: View {
                         .padding(.top, 210)
                 }
                 VStack(spacing: 8) {
-                    Text("Daily runs guided by custom playlists of your favorite music.")
+                    Text("Run workouts paired with fresh, personalized music playlists")
                         .multilineTextAlignment(.leading)
                         .foregroundColor(.white)
                         .font(RCFont.regular(18))
@@ -47,7 +47,7 @@ struct LoginSplashView: View {
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(height: 22)
-                        Text("Connect via Juky")
+                        Text("Continue with Spotify")
                             .font(RCFont.semiBold(17))
                             .foregroundColor(.black)
                     }

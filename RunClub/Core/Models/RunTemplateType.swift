@@ -8,7 +8,6 @@
 import Foundation
 
 enum RunTemplateType: String, Codable, CaseIterable, Identifiable, Hashable {
-    case rest = "Rest"
     case easyRun = "Light"
     case strongSteady = "Tempo"
     case longEasy = "Long & Easy"

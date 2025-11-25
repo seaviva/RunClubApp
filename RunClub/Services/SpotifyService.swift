@@ -1037,7 +1037,6 @@ final class SpotifyService {
 
     private func bpmRange(for template: RunTemplateType) -> (Double, Double)? {
         switch template {
-        case .rest: return nil
         case .easyRun: return (130, 150)
         case .strongSteady: return (150, 170)
         case .longEasy: return (130, 155)

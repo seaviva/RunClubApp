@@ -11,7 +11,6 @@
 		5F6E1B642EBE709F009DF509 /* RunTemplateType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B332EBE709F009DF509 /* RunTemplateType.swift */; };
 		5F6E1B652EBE709F009DF509 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B582EBE709F009DF509 /* LiveActivityManager.swift */; };
 		5F6E1B662EBE709F009DF509 /* NumberWheelPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B512EBE709F009DF509 /* NumberWheelPicker.swift */; };
-		5F6E1B682EBE709F009DF509 /* GeneratorMatrixRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B462EBE709F009DF509 /* GeneratorMatrixRunner.swift */; };
 		5F6E1B692EBE709F009DF509 /* RunPreviewService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B4B2EBE709F009DF509 /* RunPreviewService.swift */; };
 		5F6E1B6A2EBE709F009DF509 /* Genre.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B312EBE709F009DF509 /* Genre.swift */; };
 		5F6E1B6B2EBE709F009DF509 /* UIComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B542EBE709F009DF509 /* UIComponents.swift */; };
@@ -28,7 +27,6 @@
 		5F6E1B762EBE709F009DF509 /* ProgressStores.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B392EBE709F009DF509 /* ProgressStores.swift */; };
 		5F6E1B772EBE709F009DF509 /* DurationPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B4E2EBE709F009DF509 /* DurationPickerSheet.swift */; };
 		5F6E1B782EBE709F009DF509 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B502EBE709F009DF509 /* HomeView.swift */; };
-		5F6E1B792EBE709F009DF509 /* GeneratorUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B472EBE709F009DF509 /* GeneratorUtils.swift */; };
 		5F6E1B7A2EBE709F009DF509 /* RunOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B5A2EBE709F009DF509 /* RunOrchestrator.swift */; };
 		5F6E1B7C2EBE709F009DF509 /* StartRunView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B5E2EBE709F009DF509 /* StartRunView.swift */; };
 		5F6E1B7D2EBE709F009DF509 /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B562EBE709F009DF509 /* OnboardingFlowView.swift */; };
@@ -104,8 +102,6 @@
 		5F6E1B422EBE709F009DF509 /* JukyHeadlessRefresher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JukyHeadlessRefresher.swift; sourceTree = "<group>"; };
 		5F6E1B432EBE709F009DF509 /* LoginSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginSplashView.swift; sourceTree = "<group>"; };
 		5F6E1B442EBE709F009DF509 /* WebTokenConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebTokenConnectView.swift; sourceTree = "<group>"; };
-		5F6E1B462EBE709F009DF509 /* GeneratorMatrixRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratorMatrixRunner.swift; sourceTree = "<group>"; };
-		5F6E1B472EBE709F009DF509 /* GeneratorUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratorUtils.swift; sourceTree = "<group>"; };
 		5F6E1B482EBE709F009DF509 /* GenreUmbrellaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenreUmbrellaService.swift; sourceTree = "<group>"; };
 		5F6E1B492EBE709F009DF509 /* LocalGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalGenerator.swift; sourceTree = "<group>"; };
 		5F6E1B4A2EBE709F009DF509 /* ReccoBeatsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReccoBeatsClient.swift; sourceTree = "<group>"; };
@@ -260,8 +256,6 @@
 		5F6E1B4D2EBE709F009DF509 /* Generation */ = {
 			isa = PBXGroup;
 			children = (
-				5F6E1B462EBE709F009DF509 /* GeneratorMatrixRunner.swift */,
-				5F6E1B472EBE709F009DF509 /* GeneratorUtils.swift */,
 				5F6E1B482EBE709F009DF509 /* GenreUmbrellaService.swift */,
 				5F6E1B492EBE709F009DF509 /* LocalGenerator.swift */,
 				5F6E1B4A2EBE709F009DF509 /* ReccoBeatsClient.swift */,
@@ -556,7 +550,6 @@
 				5F6E1B642EBE709F009DF509 /* RunTemplateType.swift in Sources */,
 				5F6E1B652EBE709F009DF509 /* LiveActivityManager.swift in Sources */,
 				5F6E1B662EBE709F009DF509 /* NumberWheelPicker.swift in Sources */,
-				5F6E1B682EBE709F009DF509 /* GeneratorMatrixRunner.swift in Sources */,
 				5F6E1B692EBE709F009DF509 /* RunPreviewService.swift in Sources */,
 				5F6E1B6A2EBE709F009DF509 /* Genre.swift in Sources */,
 				5F6E1B6B2EBE709F009DF509 /* UIComponents.swift in Sources */,
@@ -574,7 +567,6 @@
 				5F6E1B762EBE709F009DF509 /* ProgressStores.swift in Sources */,
 				5F6E1B772EBE709F009DF509 /* DurationPickerSheet.swift in Sources */,
 				5F6E1B782EBE709F009DF509 /* HomeView.swift in Sources */,
-				5F6E1B792EBE709F009DF509 /* GeneratorUtils.swift in Sources */,
 				5F6E1B7A2EBE709F009DF509 /* RunOrchestrator.swift in Sources */,
 				5F6E1B7C2EBE709F009DF509 /* StartRunView.swift in Sources */,
 				5F6E1B7D2EBE709F009DF509 /* OnboardingFlowView.swift in Sources */,

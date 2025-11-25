@@ -14,6 +14,9 @@ struct PlaylistSelectionView: View {
     var mode: Mode = .settings
     var onContinue: (() -> Void)? = nil
     private var playlistsCtx: ModelContext { PlaylistsDataStack.shared.context }
+    @State private var refreshToken: Int = 0
+    @State private var allSelectedState: Bool = false
+    @State private var showIntroOverlay: Bool = true
 
     private var playlists: [CachedPlaylist] {
         let all = (try? playlistsCtx.fetch(FetchDescriptor<CachedPlaylist>())) ?? []
@@ -41,10 +44,12 @@ struct PlaylistSelectionView: View {
                             .font(RCFont.medium(17))
                             .foregroundColor(.white)
                         Spacer()
-                        Checkbox(isOn: Binding(
-                            get: { allSelected },
-                            set: { newVal in setAllSelected(newVal) }
-                        ))
+                        Checkbox(
+                            isOn: Binding(
+                                get: { allSelectedState },
+                                set: { newVal in setAllSelected(newVal) }
+                            )
+                        )
                     }
                     .padding(.horizontal, 20)
                     
@@ -52,8 +57,8 @@ struct PlaylistSelectionView: View {
                     LazyVStack(spacing: 14) {
                         ForEach(playlists, id: \.id) { p in
                             let isSelected = Binding<Bool>(
-                                get: { p.selectedForSync },
-                                set: { newVal in set(p.id, selected: newVal) }
+                            get: { p.selectedForSync },
+                            set: { newVal in set(p.id, selected: newVal) }
                             )
                             HStack(spacing: 14) {
                                 PlaylistImage(urlString: p.imageURL, isSynthetic: p.isSynthetic)
@@ -74,22 +79,27 @@ struct PlaylistSelectionView: View {
                             .padding(.horizontal, 20)
                             .contentShape(Rectangle())
                             .onTapGesture { isSelected.wrappedValue.toggle() }
-                        }
-                    }
-                    .padding(.bottom, mode == .onboarding ? 160 : 20) // space for bottom CTA overlay in onboarding
+                }
+            }
+                    .padding(.bottom, mode == .onboarding ? 120 : 20)
                 }
                 .padding(.top, 6)
             }
+            .id(refreshToken) // force view to recompute after catalog refresh
             .scrollIndicators(.hidden)
         }
         .background(Color.black.ignoresSafeArea())
         .overlay(alignment: .bottom) {
             if mode == .onboarding {
-                ZStack(alignment: .bottom) {
+                // VStack pushes content to bottom, filling the safe area
+                VStack(spacing: 0) {
+                    Spacer()
+                    // Gradient fades the content scrolling underneath
                     LinearGradient(colors: [Color.black, Color.black.opacity(0.0)], startPoint: .bottom, endPoint: .top)
-                        .frame(height: 180)
+                        .frame(height: 100)
                         .allowsHitTesting(false)
-                    HStack {
+                    // Solid black area with button
+                    VStack {
                         Button(action: {
                             Task {
                                 await playlistsCoordinator.refreshCatalog()
@@ -107,9 +117,46 @@ struct PlaylistSelectionView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    .padding(.bottom, 36)
+                    .frame(maxWidth: .infinity)
+                    .padding(.bottom, 32)
+                    .background(Color.black)
                 }
-                .ignoresSafeArea(.container, edges: .bottom)
+                .ignoresSafeArea(edges: .bottom)
+            }
+        }
+        .overlay {
+            if mode == .onboarding && showIntroOverlay {
+                // Native iOS blur overlay
+                ZStack {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .overlay(Color.black.opacity(0.2))
+                        .ignoresSafeArea()
+                    
+                    VStack(spacing: 16) {
+                        Text("One last thing")
+                            .font(RCFont.semiBold(32))
+                            .foregroundColor(.white)
+                        
+                        Text("Add some of your playlists you want\nto sync into the generation algorithm.")
+                            .font(RCFont.regular(17))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(6)
+                        
+                        Text("tap to continue")
+                            .font(RCFont.regular(14))
+                            .foregroundColor(.white.opacity(0.4))
+                            .padding(.top, 24)
+                    }
+                    .padding(.horizontal, 40)
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        showIntroOverlay = false
+                    }
+                }
             }
         }
         .navigationBarBackButtonHidden(mode == .onboarding)
@@ -117,6 +164,9 @@ struct PlaylistSelectionView: View {
             // Ensure synthetic exists and catalog is loaded at least once
             Task {
                 await playlistsCoordinator.refreshCatalog()
+                // Force a UI refresh so the latest catalog is rendered
+                await MainActor.run { refreshToken &+= 1 }
+                await MainActor.run { recomputeAllSelected() }
             }
             // Select all by default in onboarding context
             if mode == .onboarding {
@@ -134,11 +184,8 @@ struct PlaylistSelectionView: View {
         if let p = try? playlistsCtx.fetch(FetchDescriptor<CachedPlaylist>(predicate: #Predicate { $0.id == playlistId })).first {
             p.selectedForSync = selected
             try? playlistsCtx.save()
+            recomputeAllSelected()
         }
-    }
-    
-    private var allSelected: Bool {
-        !playlists.isEmpty && playlists.allSatisfy { $0.selectedForSync }
     }
     
     private func setAllSelected(_ selected: Bool) {
@@ -148,29 +195,29 @@ struct PlaylistSelectionView: View {
                 p.selectedForSync = selected
             }
             try? playlistsCtx.save()
+            allSelectedState = selected
         }
+    }
+    
+    private func recomputeAllSelected() {
+        allSelectedState = !playlists.isEmpty && playlists.allSatisfy { $0.selectedForSync }
     }
 }
 
 // MARK: - Checkbox control
 private struct Checkbox: View {
     @Binding var isOn: Bool
-    private let size: CGFloat = 28
+    private let size: CGFloat = 24
     var body: some View {
         Button(action: { isOn.toggle() }) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                    .frame(width: size, height: size)
-                if isOn {
-                    Image("check")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                        .foregroundColor(Color(hex: 0x00C853)) // green check
-                }
-            }
+            // NOTE: In this design, "checkbox" is the FILLED green check (selected)
+            // and "select" is the outlined box (deselected), so the mapping is inverted
+            // from the asset names.
+            Image(isOn ? "checkbox" : "select")
+                .renderingMode(.original)
+                .resizable()
+                .scaledToFit()
+                .frame(width: size, height: size)
         }
         .buttonStyle(.plain)
     }
@@ -180,20 +227,12 @@ private struct Checkbox: View {
 private struct RowSelectIcon: View {
     @Binding var isSelected: Bool
     var body: some View {
-        Group {
-            if isSelected {
-                Image("check")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 24, height: 24)
-                    .foregroundColor(Color(hex: 0x00C853))
-            } else {
-                Image(systemName: "plus")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.4))
-            }
-        }
+        // Same visual mapping as the "Select All" checkbox above.
+        Image(isSelected ? "checkbox" : "select")
+            .renderingMode(.original)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 24, height: 24)
     }
 }
 
