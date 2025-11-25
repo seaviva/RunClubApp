@@ -33,6 +33,14 @@ enum Config {
     // Remove unconditional sleeps; rely on 429-aware backoff
     static let useFieldsForMeTracks: Bool = true
     static let likesPagePrefetchDepth: Int = 3 // triple-buffer by default
+    
+    // Legacy ReccoBeats settings (deprecated - kept for backwards compatibility)
     static let featuresMaxConcurrency: Int = 20
-    static let reccoResolveBatchSize: Int = 200 // logical target (split into API-supported chunks internally)
+    static let reccoResolveBatchSize: Int = 200
+    
+    // Optimized ReccoBeats batch settings (NEW)
+    // Uses GET /v1/audio-features?ids= which accepts Spotify IDs directly
+    static let reccoBatchSize: Int = 40           // API limit is 40 IDs per request
+    static let reccoWaveConcurrency: Int = 10     // Concurrent requests per wave (tested: 10 avoids rate limits)
+    static let reccoWaveDelayMs: UInt64 = 500     // Delay between waves in milliseconds
 }

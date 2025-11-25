@@ -116,6 +116,11 @@ actor LibraryCrawler {
                                               spotify: spotify,
                                               progress: progressStore)
         let ingestStart = Date()
+        
+        // Pipeline enrichment: collect track IDs and enrich in batches while fetching continues
+        var pendingEnrichmentIds: [String] = []
+        var enrichmentTasks: [Task<Void, Never>] = []
+        let enrichmentBatchThreshold = 200  // Enrich every 200 tracks (4 pages)
 
         // Crawl pages with bounded prefetch depth
         var prefetchedPage: (items: [SpotifyService.SimplifiedTrackItem], nextOffset: Int?, total: Int?)? = nil
@@ -215,8 +220,24 @@ actor LibraryCrawler {
                     }
                 }
 
-                // Enqueue enrichment off the hot path
-                if !pageTrackIds.isEmpty { await featuresIngestor.enqueue(pageTrackIds) }
+                // Pipeline enrichment: accumulate IDs and enrich in batches
+                // This runs enrichment in parallel with fetching for better throughput
+                if !pageTrackIds.isEmpty {
+                    pendingEnrichmentIds.append(contentsOf: pageTrackIds)
+                    
+                    // Once we have enough IDs, kick off enrichment in background
+                    if pendingEnrichmentIds.count >= enrichmentBatchThreshold {
+                        let idsToEnrich = pendingEnrichmentIds
+                        pendingEnrichmentIds = []
+                        
+                        let task = Task {
+                            await featuresIngestor.enrichBatchNow(idsToEnrich)
+                        }
+                        enrichmentTasks.append(task)
+                    }
+                }
+                
+                // Artist enrichment still uses enqueue pattern (smaller dataset)
                 if !missingArtistIds.isEmpty { await artistsIngestor.enqueue(missingArtistIds) }
 
                 // Apply all DB updates in a single main-actor pass and save once
@@ -276,14 +297,28 @@ actor LibraryCrawler {
                 crawlState?.status = .idle
                 crawlState?.lastCompletedAt = Date()
                 crawlState?.nextOffset = nil
-                ps?.message = "Enriching features and artists…"
+                ps?.message = "Finishing enrichment…"
             }
             try? modelContext.save()
         }
+        
         // Finish enrichment only if not cancelled; otherwise leave for a future run
         if !cancelledAtEnd {
+            // Enrich any remaining pending IDs
+            if !pendingEnrichmentIds.isEmpty {
+                let remainingTask = Task {
+                    await featuresIngestor.enrichBatchNow(pendingEnrichmentIds)
+                }
+                enrichmentTasks.append(remainingTask)
+            }
+            
+            // Wait for all in-flight enrichment tasks to complete
+            for task in enrichmentTasks {
+                await task.value
+            }
+            
+            // Finish artist enrichment
             await artistsIngestor.flushAndWait()
-            await featuresIngestor.flushAndWait()
         }
         // Metrics
         await MainActor.run { [weak progressStore] in

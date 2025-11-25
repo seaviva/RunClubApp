@@ -46,6 +46,12 @@ actor PlaylistsCrawler {
         let artistsIngestor = ArtistsIngestor(modelContext: ctx,
                                               spotify: spotify,
                                               progress: progress)
+        
+        // Pipeline enrichment: collect track IDs and enrich in batches
+        var pendingEnrichmentIds: [String] = []
+        var enrichmentTasks: [Task<Void, Never>] = []
+        let enrichmentBatchThreshold = 200
+        
         await MainActor.run { [weak progress] in
             progress?.isRunning = true
             progress?.message = "Syncing playlists…"
@@ -64,25 +70,49 @@ actor PlaylistsCrawler {
         await pruneDeselectedData(keepPlaylistIds: Set(selected.map { $0.id }))
         // Handle synthetic Recently Played first if present
         if let rp = selected.first(where: { $0.id == "recently-played" }) {
-            let count = await syncRecentlyPlayed(playlist: rp,
-                                                 featuresIngestor: featuresIngestor,
+            let (count, ids) = await syncRecentlyPlayed(playlist: rp,
                                                  artistsIngestor: artistsIngestor)
             totalAdded += count
+            pendingEnrichmentIds.append(contentsOf: ids)
         }
         // Then handle real playlists
         for p in selected where p.id != "recently-played" {
             if isCancelled { break }
-            let count = await syncPlaylist(p,
-                                           featuresIngestor: featuresIngestor,
+            let (count, ids) = await syncPlaylist(p,
                                            artistsIngestor: artistsIngestor)
             totalAdded += count
+            pendingEnrichmentIds.append(contentsOf: ids)
+            
+            // Kick off enrichment batch if threshold reached
+            if pendingEnrichmentIds.count >= enrichmentBatchThreshold {
+                let idsToEnrich = pendingEnrichmentIds
+                pendingEnrichmentIds = []
+                let task = Task {
+                    await featuresIngestor.enrichBatchNow(idsToEnrich)
+                }
+                enrichmentTasks.append(task)
+            }
         }
-        // Flush enrichment queues
+        
+        // Enrich any remaining pending IDs
         await MainActor.run { [weak progress] in
-            progress?.message = "Enriching features and artists…"
+            progress?.message = "Finishing enrichment…"
         }
+        if !pendingEnrichmentIds.isEmpty {
+            let remainingTask = Task {
+                await featuresIngestor.enrichBatchNow(pendingEnrichmentIds)
+            }
+            enrichmentTasks.append(remainingTask)
+        }
+        
+        // Wait for all enrichment tasks
+        for task in enrichmentTasks {
+            await task.value
+        }
+        
+        // Flush artist enrichment
         await artistsIngestor.flushAndWait()
-        await featuresIngestor.flushAndWait()
+        
         await MainActor.run { [weak progress] in progress?.isRunning = false }
         // Metrics
         let secs = Date().timeIntervalSince(ingestStart)
@@ -125,11 +155,10 @@ actor PlaylistsCrawler {
         }
     }
 
-    @discardableResult
+    /// Returns (count, trackIds) for pipelined enrichment
     private func syncRecentlyPlayed(playlist: CachedPlaylist,
-                                    featuresIngestor: FeaturesIngestor,
-                                    artistsIngestor: ArtistsIngestor) async -> Int {
-        if isCancelled { return 0 }
+                                    artistsIngestor: ArtistsIngestor) async -> (Int, [String]) {
+        if isCancelled { return (0, []) }
         let market = (try? await spotify.getProfileMarket()) ?? "US"
         do {
             let items = try await spotify.getRecentlyPlayed(limit: 50, market: market)
@@ -150,10 +179,9 @@ actor PlaylistsCrawler {
             await MainActor.run {
                 do { try repo.upsertTracks(tracks) } catch { }
             }
-            // Enqueue features and artists
+            // Collect IDs for pipelined enrichment
             let trackIds = items.map { $0.trackId }
             let artistIds = Array(Set(items.map { $0.artistId }))
-            await featuresIngestor.enqueue(trackIds)
             await artistsIngestor.enqueue(artistIds)
             // Upsert memberships (for all, including those present in likes)
             let pairs = items.map { (trackId: $0.trackId, addedAt: $0.addedAt as Date?) }
@@ -167,22 +195,22 @@ actor PlaylistsCrawler {
                 progress?.tracksDone += items.count
                 progress?.tracksTotal += items.count
             }
-            return items.count
+            return (items.count, trackIds)
         } catch {
             // non-fatal
-            return 0
+            return (0, [])
         }
     }
 
-    @discardableResult
+    /// Returns (count, trackIds) for pipelined enrichment
     private func syncPlaylist(_ playlist: CachedPlaylist,
-                              featuresIngestor: FeaturesIngestor,
-                              artistsIngestor: ArtistsIngestor) async -> Int {
-        if isCancelled { return 0 }
+                              artistsIngestor: ArtistsIngestor) async -> (Int, [String]) {
+        if isCancelled { return (0, []) }
         let market = (try? await spotify.getProfileMarket()) ?? "US"
         var offset = 0
         var total: Int? = nil
         var added = 0
+        var allTrackIds: [String] = []
         await MainActor.run { [weak progress] in
             progress?.message = "Syncing \(playlist.name)…"
         }
@@ -209,10 +237,10 @@ actor PlaylistsCrawler {
                 await MainActor.run {
                     do { try repo.upsertTracks(tracks) } catch { }
                 }
-                // Enqueue features and artists
+                // Collect IDs for pipelined enrichment
                 let trackIds = page.items.map { $0.trackId }
                 let artistIds = Array(Set(page.items.map { $0.artistId }))
-                await featuresIngestor.enqueue(trackIds)
+                allTrackIds.append(contentsOf: trackIds)
                 await artistsIngestor.enqueue(artistIds)
                 // Collect membership pairs
                 for it in page.items { allPairs.append((it.trackId, it.addedAt)) }
@@ -239,7 +267,7 @@ actor PlaylistsCrawler {
                 try? ctx.save()
             }
         }
-        return added
+        return (added, allTrackIds)
     }
 }
 
