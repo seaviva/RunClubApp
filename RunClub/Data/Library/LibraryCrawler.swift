@@ -338,6 +338,162 @@ actor LibraryCrawler {
         }
         await MainActor.run { [weak progressStore] in progressStore?.isRunning = false }
     }
+    
+    /// Incremental sync: Only fetch new likes since last sync
+    /// Spotify returns likes in reverse chronological order (newest first)
+    /// We stop when we hit a track older than our last sync
+    func incrementalSync() async {
+        if isCancelledFlag { isCancelledFlag = false }
+        
+        // Get last sync timestamp
+        var lastSyncDate: Date = .distantPast
+        await MainActor.run {
+            if let state = try? modelContext.fetch(FetchDescriptor<CrawlState>()).first,
+               let lastCompleted = state.lastCompletedAt {
+                lastSyncDate = lastCompleted
+            }
+        }
+        
+        // If we've never synced, do a full sync
+        if lastSyncDate == .distantPast {
+            await MainActor.run { [weak progressStore] in
+                progressStore?.message = "First sync - caching library…"
+            }
+            await startOrResume()
+            return
+        }
+        
+        await MainActor.run { [weak progressStore] in
+            progressStore?.isRunning = true
+            progressStore?.message = "Checking for new likes…"
+            progressStore?.tracksDone = 0
+            progressStore?.tracksTotal = 0
+            if let name = progressStore?.debugName { print("[\(name)] incremental sync starting") }
+        }
+        
+        let market = marketProvider() ?? "US"
+        var newTrackIds: [String] = []
+        var newArtistIds: Set<String> = []
+        var offset = 0
+        let ingestStart = Date()
+        
+        // Fetch pages until we hit already-synced tracks
+        syncLoop: while !isCancelledFlag {
+            do {
+                let page = try await spotify.getLikedTracksPage(limit: 50, offset: offset, market: market)
+                
+                var foundOldTrack = false
+                for track in page.items {
+                    // Stop condition: Track was added before our last sync
+                    if track.addedAt < lastSyncDate {
+                        print("[LIKES] Hit track from \(track.addedAt), stopping (last sync: \(lastSyncDate))")
+                        foundOldTrack = true
+                        break
+                    }
+                    
+                    // Check if we already have this track (belt & suspenders)
+                    var exists = false
+                    await MainActor.run {
+                        let tid = track.trackId
+                        exists = ((try? modelContext.fetch(FetchDescriptor<CachedTrack>(predicate: #Predicate { $0.id == tid })))?.first) != nil
+                    }
+                    
+                    if exists {
+                        // We have this track but it's newer than last sync - might be a re-like, skip
+                        continue
+                    }
+                    
+                    // New track - add to database
+                    await MainActor.run {
+                        let ct = CachedTrack(
+                            id: track.trackId,
+                            name: track.name,
+                            artistId: track.artistId,
+                            artistName: track.artistName,
+                            durationMs: track.durationMs,
+                            albumName: track.albumName,
+                            albumReleaseYear: track.albumReleaseYear,
+                            popularity: track.popularity,
+                            explicit: track.explicit,
+                            addedAt: track.addedAt,
+                            isPlayable: true
+                        )
+                        modelContext.insert(ct)
+                        try? modelContext.save()
+                    }
+                    
+                    newTrackIds.append(track.trackId)
+                    newArtistIds.insert(track.artistId)
+                }
+                
+                await MainActor.run { [weak progressStore] in
+                    progressStore?.tracksDone = newTrackIds.count
+                    progressStore?.message = "Found \(newTrackIds.count) new songs…"
+                }
+                
+                if foundOldTrack {
+                    break syncLoop
+                }
+                
+                // Continue to next page if available
+                if let next = page.nextOffset {
+                    offset = next
+                } else {
+                    break syncLoop
+                }
+            } catch {
+                print("[LIKES] Incremental sync error: \(error)")
+                break syncLoop
+            }
+        }
+        
+        // Enrich only the new tracks
+        if !newTrackIds.isEmpty && !isCancelledFlag {
+            await MainActor.run { [weak progressStore] in
+                progressStore?.message = "Enriching \(newTrackIds.count) new songs…"
+            }
+            
+            let featuresIngestor = FeaturesIngestor(
+                modelContext: modelContext,
+                recco: ReccoBeatsService(),
+                cache: ReccoIdCache(),
+                progress: progressStore
+            )
+            await featuresIngestor.enrichBatchNow(newTrackIds)
+            
+            // Enrich new artists
+            let artistsIngestor = ArtistsIngestor(
+                modelContext: modelContext,
+                spotify: spotify,
+                progress: progressStore
+            )
+            await artistsIngestor.enqueue(Array(newArtistIds))
+            await artistsIngestor.flushAndWait()
+        }
+        
+        // Update last sync timestamp
+        await MainActor.run {
+            if let state = try? modelContext.fetch(FetchDescriptor<CrawlState>()).first {
+                state.lastCompletedAt = Date()
+                try? modelContext.save()
+            }
+        }
+        
+        // Report results
+        let elapsed = Date().timeIntervalSince(ingestStart)
+        await MainActor.run { [weak progressStore] in
+            if newTrackIds.isEmpty {
+                progressStore?.message = "Already up to date!"
+            } else {
+                progressStore?.message = "Added \(newTrackIds.count) songs in \(String(format: "%.1f", elapsed))s"
+            }
+        }
+        
+        print("[LIKES] Incremental sync complete: \(newTrackIds.count) new tracks in \(String(format: "%.1f", elapsed))s")
+        
+        // Brief delay to show the completion message
+        try? await Task.sleep(nanoseconds: 1_500_000_000)
+        
+        await MainActor.run { [weak progressStore] in progressStore?.isRunning = false }
+    }
 }
-
-

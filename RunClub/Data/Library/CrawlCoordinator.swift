@@ -44,6 +44,12 @@ final class CrawlCoordinator: ObservableObject {
         try? await crawler.refreshFromScratch()
         await crawler.startOrResume()
     }
+    
+    /// Quick sync: Only fetch new likes since last sync (incremental)
+    func quickSync() async {
+        guard let crawler else { return }
+        await crawler.incrementalSync()
+    }
 
     func cancel() async {
         await crawler?.cancel()

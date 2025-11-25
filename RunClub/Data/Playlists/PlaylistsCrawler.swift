@@ -32,6 +32,152 @@ actor PlaylistsCrawler {
         isCancelled = true
         Task { @MainActor [weak progress] in progress?.isRunning = false }
     }
+    
+    /// Incremental sync: Only sync playlists whose snapshot_id has changed
+    func incrementalSync() async {
+        if isCancelled { isCancelled = false }
+        let ingestStart = Date()
+        
+        await MainActor.run { [weak progress] in
+            progress?.isRunning = true
+            progress?.message = "Checking for changes…"
+            progress?.tracksDone = 0
+            progress?.tracksTotal = 0
+        }
+        
+        // Fetch selected playlists
+        var selected: [CachedPlaylist] = []
+        await MainActor.run {
+            let all = (try? ctx.fetch(FetchDescriptor<CachedPlaylist>())) ?? []
+            selected = all.filter { $0.selectedForSync }
+        }
+        
+        if selected.isEmpty {
+            await MainActor.run { [weak progress] in
+                progress?.message = "No playlists selected"
+                progress?.isRunning = false
+            }
+            return
+        }
+        
+        // Get fresh metadata from Spotify to compare snapshot IDs
+        let freshMetadata = try? await spotify.getAllUserPlaylists()
+        let freshSnapshots: [String: String] = Dictionary(
+            uniqueKeysWithValues: (freshMetadata ?? []).compactMap { item -> (String, String)? in
+                guard let snap = item.snapshotId else { return nil }
+                return (item.id, snap)
+            }
+        )
+        
+        // Determine which playlists need syncing
+        var playlistsToSync: [CachedPlaylist] = []
+        var unchangedCount = 0
+        
+        for playlist in selected {
+            // Synthetic playlists (Recently Played) always need refresh - no snapshot_id
+            if playlist.isSynthetic {
+                playlistsToSync.append(playlist)
+                continue
+            }
+            
+            // Check if snapshot changed
+            let currentSnapshot = freshSnapshots[playlist.id]
+            if let stored = playlist.snapshotId, let current = currentSnapshot, stored == current {
+                // Unchanged - skip
+                unchangedCount += 1
+                print("[PLAYLISTS] \(playlist.name) unchanged (snapshot match)")
+                continue
+            }
+            
+            // Needs sync (changed or never synced)
+            playlistsToSync.append(playlist)
+            print("[PLAYLISTS] \(playlist.name) needs sync (snapshot: \(playlist.snapshotId ?? "nil") → \(currentSnapshot ?? "nil"))")
+        }
+        
+        // If nothing to sync, we're done
+        if playlistsToSync.isEmpty {
+            await MainActor.run { [weak progress] in
+                progress?.message = "All \(unchangedCount) playlists up to date!"
+            }
+            print("[PLAYLISTS] Incremental sync: all \(unchangedCount) playlists unchanged")
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            await MainActor.run { [weak progress] in progress?.isRunning = false }
+            return
+        }
+        
+        await MainActor.run { [weak progress] in
+            progress?.message = "Syncing \(playlistsToSync.count) changed playlists…"
+        }
+        
+        // Sync only the changed playlists
+        var totalAdded = 0
+        var pendingEnrichmentIds: [String] = []
+        var enrichmentTasks: [Task<Void, Never>] = []
+        let enrichmentBatchThreshold = 200
+        
+        let featuresIngestor = FeaturesIngestor(modelContext: ctx,
+                                                recco: ReccoBeatsService(),
+                                                cache: ReccoIdCache(),
+                                                progress: progress)
+        let artistsIngestor = ArtistsIngestor(modelContext: ctx,
+                                              spotify: spotify,
+                                              progress: progress)
+        
+        for playlist in playlistsToSync {
+            if isCancelled { break }
+            
+            if playlist.id == "recently-played" {
+                let (count, ids) = await syncRecentlyPlayed(playlist: playlist, artistsIngestor: artistsIngestor)
+                totalAdded += count
+                pendingEnrichmentIds.append(contentsOf: ids)
+            } else {
+                let (count, ids) = await syncPlaylist(playlist, artistsIngestor: artistsIngestor)
+                totalAdded += count
+                pendingEnrichmentIds.append(contentsOf: ids)
+                
+                // Update snapshot ID after successful sync
+                if let newSnapshot = freshSnapshots[playlist.id] {
+                    await MainActor.run {
+                        playlist.snapshotId = newSnapshot
+                        playlist.lastSyncedAt = Date()
+                        try? ctx.save()
+                    }
+                }
+            }
+            
+            // Kick off enrichment if threshold reached
+            if pendingEnrichmentIds.count >= enrichmentBatchThreshold {
+                let idsToEnrich = pendingEnrichmentIds
+                pendingEnrichmentIds = []
+                let task = Task { await featuresIngestor.enrichBatchNow(idsToEnrich) }
+                enrichmentTasks.append(task)
+            }
+        }
+        
+        // Enrich remaining
+        if !pendingEnrichmentIds.isEmpty {
+            let task = Task { await featuresIngestor.enrichBatchNow(pendingEnrichmentIds) }
+            enrichmentTasks.append(task)
+        }
+        
+        // Wait for enrichment
+        for task in enrichmentTasks { await task.value }
+        await artistsIngestor.flushAndWait()
+        
+        let elapsed = Date().timeIntervalSince(ingestStart)
+        await MainActor.run { [weak progress] in
+            if playlistsToSync.count == 1 {
+                progress?.message = "Synced 1 playlist (\(totalAdded) tracks) in \(String(format: "%.1f", elapsed))s"
+            } else {
+                progress?.message = "Synced \(playlistsToSync.count) playlists (\(totalAdded) tracks) in \(String(format: "%.1f", elapsed))s"
+            }
+        }
+        
+        print("[PLAYLISTS] Incremental sync complete: \(playlistsToSync.count) playlists, \(totalAdded) tracks in \(String(format: "%.1f", elapsed))s")
+        
+        try? await Task.sleep(nanoseconds: 1_500_000_000)
+        await MainActor.run { [weak progress] in progress?.isRunning = false }
+    }
 
     /// Refreshes all selected playlists and the synthetic 'recently-played' if selected.
     func refreshSelected() async {

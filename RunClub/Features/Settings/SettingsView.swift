@@ -29,13 +29,32 @@ struct SettingsView: View {
     @State private var lastCompleted: Date? = nil
     @State private var playlistsLastSync: Date? = nil
     @State private var showStatsConnect: Bool = false
-    @State private var showDurationPicker: Bool = false
+    @State private var showLengthDropdown: Bool = false
     @State private var showPlaylistSelection: Bool = false
+    
+    // Track which sync type is running
+    @State private var likesQuickSyncRunning: Bool = false
+    @State private var likesFullResetRunning: Bool = false
+    @State private var playlistsQuickSyncRunning: Bool = false
+    @State private var playlistsFullResetRunning: Bool = false
 
     var body: some View {
         NavigationStack {
         ZStack(alignment: .top) {
             Color.black.ignoresSafeArea()
+            
+            // Tap-to-dismiss layer for dropdown
+            if showLengthDropdown {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showLengthDropdown = false
+                        }
+                    }
+                    .zIndex(99)
+            }
             
             VStack(alignment: .leading, spacing: 0) {
                 // Header
@@ -51,88 +70,138 @@ struct SettingsView: View {
                         // MARK: - Default Preferences
                         SettingsSection(title: "DEFAULT PREFERENCES") {
                             SettingsRow(label: "LENGTH", value: "\(defaultRunMinutes) MIN", showChevron: true) {
-                                showDurationPicker = true
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    showLengthDropdown.toggle()
+                                }
                             }
                             SettingsRow(label: "FILTERS", value: "NONE", showChevron: true) {
                                 // TODO: Open filters picker
                             }
                         }
+                        .overlay(alignment: .topTrailing) {
+                            if showLengthDropdown {
+                                LengthDropdown(
+                                    selectedMinutes: $defaultRunMinutes,
+                                    isPresented: $showLengthDropdown
+                                )
+                                .offset(x: 0, y: 28 + 52) // 28 for section title + padding, 52 for row height
+                            }
+                        }
+                        .zIndex(100)
                         
                         // MARK: - Songs - Likes
-                        SettingsSection(title: "SONGS - LIKES") {
-                            let likesRunning = progressStore.isRunning && progressStore.debugName == "LIKES"
+                        let likesRunning = progressStore.isRunning && progressStore.debugName == "LIKES"
+                        SettingsSectionWithStatus(
+                            title: "SONGS - LIKES",
+                            statusText: likesRunning
+                                ? (progressStore.message.isEmpty ? "Syncing..." : progressStore.message)
+                                : (lastCompleted != nil ? "Sync'd \(lastCompleted!.formatted(date: .numeric, time: .shortened))" : "Not synced")
+                        ) {
                             if likesRunning {
-                                // Show tracksDone during sync for real-time feedback (matches toast)
                                 SettingsRowWithProgress(
                                     label: "TRACKS",
                                     value: progressStore.tracksTotal > 0 ? "\(progressStore.tracksDone)/\(progressStore.tracksTotal)" : "\(progressStore.tracksDone)"
                                 )
-                                SettingsRowWithAction(
-                                    label: progressStore.message.isEmpty ? "Syncing..." : progressStore.message,
-                                    actionLabel: "CANCEL",
-                                    actionIcon: "x",
-                                    isCancel: true
-                                ) {
-                                    let coord = crawlCoordinator
-                                    Task { await coord.cancel() }
-                                }
                             } else {
-                                // Show enriched count when idle (featuresDone from DB)
                                 SettingsRow(label: "TRACKS", value: "\(likesFeaturesCount)/\(likesCount)")
-                                SettingsRowWithAction(
-                                    label: lastCompleted != nil ? "Sync'd \(lastCompleted!.formatted(date: .numeric, time: .shortened))" : "Not synced",
-                                    actionLabel: "REFRESH",
-                                    actionIcon: "refresh",
-                                    isCancel: false
-                                ) {
-                                    let coord = crawlCoordinator
-                                    Task { await coord.refresh() }
-                                }
                             }
+                            SettingsRowDualAction(
+                                // Left button: QUICK SYNC or CANCEL (if quick sync is running)
+                                leftLabel: likesQuickSyncRunning ? "CANCEL" : "QUICK SYNC",
+                                leftIcon: likesQuickSyncRunning ? "x" : "ArrowsClockwise",
+                                leftColor: likesQuickSyncRunning ? .red : .green,
+                                leftDisabled: likesFullResetRunning,  // Disabled if OTHER sync is running
+                                leftAction: {
+                                    let coord = crawlCoordinator
+                                    if likesQuickSyncRunning {
+                                        Task { await coord.cancel() }
+                                    } else {
+                                        likesQuickSyncRunning = true
+                                        Task { await coord.quickSync() }
+                                    }
+                                },
+                                // Right button: FULL RESET or CANCEL (if full reset is running)
+                                rightLabel: likesFullResetRunning ? "CANCEL" : "FULL RESET",
+                                rightIcon: likesFullResetRunning ? "x" : "ClockClockwise",
+                                rightColor: likesFullResetRunning ? .red : .blue,
+                                rightDisabled: likesQuickSyncRunning,  // Disabled if OTHER sync is running
+                                rightAction: {
+                                    let coord = crawlCoordinator
+                                    if likesFullResetRunning {
+                                        Task { await coord.cancel() }
+                                    } else {
+                                        likesFullResetRunning = true
+                                        Task { await coord.refresh() }
+                                    }
+                                }
+                            )
                         }
                         
                         // MARK: - Songs - Playlists
-                        SettingsSection(title: "SONGS - PLAYLISTS") {
+                        SettingsSectionWithStatus(
+                            title: "SONGS - PLAYLISTS",
+                            statusText: playlistsProgress.isRunning
+                                ? (playlistsProgress.message.isEmpty ? "Syncing..." : playlistsProgress.message)
+                                : (playlistsLastSync != nil ? "Sync'd \(playlistsLastSync!.formatted(date: .numeric, time: .shortened))" : "Not synced")
+                        ) {
                             SettingsRowNav(label: "SELECTED PLAYLISTS", value: "\(selectedPlaylistsCount)") {
                                 showPlaylistSelection = true
                             }
                             
                             if playlistsProgress.isRunning {
-                                // Show tracksDone during sync for real-time feedback (matches toast)
                                 SettingsRowWithProgress(
                                     label: "TRACKS",
                                     value: playlistsProgress.tracksTotal > 0 ? "\(playlistsProgress.tracksDone)/\(playlistsProgress.tracksTotal)" : "\(playlistsProgress.tracksDone)"
                                 )
-                                SettingsRowWithAction(
-                                    label: playlistsProgress.message.isEmpty ? "Syncing..." : playlistsProgress.message,
-                                    actionLabel: "CANCEL",
-                                    actionIcon: "x",
-                                    isCancel: true
-                                ) {
-                                    Task { await playlistsCoordinator.cancel() }
-                                }
                             } else {
-                                // Show enriched count when idle (featuresDone from DB)
                                 SettingsRow(label: "TRACKS", value: "\(playlistsFeaturesCount)/\(playlistsCount)")
-                                SettingsRowWithAction(
-                                    label: playlistsLastSync != nil ? "Sync'd \(playlistsLastSync!.formatted(date: .numeric, time: .shortened))" : "Not synced",
-                                    actionLabel: "REFRESH",
-                                    actionIcon: "refresh",
-                                    isCancel: false
-                                ) {
-                                    Task {
-                                        print("[SETTINGS] Sync Selected tapped")
-                                        await MainActor.run {
-                                            playlistsProgress.message = "Starting playlists sync…"
-                                            playlistsProgress.isRunning = true
+                            }
+                            SettingsRowDualAction(
+                                // Left button: QUICK SYNC or CANCEL (if quick sync is running)
+                                leftLabel: playlistsQuickSyncRunning ? "CANCEL" : "QUICK SYNC",
+                                leftIcon: playlistsQuickSyncRunning ? "x" : "ArrowsClockwise",
+                                leftColor: playlistsQuickSyncRunning ? .red : .green,
+                                leftDisabled: playlistsFullResetRunning,  // Disabled if OTHER sync is running
+                                leftAction: {
+                                    if playlistsQuickSyncRunning {
+                                        Task { await playlistsCoordinator.cancel() }
+                                    } else {
+                                        playlistsQuickSyncRunning = true
+                                        Task {
+                                            await MainActor.run {
+                                                playlistsProgress.message = "Checking for changes…"
+                                                playlistsProgress.isRunning = true
+                                            }
+                                            await playlistsCoordinator.configure(auth: auth, progressStore: playlistsProgress, likesContext: modelContext)
+                                            await playlistsCoordinator.refreshCatalog()
+                                            await playlistsCoordinator.quickSync()
+                                            await loadCounts()
                                         }
-                                        await playlistsCoordinator.configure(auth: auth, progressStore: playlistsProgress, likesContext: modelContext)
-                                        await playlistsCoordinator.refreshCatalog()
-                                        await playlistsCoordinator.refreshSelected()
-                                        await loadCounts()
+                                    }
+                                },
+                                // Right button: FULL RESET or CANCEL (if full reset is running)
+                                rightLabel: playlistsFullResetRunning ? "CANCEL" : "FULL RESET",
+                                rightIcon: playlistsFullResetRunning ? "x" : "ClockClockwise",
+                                rightColor: playlistsFullResetRunning ? .red : .blue,
+                                rightDisabled: playlistsQuickSyncRunning,  // Disabled if OTHER sync is running
+                                rightAction: {
+                                    if playlistsFullResetRunning {
+                                        Task { await playlistsCoordinator.cancel() }
+                                    } else {
+                                        playlistsFullResetRunning = true
+                                        Task {
+                                            await MainActor.run {
+                                                playlistsProgress.message = "Full reset…"
+                                                playlistsProgress.isRunning = true
+                                            }
+                                            await playlistsCoordinator.configure(auth: auth, progressStore: playlistsProgress, likesContext: modelContext)
+                                            await playlistsCoordinator.refreshCatalog()
+                                            await playlistsCoordinator.refreshSelected()
+                                            await loadCounts()
+                                        }
                                     }
                                 }
-                            }
+                            )
                         }
                         
                         // MARK: - App
@@ -181,14 +250,6 @@ struct SettingsView: View {
                 // keep sheet open; user may continue
             })
         }
-        .sheet(isPresented: $showDurationPicker) {
-            DurationPickerSheet(initialMinutes: defaultRunMinutes) { newValue in
-                if let minutes = newValue {
-                    defaultRunMinutes = minutes
-                }
-            }
-            .presentationDetents([.height(300)])
-        }
         .task {
             await playlistsCoordinator.configure(auth: auth, progressStore: playlistsProgress, likesContext: modelContext)
             await loadCounts()
@@ -196,11 +257,15 @@ struct SettingsView: View {
         .onChange(of: playlistsProgress.isRunning) { running in
             if !running {
                 playlistsLastSync = Date()
+                playlistsQuickSyncRunning = false
+                playlistsFullResetRunning = false
                 Task { await loadCounts() }
             }
         }
         .onChange(of: progressStore.isRunning) { running in
             if !running {
+                likesQuickSyncRunning = false
+                likesFullResetRunning = false
                 Task { await loadCounts() }
             }
         }
@@ -407,5 +472,155 @@ private struct SettingsRowButton: View {
             .background(Color.white.opacity(0.1))
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// Section with status text below (right-aligned, size 13, light font)
+private struct SettingsSectionWithStatus<Content: View>: View {
+    let title: String
+    let statusText: String
+    @ViewBuilder let content: Content
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(title)
+                .font(RCFont.light(13))
+                .foregroundColor(.white.opacity(0.4))
+                .padding(.bottom, 8)
+            
+            VStack(alignment: .leading, spacing: 1) {
+                content
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            
+            // Status text - right aligned, size 13, light font
+            HStack {
+                Spacer()
+                Text(statusText)
+                    .font(RCFont.light(13))
+                    .foregroundColor(.white.opacity(0.4))
+            }
+            .padding(.top, 6)
+        }
+    }
+}
+
+/// Row with two side-by-side action buttons
+private struct SettingsRowDualAction: View {
+    let leftLabel: String
+    var leftIcon: String? = nil
+    var leftColor: Color = .green
+    var leftDisabled: Bool = false
+    let leftAction: () -> Void
+    
+    let rightLabel: String
+    var rightIcon: String? = nil
+    var rightColor: Color = .blue
+    var rightDisabled: Bool = false
+    let rightAction: () -> Void
+    
+    var body: some View {
+        HStack(spacing: 1) {
+            // Left button
+            Button(action: leftAction) {
+                HStack(spacing: 6) {
+                    Text(leftLabel)
+                        .font(RCFont.regular(16))
+                    if let leftIcon {
+                        Image(leftIcon)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                    }
+                }
+                .foregroundColor(leftDisabled ? .white.opacity(0.3) : leftColor)
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(Color.white.opacity(0.1))
+            }
+            .buttonStyle(.plain)
+            .disabled(leftDisabled)
+            
+            // Right button
+            Button(action: rightAction) {
+                HStack(spacing: 6) {
+                    Text(rightLabel)
+                        .font(RCFont.regular(16))
+                    if let rightIcon {
+                        Image(rightIcon)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                    }
+                }
+                .foregroundColor(rightDisabled ? .white.opacity(0.3) : rightColor)
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(Color.white.opacity(0.1))
+            }
+            .buttonStyle(.plain)
+            .disabled(rightDisabled)
+        }
+    }
+}
+
+/// Length dropdown selector
+private struct LengthDropdown: View {
+    @Binding var selectedMinutes: Int
+    @Binding var isPresented: Bool
+    
+    // Range from 20 to 120 minutes in 5-minute increments
+    private let minuteOptions = stride(from: 20, through: 120, by: 5).map { $0 }
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                ForEach(minuteOptions, id: \.self) { minutes in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            selectedMinutes = minutes
+                            isPresented = false
+                        }
+                    } label: {
+                        HStack {
+                            Text("\(minutes)")
+                                .font(RCFont.regular(16))
+                                .foregroundColor(.white)
+                            Spacer()
+                            if minutes == selectedMinutes {
+                                Image("check")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 20, height: 20)
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .frame(height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // Divider between items (except after last)
+                    if minutes != minuteOptions.last {
+                        Rectangle()
+                            .fill(Color.white.opacity(0.1))
+                            .frame(height: 1)
+                    }
+                }
+            }
+        }
+        .scrollIndicators(.hidden)
+        .frame(width: 120, height: 300)
+        .background(
+            ZStack {
+                Color.black
+                Color.white.opacity(0.15)
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: Color.black.opacity(0.4), radius: 16, x: 0, y: 8)
     }
 }

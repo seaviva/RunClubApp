@@ -131,10 +131,36 @@ final class PlaylistsCoordinator: ObservableObject {
         }
     }
 
+    /// Quick sync: Only sync playlists that have changed (based on snapshot_id)
+    func quickSync() async {
+        // Ensure crawler exists
+        if crawler == nil {
+            let spotify = SpotifyService()
+            spotify.accessTokenProvider = { AuthService.overrideToken() ?? (AuthService.sharedTokenSync() ?? "") }
+            self.crawler = PlaylistsCrawler(spotify: spotify,
+                                            repository: repo,
+                                            progress: self.progress,
+                                            context: PlaylistsDataStack.shared.context,
+                                            likesContext: ModelContext(PlaylistsDataStack.shared.container))
+        }
+        guard let crawler else {
+            print("[PLAYLISTS] quickSync aborted — crawler unavailable")
+            return
+        }
+        
+        runningTask?.cancel()
+        runningTask = Task {
+            print("[PLAYLISTS] incremental sync starting")
+            await crawler.incrementalSync()
+            await MainActor.run { [weak self] in
+                print("[PLAYLISTS] incremental sync finished")
+                self?.runningTask = nil
+            }
+        }
+    }
+    
     func cancel() async {
         runningTask?.cancel()
         await crawler?.cancel()
     }
 }
-
-
