@@ -22,7 +22,6 @@
 		5F6E1B712EBE709F009DF509 /* LocalGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B492EBE709F009DF509 /* LocalGenerator.swift */; };
 		5F6E1B722EBE709F009DF509 /* RunSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B5C2EBE709F009DF509 /* RunSummaryView.swift */; };
 		5F6E1B732EBE709F009DF509 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B602EBE709F009DF509 /* SettingsView.swift */; };
-		5F6E1BDB2ECF0000009DF509 /* DefaultFiltersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1BDA2ECF0000009DF509 /* DefaultFiltersView.swift */; };
 		5F6E1B742EBE709F009DF509 /* Decade.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B302EBE709F009DF509 /* Decade.swift */; };
 		5F6E1B752EBE709F009DF509 /* CachedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B2E2EBE709F009DF509 /* CachedModels.swift */; };
 		5F6E1B762EBE709F009DF509 /* ProgressStores.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B392EBE709F009DF509 /* ProgressStores.swift */; };
@@ -54,6 +53,7 @@
 		5F6E1BA92EC3ABC1009DF509 /* PlaylistsDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1BA42EC3ABC1009DF509 /* PlaylistsDataStack.swift */; };
 		5F6E1BAA2EC3ABC1009DF509 /* PlaylistsCrawler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1BA32EC3ABC1009DF509 /* PlaylistsCrawler.swift */; };
 		5F6E1BD92ECD016D009DF509 /* ThirdSourceDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1BD72ECD016D009DF509 /* ThirdSourceDataStack.swift */; };
+		5F6E1BDB2ECF0000009DF509 /* DefaultFiltersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1BDA2ECF0000009DF509 /* DefaultFiltersView.swift */; };
 		5F94FD012E4F8E1900A3F9AE /* SpotifyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FCFF2E4F8CF600A3F9AE /* SpotifyService.swift */; };
 		5FECA3D02E79E918007D0002 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5FECA3CF2E79E918007D0002 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -124,7 +124,6 @@
 		5F6E1B5D2EBE709F009DF509 /* SpotifyPlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyPlaybackController.swift; sourceTree = "<group>"; };
 		5F6E1B5E2EBE709F009DF509 /* StartRunView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartRunView.swift; sourceTree = "<group>"; };
 		5F6E1B602EBE709F009DF509 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		5F6E1BDA2ECF0000009DF509 /* DefaultFiltersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultFiltersView.swift; sourceTree = "<group>"; };
 		5F6E1B8C2EC2778C009DF509 /* ArtistsIngestor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistsIngestor.swift; sourceTree = "<group>"; };
 		5F6E1B8D2EC2778C009DF509 /* FeaturesIngestor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturesIngestor.swift; sourceTree = "<group>"; };
 		5F6E1B8E2EC2778C009DF509 /* ReccoIdCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReccoIdCache.swift; sourceTree = "<group>"; };
@@ -136,6 +135,7 @@
 		5F6E1BA42EC3ABC1009DF509 /* PlaylistsDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistsDataStack.swift; sourceTree = "<group>"; };
 		5F6E1BA52EC3ABC1009DF509 /* PlaylistsRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistsRepository.swift; sourceTree = "<group>"; };
 		5F6E1BD72ECD016D009DF509 /* ThirdSourceDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThirdSourceDataStack.swift; sourceTree = "<group>"; };
+		5F6E1BDA2ECF0000009DF509 /* DefaultFiltersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultFiltersView.swift; sourceTree = "<group>"; };
 		5F94FCCD2E4F886200A3F9AE /* RunClubAppX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RunClubAppX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F94FCDC2E4F886300A3F9AE /* RunClubTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunClubTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F94FCE62E4F886300A3F9AE /* RunClubUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunClubUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -775,7 +775,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.StemsLabs.RunClubAppX;
 				PRODUCT_NAME = RunClubAppX;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -818,7 +818,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.StemsLabs.RunClubAppX;
 				PRODUCT_NAME = RunClubAppX;
 				PROVISIONING_PROFILE_SPECIFIER = "";
