@@ -45,19 +45,6 @@ struct SettingsView: View {
         ZStack(alignment: .top) {
             Color.black.ignoresSafeArea()
             
-            // Tap-to-dismiss layer for dropdown
-            if showLengthDropdown {
-                Color.clear
-                    .contentShape(Rectangle())
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            showLengthDropdown = false
-                        }
-                    }
-                    .zIndex(99)
-            }
-            
             VStack(alignment: .leading, spacing: 0) {
                 // Header
                 Text("SETTINGS")
@@ -86,7 +73,7 @@ struct SettingsView: View {
                                     selectedMinutes: $defaultRunMinutes,
                                     isPresented: $showLengthDropdown
                                 )
-                                .offset(x: 0, y: 28 + 52) // 28 for section title + padding, 52 for row height
+                                .offset(x: 0, y: 80) // Below section title + row height
                             }
                         }
                         .zIndex(100)
@@ -242,6 +229,17 @@ struct SettingsView: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 40)
                 }
+                // Dismiss dropdown when scrolling
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 5)
+                        .onChanged { _ in
+                            if showLengthDropdown {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    showLengthDropdown = false
+                                }
+                            }
+                        }
+                )
             }
         }
         .navigationBarHidden(true)

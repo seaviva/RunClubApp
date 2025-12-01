@@ -43,7 +43,7 @@ Key highlights of the current architecture:
 - `CachedModels.swift`: SwiftData entities and cache models.
 - `CompletedRun.swift`: Completed run record (date, elapsedSeconds, distanceMeters, runMinutes, template).
 - `PreviewRun.swift`: Preview data used to confirm a playlist before starting a run (includes `runMinutes`).
-- `RunTemplateType.swift`: Templates (easyRun, strongSteady, waves, pyramid, kicker, rest).
+- `RunTemplateType.swift`: Templates (light, tempo, hiit, intervals, pyramid, kicker).
 - `Genre.swift`: Genres used for filtering and recommendations.
 - `Decade.swift`: Decade buckets for filtering.
 - `SpotifyCredentials.swift`: Stored credentials model (for legacy reads where applicable).

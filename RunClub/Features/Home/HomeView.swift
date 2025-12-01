@@ -17,58 +17,44 @@ struct HomeView: View {
     @EnvironmentObject var playlistsProgress: PlaylistsProgressStore
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("defaultRunMinutes") private var defaultRunMinutes: Int = 30
-    @State private var customTemplate: RunTemplateType?
     
-    @State private var customGenres: Set<Genre> = []
-    @State private var customDecades: Set<Decade> = []
-    @State private var customPrompt: String = ""
-    @State private var customMinutes: Int? = nil
-    // Track if user has explicitly changed filters this session (to override defaults)
-    @State private var userChangedFilters: Bool = false
-    // Carousel selection for templates on Home
-    @State private var selectedTemplate: RunTemplateType = .easyRun
-    // New sheets for filters and duration
-    @State private var showingFiltersSheet = false
-    @State private var showingDurationSheet = false
+    // Run setup state (passed from RunSetupSheet to RunPreviewSheet)
+    @State private var pendingTemplate: RunTemplateType = .light
+    @State private var pendingMinutes: Int = 30
+    @State private var pendingGenres: Set<Genre> = []
+    @State private var pendingDecades: Set<Decade> = []
+    
+    // Sheet states
+    @State private var showingRunSetup = false
     @State private var showingSettings = false
+    @State private var showingLog = false
+    @State private var showingPreview = false
+    @State private var showingStartRun = false
+    
+    // Error handling
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var isGenerating = false
+    
     // Current-session generated playlist URL
     @State private var generatedURL: URL? = nil
     @State private var currentUserId: String? = nil
-    @State private var showingStartRun = false
-    @State private var showingPreview = false
     @State private var lastGeneratedTemplate: RunTemplateType? = nil
     @State private var lastRunMinutes: Int? = nil
-    @State private var pendingTemplate: RunTemplateType? = nil
     
     private let spotify = SpotifyService()
-    @State private var showingLog: Bool = false
-
-    // Order templates for the Home carousel.
-    private func templateCarouselOrder(recommended: RunTemplateType?) -> [RunTemplateType] {
-        let base = RunTemplateType.allCases
-        guard let rec = recommended else { return base }
-        return [rec] + base.filter { $0 != rec }
-    }
-
-    private var runMinutes: Int { customMinutes ?? defaultRunMinutes }
 
     var body: some View {
-        let activeTemplate: RunTemplateType? = selectedTemplate
-        GeometryReader { proxy in
-        ZStack(alignment: .top) {
-            // Background image keyed by carousel-selected template or rest
-            Image(templateBackgroundAssetName(for: activeTemplate))
+        ZStack {
+            // Static background image - fills entire screen
+            Image("homestreet")
                 .resizable()
                 .scaledToFill()
-                .ignoresSafeArea()
+                .ignoresSafeArea(.all)
                 .accessibilityHidden(true)
 
             VStack(spacing: 0) {
-                //Color.clear.frame(height: max(0,proxy.safeAreaInsets.top - 16))
-                // Header: centered HStack with left logo, middle title, right log button
+                // Header: logo on left, log + settings on right
                 HStack(spacing: 0) {
                     Image("runclublogo")
                         .renderingMode(.original)
@@ -111,127 +97,65 @@ struct HomeView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.top, 12)
+                .padding(.horizontal, 28)
                 .frame(height: 44, alignment: .center)
 
-                // Main content fills remaining space; bottom-centered
-                if (AuthService.overrideToken() != nil) {
-                VStack(spacing: 20) {
-                        // Carousel of templates/rest (only when not completed)
-                        TabView(selection: $selectedTemplate) {
-                            ForEach(templateCarouselOrder(recommended: nil)) { t in
-                                VStack(spacing: 12) {
-                                    Text(t.rawValue)
-                                        .font(RCFont.powerGroteskLight(60))
-                                        .foregroundColor(.white)
-                                        .multilineTextAlignment(.center)
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.5)
-                                        .padding(.horizontal, 20)
-                                    Text(runDescription(for: t))
-                                        .font(RCFont.light(16))
-                                        .foregroundColor(.white)
-                                        .multilineTextAlignment(.center)
-                                        .lineSpacing(6)
-                                        .padding(.horizontal, 20)
-                                        .padding(.bottom, 24)
-                                    // Duration text removed; length is now shown in the duration pill
-                                }
-                                .tag(t)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                                .padding(.bottom, 32)
-                            }
+                // Main CTA area
+                if AuthService.overrideToken() != nil {
+                    Spacer()
+                    
+                    // Main headline text
+                    Text("It's a great\nday for a run")
+                        .font(RCFont.powerGroteskLight(60))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(0)
+                        .padding(.horizontal, 20)
+                    
+                    // Weather card
+                    WeatherCardView()
+                        .padding(.horizontal, 48)
+                        .padding(.top, 32)
+                    
+                    Spacer()
+                    
+                    // Single CTA button
+                    Button(action: {
+                        if generatedURL != nil {
+                            showingStartRun = true
+                        } else {
+                            showingRunSetup = true
                         }
-                        .tabViewStyle(.page(indexDisplayMode: .always))
-                        .onChange(of: selectedTemplate) { _, _ in }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                .padding(.bottom, 16)
+                    }) {
+                        Text(generatedURL != nil ? "CONTINUE RUN" : "LET'S GO")
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
+                    .buttonStyle(SecondaryOutlineButtonStyle())
+                    .disabled(isGenerating)
+                    .padding(.horizontal, 48)
+                    .padding(.bottom, 16)
                 } else {
-                    // Use StatsForSpotify connect instead of native PKCE
+                    Spacer()
+                    // Connect Spotify prompt
                     Button("Connect Spotify") { showingSettings = true }
                         .buttonStyle(.borderedProminent)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                        .padding(.bottom, 32)
+                        .padding(.bottom, 80)
                 }
-
-                // Bottom controls: buttons bar + CTA, pinned to bottom
-                VStack(spacing: 0) {
-                    // Buttons bar (filters + duration)
-                    if (AuthService.overrideToken() != nil) {
-                            HStack(spacing: 16) {
-                                Spacer()
-                                let filtersApplied = !customGenres.isEmpty || !customDecades.isEmpty
-                                Button(action: { showingFiltersSheet = true }) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "music.note.list").font(.system(size: 16, weight: .regular))
-                                        Text(filtersApplied ? "CUSTOM" : "AUTO")
-                                            .font(RCFont.medium(15))
-                                    }
-                                    .foregroundColor(Color(hex: 0x1FCBFF))
-                                    .padding(.horizontal, 20)
-                                    .frame(height: 48)
-                                    .background(Color(hex: 0x33B1FF, alpha: 0.25))
-                                    .cornerRadius(28)
-                                }
-                                Button(action: { showingDurationSheet = true }) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "timer").font(.system(size: 16, weight: .regular))
-                                        let label = "~\(runMinutes)min"
-                                        Text(label).font(RCFont.medium(15))
-                                    }
-                                    .foregroundColor(Color(hex: 0xFF3333))
-                                    .padding(.horizontal, 20)
-                                    .frame(height: 48)
-                                    .background(Color(hex: 0xFF3333, alpha: 0.25))
-                                    .cornerRadius(28)
-                                }
-                                Spacer()
-                            }
-                            .frame(height: 68)
-                    }
-
-                    // CTA row
-                    
-                    if (AuthService.overrideToken() != nil) {
-                        HStack(spacing: 16) {
-                            Spacer()
-                            Button(action: {
-                                if generatedURL != nil {
-                                    showingStartRun = true
-                                } else {
-                                    let template = selectedTemplate
-                                    print("Home: starting preview — template=\(template.rawValue) minutes=\(runMinutes)")
-                                    pendingTemplate = template
-                                    showingPreview = true
-                                }
-                            }) {
-                                Text("LET’S RUN")
-                                    .lineLimit(1)
-                                    .fixedSize(horizontal: true, vertical: false)
-                            }
-                            .buttonStyle(SecondaryOutlineButtonStyle())
-                            .disabled(isGenerating)
-                            Spacer(minLength: 0)
-                        }
-                        .padding(.top, 8)
-                    } else { EmptyView() }
-                    Spacer()
-                }
-                .frame(height: 206 + max(0, proxy.safeAreaInsets.bottom))
-                .padding(.horizontal, 20)
             }
+            .safeAreaPadding(.top)
             .onAppear {
-                // Load default filters if user hasn't explicitly changed them this session
-                if !userChangedFilters {
-                    let defaultGenres = DefaultFiltersHelper.getDefaultGenres()
-                    let defaultDecades = DefaultFiltersHelper.getDefaultDecades()
-                    if !defaultGenres.isEmpty || !defaultDecades.isEmpty {
-                        customGenres = defaultGenres
-                        customDecades = defaultDecades
-                    }
+                // Initialize pending minutes from defaults
+                pendingMinutes = defaultRunMinutes
+                
+                // Load default filters
+                let defaultGenres = DefaultFiltersHelper.getDefaultGenres()
+                let defaultDecades = DefaultFiltersHelper.getDefaultDecades()
+                if !defaultGenres.isEmpty {
+                    pendingGenres = defaultGenres
+                }
+                if !defaultDecades.isEmpty {
+                    pendingDecades = defaultDecades
                 }
                 
                 Task {
@@ -244,21 +168,28 @@ struct HomeView: View {
                 }
             }
         }
-        }
         // Sheets
-        .sheet(isPresented: $showingFiltersSheet) {
-            FilterPickerSheet(initialGenres: customGenres, initialDecades: customDecades) { g, d in
-                customGenres = g
-                customDecades = d
-                userChangedFilters = true  // Mark that user has explicitly changed filters
+        .sheet(isPresented: $showingRunSetup) {
+            RunSetupSheet(
+                initialTemplate: pendingTemplate,
+                initialMinutes: pendingMinutes,
+                initialGenres: pendingGenres,
+                initialDecades: pendingDecades
+            ) { template, minutes, genres, decades in
+                // Store the selected values and open preview
+                pendingTemplate = template
+                pendingMinutes = minutes
+                pendingGenres = genres
+                pendingDecades = decades
+                showingRunSetup = false
+                
+                // Small delay to allow sheet dismissal animation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showingPreview = true
+                }
             }
             .presentationDetents([.large])
-        }
-         .sheet(isPresented: $showingDurationSheet) {
-            DurationPickerSheet(initialMinutes: customMinutes) { minutes in
-                customMinutes = minutes
-            }
-            .presentationDetents([.medium, .large])
+            .interactiveDismissDisabled(true)
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
@@ -268,9 +199,16 @@ struct HomeView: View {
                 .environmentObject(playlistsCoordinator)
                 .environmentObject(playlistsProgress)
         }
-        .sheet(isPresented: $showingLog) { RunLogView().environment(\.modelContext, modelContext) }
+        .sheet(isPresented: $showingLog) {
+            RunLogView().environment(\.modelContext, modelContext)
+        }
         .sheet(isPresented: $showingPreview) {
-            RunPreviewSheet(template: selectedTemplate, runMinutes: runMinutes, genres: Array(customGenres), decades: Array(customDecades)) { preview in
+            RunPreviewSheet(
+                template: pendingTemplate,
+                runMinutes: pendingMinutes,
+                genres: Array(pendingGenres),
+                decades: Array(pendingDecades)
+            ) { preview in
                 Task { await confirm(preview: preview) }
             }
             .presentationDetents([.large])
@@ -283,9 +221,9 @@ struct HomeView: View {
                 StartRunView(playlistURI: url.absoluteString, template: t, runMinutes: m) { elapsedSeconds, distanceMeters in
                     persistCompletedRun(template: t, runMinutes: m, elapsedSeconds: elapsedSeconds, distanceMeters: distanceMeters)
                 }
-                    .presentationDetents([.large])
-                    .interactiveDismissDisabled(true)
-                    .presentationDragIndicator(.hidden)
+                .presentationDetents([.large])
+                .interactiveDismissDisabled(true)
+                .presentationDragIndicator(.hidden)
             } else {
                 Text("No run available")
             }
@@ -297,30 +235,17 @@ struct HomeView: View {
         }
     }
 
-    private func generate() {
-        Task {
-            isGenerating = true
-            defer { isGenerating = false }
-            // New flow: compute selection and present preview; no network playlist creation here
-            let template = selectedTemplate
-            pendingTemplate = template
-            showingPreview = true
-        }
-    }
-
     private func confirm(preview: PreviewRun) async {
-            // Use override-first provider to support StatsForSpotify login fully
-            spotify.accessTokenProvider = { AuthService.overrideToken() ?? (AuthService.sharedTokenSync() ?? "") }
-            do {
+        // Use override-first provider to support StatsForSpotify login fully
+        spotify.accessTokenProvider = { AuthService.overrideToken() ?? (AuthService.sharedTokenSync() ?? "") }
+        do {
             let url = try await spotify.createConfirmedPlaylist(from: preview)
             generatedURL = url
             lastGeneratedTemplate = preview.template
             lastRunMinutes = preview.runMinutes
-            // Clear custom minutes after successful confirmation so it only applies to this run
-            customMinutes = nil
             showingPreview = false
             showingStartRun = true
-            } catch {
+        } catch {
             errorMessage = (error as NSError).localizedDescription
             showError = true
         }
@@ -334,112 +259,100 @@ struct HomeView: View {
         modelContext.insert(record)
         try? modelContext.save()
     }
-    private func openURL(_ url: URL) { Task { await UIApplication.shared.open(url) } }
-
-    private func selectionSummary() -> String {
-        let hasTemplate = (customTemplate != nil)
-        let hasDuration = (customMinutes != nil)
-        let hasGenres = !customGenres.isEmpty
-        let hasDecades = !customDecades.isEmpty
-        let hasPrompt = !customPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        if !(hasTemplate || hasDuration || hasGenres || hasDecades || hasPrompt) {
-            return "Auto"
-        }
-        var parts: [String] = []
-        if let t = customTemplate { parts.append(t.rawValue) }
-        if let m = customMinutes { parts.append("~\(m)min") }
-        if hasGenres { parts.append("Genres: " + customGenres.map { $0.rawValue }.joined(separator: ", ")) }
-        if hasDecades { parts.append("Decades: " + customDecades.map { $0.rawValue }.joined(separator: ", ")) }
-        if hasPrompt { parts.append("Prompt: \(customPrompt)") }
-        return parts.joined(separator: " · ")
-    }
-
-    private func filterSummary() -> String {
-        var parts: [String] = []
-        if !customGenres.isEmpty { parts.append(customGenres.map { $0.rawValue }.joined(separator: ", ")) }
-        if !customDecades.isEmpty { parts.append(customDecades.map { $0.rawValue }.joined(separator: ", ")) }
-        let prompt = customPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !prompt.isEmpty { parts.append("\"\(prompt)\"") }
-        return parts.joined(separator: " • ")
-    }
-
-    private func runDescription(for template: RunTemplateType) -> String {
-        switch template {
-        case .easyRun:
-            return "A relaxed, steady-paced run with low-energy tracks to keep you comfortable from start to finish. Perfect for recovery or getting moving without pushing too hard."
-        case .strongSteady:
-            return "A steady run at a confident, moderate effort — powered by mid- to high-energy songs that help you lock into a groove and hold it."
-        case .shortWaves:
-            return "A playful fartlek: one song easy, one song high-energy — repeat until you’re done. Let the music set the pace changes."
-        case .longWaves:
-            return "A longer fartlek: two songs easy, two songs high-energy — repeated for a balanced mix of cruising and pushing."
-        case .pyramid:
-            return "Start easy and gradually build up to your hardest effort in the middle, then step back down to finish relaxed. The playlist’s energy rises and falls to guide you."
-        case .kicker:
-            return "A steady run with a surprise ending — the last few tracks are all high-energy to push you into a strong, satisfying finish."
-        }
-    }
-
-    // Map a template to a background asset name located under Assets `templateimages`.
-    private func templateBackgroundAssetName(for template: RunTemplateType?) -> String {
-        guard let t = template else { return "light" }
-        switch t {
-        case .easyRun: return "light"
-        case .strongSteady: return "tempo"
-        case .shortWaves: return "hiit"
-        case .longWaves: return "intervals"
-        case .pyramid: return "pyramid"
-        case .kicker: return "kicker"
-        }
-    }
 }
 
-// Token chip for displaying selected filters in Home sync'd playlist section
-private struct FilterTokenChip: View {
-    let title: String
+// MARK: - Weather Card View
+struct WeatherCardView: View {
     var body: some View {
-        Text(title)
-            .font(RCFont.regular(13))
-            .foregroundColor(.white)
-            .padding(.horizontal, 8)
-            .frame(height: 32)
-            .background(Color.white.opacity(0.15))
-            .cornerRadius(4)
-    }
-}
-private struct RecommendationCard: View {
-    let title: String
-    let template: RunTemplateType
-    let minutes: Int
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.headline)
-            Text(template.rawValue)
-                .font(.title3).bold()
-            Text("\(minutes) min")
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color.gray.opacity(0.12))
-        .cornerRadius(12)
-    }
-}
-
-private struct CustomizeStubView: View {
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 16) {
-                Text("Customization coming soon")
-                Button("Close") { dismiss() }
+        VStack(alignment: .leading, spacing: 12) {
+            // Top row: Date and temperature
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Wednesday, 26th")
+                        .font(RCFont.medium(16))
+                        .foregroundColor(.white)
+                    
+                    HStack(spacing: 6) {
+                        Text("☀️")
+                            .font(.system(size: 14))
+                        Text("Sunny")
+                            .font(RCFont.regular(14))
+                            .foregroundColor(Color(hex: 0xFFD60A))
+                    }
+                }
+                
+                Spacer()
+                
+                Text("68°")
+                    .font(RCFont.light(48))
+                    .foregroundColor(.white)
             }
-            .padding()
-            .navigationTitle("Customize Run")
-            .navigationBarTitleDisplayMode(.inline)
+            
+            // Bottom row: Weather details
+            HStack(spacing: 0) {
+                // UV / AQI column
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("UV  5:45am")
+                        .font(RCFont.regular(12))
+                        .foregroundColor(.white.opacity(0.7))
+                    Text("AQI  6:31pm")
+                        .font(RCFont.regular(12))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                Spacer()
+                
+                // Sunrise/Sunset column
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sunrise.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.7))
+                        Text("5:45am")
+                            .font(RCFont.regular(12))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    HStack(spacing: 4) {
+                        Image(systemName: "sunset.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.7))
+                        Text("6:31pm")
+                            .font(RCFont.regular(12))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                }
+                
+                Spacer()
+                
+                // High/Low temps
+                VStack(alignment: .trailing, spacing: 4) {
+                    HStack(spacing: 2) {
+                        Text("L")
+                            .font(RCFont.regular(12))
+                            .foregroundColor(Color(hex: 0x4A90D9))
+                        Text("68")
+                            .font(RCFont.regular(12))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    HStack(spacing: 2) {
+                        Text("H")
+                            .font(RCFont.regular(12))
+                            .foregroundColor(Color(hex: 0xE55C3A))
+                        Text("48")
+                            .font(RCFont.regular(12))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                }
+            }
         }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.1))
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                )
+        )
     }
 }
-
-

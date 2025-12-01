@@ -16,29 +16,27 @@
   - Short: 20–30 min (midpoint default 25).
   - Medium: 30–45 min (midpoint default 37).
   - Long: 45–60 min (midpoint default 53).
-- **Long & Easy rule**: 1.5× the selected duration category (respecting lower/upper derived bounds).
+- **Duration multiplier rule (legacy)**: No longer used; all templates use standard duration ranges.
 - **Storage**: `AppStorage` keys (e.g., `runsPerWeek`, `preferredDurationCategory`, `onboardingComplete`).
 
 ## Duration Handling
-- **Hard bounds**: Do not exceed the duration bracket bounds for the selected category, except when explicitly specified by a template rule (e.g., Long & Easy 1.5×).
+- **Hard bounds**: Do not exceed the duration bracket bounds for the selected category.
 - **Template-specific targets**: Each template has a target total and warm‑up/core/cool‑down split per category. The generator aims for these and allows small flexibility (≈±1 track) to fit within bounds; see details below and in `ALGORITHM_SPEC.md`.
 - **Tolerance**: Prefer within ±60s of target while obeying bounds (flex around track boundaries).
 - **Warm‑up/Cool‑down**: Reserved as Easy; roughly WU ≈ 20–25% and CD ≈ 15–20% of total, with per‑template splits below.
-- **Duration bias by template**: Easy leans shorter; Strong & Steady / Pyramid / Kicker lean longer; Waves center (Long Waves slightly longer). See `ALGORITHM_SPEC.md`.
+- **Duration bias by template**: Light leans shorter; Tempo / Pyramid / Kicker lean longer; Waves center (Intervals slightly longer). See `ALGORITHM_SPEC.md`.
 - **Waves note**: “Short Waves” and “Long Waves” describe interval pattern length, not strictly the total duration.
 
 ## Template Archetypes and Segment Logic
 Definitions encode how playlist effort should flow (tiered effort per slot using a 5‑tier system: Easy, Moderate, Strong, Hard, Max). Tempo targets now use fixed BPM windows per tier (see `ALGORITHM_SPEC.md` for window ranges and slot rules).
 
-- **Easy Run**: Mostly Easy; allow ≤20% low‑end Moderate in middle; WU/CD Easy.
+- **Light**: Mostly Easy; allow ≤20% low‑end Moderate in middle; WU/CD Easy.
 
-- **Strong & Steady**: Mostly Strong; optionally 1–2 low‑end Hard spikes; no Max; WU/CD Easy.
+- **Tempo**: Mostly Strong; optionally 1–2 low‑end Hard spikes; no Max; WU/CD Easy.
 
-- **Long & Easy**: Mostly Easy; ≤20% Moderate; WU/CD Easy. Duration may apply 1.5× rule per scheduler.
+- **HIIT** (fartlek): Repeat Easy ↔ Hard cycles; no Max in first cycle; at most one Max near the end if time; end Easy; WU/CD Easy.
 
-- **Short Waves** (fartlek): Repeat Easy ↔ Hard cycles; no Max in first cycle; at most one Max near the end if time; end Easy; WU/CD Easy.
-
-- **Long Waves**: Repeat Moderate ↔ Hard (tighter range than short waves; start Moderate; fewer Hards; no Max); WU/CD Easy.
+- **Intervals**: Repeat Moderate ↔ Hard (tighter range than HIIT; start Moderate; fewer Hards; no Max); WU/CD Easy.
 
 - **Pyramid**: Moderate → Strong → Hard → Max → Hard → Strong → Moderate (drop Max first if short); WU/CD Easy.
 
@@ -48,23 +46,19 @@ Notes:
 - See `ALGORITHM_SPEC.md` for slot windows, relaxations, and scoring.
 
 ### Template Duration Targets (minutes → WU/Core/CD)
-- **Easy Run** (leans short)
+- **Light** (leans short)
   - Short: 20–22 → 4/13/3 (baseline 20)
   - Medium: 32–35 → 6/22/6 (baseline 34)
   - Long: 47–50 → 8/34/8 (baseline 50)
-- **Strong & Steady** (middle)
+- **Tempo** (middle)
   - Short: 25 → 5/15/5
   - Medium: 38–40 → 7/25/7 (baseline 39)
   - Long: 55 → 9/37/9
-- **Long & Easy** (1.5× weekend run)
-  - Short (30×1.5): 45 → 8/29/8
-  - Medium (45×1.5): 68 → 12/44/12
-  - Long (60×1.5): 90 → 15/60/15
-- **Short Waves** (alt easy/hard, middle)
+- **HIIT** (alt easy/hard, middle)
   - Short: 26–28 → 5/17/4 (baseline 26)
   - Medium: 38–40 → 7/25/6 (baseline 38)
   - Long: 50–52 → 9/34/8 (baseline 51)
-- **Long Waves** (2 easy/2 hard, leans long)
+- **Intervals** (2 easy/2 hard, leans long)
   - Short: 28–30 → 6/18/5 (baseline 29)
   - Medium: 43–45 → 8/29/8 (baseline 45)
   - Long: 58–60 → 10/40/10
@@ -89,24 +83,24 @@ Notes:
 - Settings gear always visible in header.
 
 - **2 runs/week**
-  - Week A: Strong & Steady (Medium), Easy Run (Short)
-  - Week B: Kicker (Medium), Long & Easy (Long×1.5)
+  - Week A: Tempo (Medium), Light (Short)
+  - Week B: Kicker (Medium), Light (Long)
 
 - **3 runs/week**
-  - Week A: Easy Run (Short), Strong & Steady (Medium), Short Waves (Medium)
-  - Week B: Easy Run (Short), Pyramid (Medium), Long & Easy (Long×1.5)
+  - Week A: Light (Short), Tempo (Medium), HIIT (Medium)
+  - Week B: Light (Short), Pyramid (Medium), Light (Long)
 
 - **4 runs/week**
-  - Week A: Easy Run (Short), Strong & Steady (Medium), Short Waves (Medium), Long & Easy (Long×1.5)
-  - Week B: Easy Run (Short), Kicker (Medium), Long Waves (Medium), Strong & Steady (Medium)
+  - Week A: Light (Short), Tempo (Medium), HIIT (Medium), Light (Long)
+  - Week B: Light (Short), Kicker (Medium), Intervals (Medium), Tempo (Medium)
 
 - **5 runs/week**
-  - Week A: Easy Run (Short), Strong & Steady (Medium), Short Waves (Medium), Easy Run (Short), Long & Easy (Long×1.5)
-  - Week B: Easy Run (Short), Pyramid (Medium), Strong & Steady (Medium), Kicker (Medium), Easy Run (Short)
+  - Week A: Light (Short), Tempo (Medium), HIIT (Medium), Light (Short), Light (Long)
+  - Week B: Light (Short), Pyramid (Medium), Tempo (Medium), Kicker (Medium), Light (Short)
 
 ## Customization Inputs
 - **Template**: Choose any from the list above.
-- **Duration**: Constrained by category bounds; Long & Easy applies 1.5× rule.
+- **Duration**: Constrained by category bounds.
 - **Genres**: Umbrella genres backed by JSON mapping (10 umbrellas). If a selected umbrella is thin, neighbor umbrellas are automatically considered with reduced weight.
 - **Decades**: 70s, 80s, 90s, 00s, 10s, 20s.
 - **Prompt**: Keyword extraction to genres/moods/decades; no LLM in MVP.
@@ -263,7 +257,7 @@ Notes: Local generation is SwiftData‑first; legacy Spotify recommendations pat
 - Before Generation pipeline (Phase 2):
   - Smoke test token refresh across app relaunch; handle offline/denied scopes gracefully.
 - After initial Generation pipeline:
-  - For each template and duration category, create 1 playlist; check order matches template shape and total duration within bounds (Long & Easy uses 1.5× rule).
+  - For each template and duration category, create 1 playlist; check order matches template shape and total duration within bounds.
   - Validate fallback behavior when recommendations are sparse (playlist still created, within bounds).
 
 - After Library Cache & Crawler:

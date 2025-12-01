@@ -8,10 +8,10 @@
 import Foundation
 
 enum RunTemplateType: String, Codable, CaseIterable, Identifiable, Hashable {
-    case easyRun = "Light"
-    case strongSteady = "Tempo"
-    case shortWaves = "HIIT"
-    case longWaves = "Intervals"
+    case light = "Light"
+    case tempo = "Tempo"
+    case hiit = "HIIT"
+    case intervals = "Intervals"
     case pyramid = "Pyramid"
     case kicker = "Kicker"
 

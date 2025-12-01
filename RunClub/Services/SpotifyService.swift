@@ -1037,9 +1037,9 @@ final class SpotifyService {
 
     private func bpmRange(for template: RunTemplateType) -> (Double, Double)? {
         switch template {
-        case .easyRun: return (130, 150)
-        case .strongSteady: return (150, 170)
-        case .shortWaves, .longWaves, .pyramid, .kicker: return nil
+        case .light: return (130, 150)
+        case .tempo: return (150, 170)
+        case .hiit, .intervals, .pyramid, .kicker: return nil
         }
     }
 
@@ -1127,8 +1127,8 @@ final class SpotifyService {
         return URL(string: urlString)!
     }
 
-    // MARK: - Public: Generation (MVP Easy/Steady)
-    /// Generates a playlist for Easy Run or Strong & Steady honoring hard filters, BPM, popularity, and duration bounds.
+    // MARK: - Public: Generation (MVP Light/Tempo)
+    /// Generates a playlist for Light or Tempo honoring hard filters, BPM, popularity, and duration bounds.
     
 
     // MARK: - Public helpers

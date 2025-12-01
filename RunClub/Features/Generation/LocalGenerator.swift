@@ -588,7 +588,7 @@ final class LocalGenerator {
         for slot in slots {
             guard secondsSoFar < minSeconds else { break }
             // Filter pool by hard per-artist cap and not already chosen
-            let perArtistMax = (template == .easyRun ? 1 : 2)
+            let perArtistMax = (template == .light ? 1 : 2)
             let now = Date()
             let threeDays: TimeInterval = 3 * 24 * 3600
             // Unified availability: include likes, playlists, and third-source every slot; no source gating here
@@ -873,7 +873,7 @@ final class LocalGenerator {
                     guard secondsSoFar < minSeconds else { break }
                     // Treat tail extension as main adjustments rather than cooldown to avoid inflating cooldown
                     let slot = Slot(effort: .easy, targetEffort: 0.45)
-                    let perArtistMax = (template == .easyRun ? 1 : 2)
+                    let perArtistMax = (template == .light ? 1 : 2)
                     let now = Date()
                     let threeDays: TimeInterval = 3 * 24 * 3600
                     // Tail extension prefers likes first
@@ -969,7 +969,7 @@ final class LocalGenerator {
         if cdSecondsAcc < (cdTarget - 60) {
             while cdSecondsAcc < (cdTarget - 60) && secondsSoFar < maxSeconds {
                 let slot = Slot(effort: .easy, targetEffort: 0.35)
-                let perArtistMax = (template == .easyRun ? 1 : 2)
+                let perArtistMax = (template == .light ? 1 : 2)
                 // prefer likes first
                 var available = pool.filter { c in
                     !selected.contains(where: { $0.track.id == c.track.id }) &&
@@ -1248,7 +1248,7 @@ final class LocalGenerator {
         // Middle by template (approximate to minute buckets of ~4 min per slot)
         let m = max(1, middle / 4)
         switch template {
-        case .easyRun:
+        case .light:
             // Mostly Easy; allow ≤20% low-end Moderate in middle
             let modCount = min(max(0, Int(round(Double(m) * 0.2))), max(0, m - 1))
             let pre = (m - modCount) / 2
@@ -1256,7 +1256,7 @@ final class LocalGenerator {
             plan += slots(of: .easy, count: pre, target: 0.45)
             plan += slots(of: .moderate, count: modCount, target: 0.48)
             plan += slots(of: .easy, count: post, target: 0.45)
-        case .strongSteady:
+        case .tempo:
             // Mostly Strong; up to 2 low-end Hard spikes; no Max
             if m <= 2 {
                 plan += slots(of: .strong, count: m, target: 0.60)
@@ -1276,7 +1276,7 @@ final class LocalGenerator {
                     mid -= chunk
                 }
             }
-        case .shortWaves:
+        case .hiit:
             // Strict alternation between Easy and Hard, one song at a time.
             // Start with Hard if warm-up ended with Easy to avoid Easy→Easy adjacency.
             // Allow one Max near the end only (not in first cycle), replacing a Hard.
@@ -1294,7 +1294,7 @@ final class LocalGenerator {
                     plan.append(Slot(effort: .easy, targetEffort: 0.45))
                 }
             }
-        case .longWaves:
+        case .intervals:
             // Repeat Moderate ↔ Hard; no Max
             let pattern: [EffortTier] = [.moderate, .hard]
             for i in 0..<m { let e = pattern[i % pattern.count]; plan.append(Slot(effort: e, targetEffort: e == .moderate ? 0.48 : 0.80)) }
@@ -1342,14 +1342,14 @@ final class LocalGenerator {
         // Core by template using coreSlots as the count 'm'
         let m = max(0, coreSlots)
         switch template {
-        case .easyRun:
+        case .light:
             let modCount = min(max(0, Int(round(Double(m) * 0.2))), max(0, m - 1))
             let pre = max(0, (m - modCount) / 2)
             let post = max(0, m - modCount - pre)
             plan += slots(of: .easy, count: pre, target: 0.45)
             plan += slots(of: .moderate, count: modCount, target: 0.48)
             plan += slots(of: .easy, count: post, target: 0.45)
-        case .strongSteady:
+        case .tempo:
             if m <= 2 {
                 plan += slots(of: .strong, count: m, target: 0.60)
             } else {
@@ -1368,7 +1368,7 @@ final class LocalGenerator {
                     mid -= chunk
                 }
             }
-        case .shortWaves:
+        case .hiit:
             var usedMax = false
             let startWithHard = !plan.isEmpty && plan.last?.effort == .easy
             for i in 0..<m {
@@ -1383,7 +1383,7 @@ final class LocalGenerator {
                     plan.append(Slot(effort: .easy, targetEffort: 0.45))
                 }
             }
-        case .longWaves:
+        case .intervals:
             let pattern: [EffortTier] = [.moderate, .hard]
             for i in 0..<m { let e = pattern[i % pattern.count]; plan.append(Slot(effort: e, targetEffort: e == .moderate ? 0.48 : 0.80)) }
         case .pyramid:

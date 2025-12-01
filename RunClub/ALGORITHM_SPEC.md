@@ -5,7 +5,7 @@ Scope: Authoritative specification for run template structure and the local play
 
 ### High-level goals:
 	•	Uses template-tier tempo windows instead of user pace. Fixed BPM bands per effort tier still accept ½×/2× tempo so songs across genres can “feel” right without collecting cadence data.  ￼
-	•	Builds runs as effort curves, not crude blocks. Warm-up/cooldown are reserved; Pyramid/Steady/Waves are granular and ordered; Easy/Long Easy avoid surges.  ￼
+	•	Builds runs as effort curves, not crude blocks. Warm-up/cooldown are reserved; Pyramid/Tempo/Waves are granular and ordered; Light avoids surges.  ￼
 	•	Reduces repetition and boosts variety. 10-day lockout, artist spacing, genre/decade diversity bonus, and a rediscovery target (liked but unused ≥60 days) so playlists feel fresh.  ￼
 	•	Fits duration reliably. It reserves WU/CD minutes, biases by template (Easy → shorter; Pyramid/Steady/Kicker → longer), then trims/extends edges to land within ±60s.  ￼
 	•	Scores songs on fitness, not just rules. Slot scoring blends tempo fit with energy/danceability (and a proxy if tempo is missing), then samples from the top candidates with randomness to avoid sameness.  ￼
@@ -65,21 +65,19 @@ Scope: Authoritative specification for run template structure and the local play
 - Reserve warm‑up at start and cooldown at end (both Easy). Use template‑specific targets per category; keep small flexibility (≈±1 track) at selection time to fit within bounds.
 - Typical shares: WU ≈ 20–25% of total, CD ≈ 15–20% of total.
 - Template duration targets (minutes → WU/Core/CD):
-  - Easy Run — Short 20–22 → 4/13/3; Medium 32–35 → 6/22/6; Long 47–50 → 8/34/8
-  - Strong & Steady — Short 25 → 5/15/5; Medium 38–40 → 7/25/7; Long 55 → 9/37/9
-  - Long & Easy — Short 45 → 8/29/8; Medium 68 → 12/44/12; Long 90 → 15/60/15
-  - Short Waves — Short 26–28 → 5/17/4; Medium 38–40 → 7/25/6; Long 50–52 → 9/34/8
-  - Long Waves — Short 28–30 → 6/18/5; Medium 43–45 → 8/29/8; Long 58–60 → 10/40/10
+  - Light — Short 20–22 → 4/13/3; Medium 32–35 → 6/22/6; Long 47–50 → 8/34/8
+  - Tempo — Short 25 → 5/15/5; Medium 38–40 → 7/25/7; Long 55 → 9/37/9
+  - HIIT — Short 26–28 → 5/17/4; Medium 38–40 → 7/25/6; Long 50–52 → 9/34/8
+  - Intervals — Short 28–30 → 6/18/5; Medium 43–45 → 8/29/8; Long 58–60 → 10/40/10
   - Pyramid — Short 27–28 → 5/17/5; Medium 40–42 → 7/26/7; Long 55–57 → 9/37/9
   - Kicker — Short 25–26 → 5/15/5; Medium 38–40 → 7/25/7; Long 52–54 → 9/35/8
-- Duration bias by template: Easy leans shorter; Strong & Steady / Pyramid / Kicker lean longer; Waves centered (Long Waves slightly longer).
+- Duration bias by template: Light leans shorter; Tempo / Pyramid / Kicker lean longer; Waves centered (Intervals slightly longer).
 
 ### Templates as Tier Curves (adapts to run length)
-- Easy Run: mostly Easy; allow ≤20% low‑end Moderate in middle.
-- Strong & Steady: mostly Strong; optionally 1–2 low‑end Hard spikes; no Max.
-- Long & Easy: same as Easy (Easy-majority; ≤20% Moderate).
-- Short Waves: strict alternation Easy↔Hard (one song each); start with Hard if warm‑up ended Easy to avoid Easy→Easy; no Max in first cycle; allow ≤1 Max only near the end (replacing a Hard) if long enough; Easy anchors between Hards.
-- Long Waves: repeat Moderate↔Hard; slightly tighter than Short Waves (start Moderate; fewer Hards; no Max).
+- Light: mostly Easy; allow ≤20% low‑end Moderate in middle.
+- Tempo: mostly Strong; optionally 1–2 low‑end Hard spikes; no Max.
+- HIIT: strict alternation Easy↔Hard (one song each); start with Hard if warm‑up ended Easy to avoid Easy→Easy; no Max in first cycle; allow ≤1 Max only near the end (replacing a Hard) if long enough; Easy anchors between Hards.
+- Intervals: repeat Moderate↔Hard; slightly tighter than HIIT (start Moderate; fewer Hards; no Max).
 - Pyramid: Moderate → Strong → Hard → Max → Hard → Strong → Moderate; if short, drop Max first; if very short, Strong as peak.
 - Kicker: Moderate/Strong base; final ramp to Hard then Max; at most 1 Max and ≤2 Hard; for short runs end at Hard only.
 

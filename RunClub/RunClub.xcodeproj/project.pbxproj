@@ -54,6 +54,7 @@
 		5F6E1BAA2EC3ABC1009DF509 /* PlaylistsCrawler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1BA32EC3ABC1009DF509 /* PlaylistsCrawler.swift */; };
 		5F6E1BD92ECD016D009DF509 /* ThirdSourceDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1BD72ECD016D009DF509 /* ThirdSourceDataStack.swift */; };
 		5F6E1BDB2ECF0000009DF509 /* DefaultFiltersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1BDA2ECF0000009DF509 /* DefaultFiltersView.swift */; };
+		5F6E1E922EDDE804009DF509 /* RunSetupSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1E912EDDE804009DF509 /* RunSetupSheet.swift */; };
 		5F94FD012E4F8E1900A3F9AE /* SpotifyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FCFF2E4F8CF600A3F9AE /* SpotifyService.swift */; };
 		5FECA3D02E79E918007D0002 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5FECA3CF2E79E918007D0002 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -136,6 +137,7 @@
 		5F6E1BA52EC3ABC1009DF509 /* PlaylistsRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistsRepository.swift; sourceTree = "<group>"; };
 		5F6E1BD72ECD016D009DF509 /* ThirdSourceDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThirdSourceDataStack.swift; sourceTree = "<group>"; };
 		5F6E1BDA2ECF0000009DF509 /* DefaultFiltersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultFiltersView.swift; sourceTree = "<group>"; };
+		5F6E1E912EDDE804009DF509 /* RunSetupSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunSetupSheet.swift; sourceTree = "<group>"; };
 		5F94FCCD2E4F886200A3F9AE /* RunClubAppX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RunClubAppX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F94FCDC2E4F886300A3F9AE /* RunClubTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunClubTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F94FCE62E4F886300A3F9AE /* RunClubUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunClubUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -270,6 +272,7 @@
 		5F6E1B552EBE709F009DF509 /* Home */ = {
 			isa = PBXGroup;
 			children = (
+				5F6E1E912EDDE804009DF509 /* RunSetupSheet.swift */,
 				5F6E1B4E2EBE709F009DF509 /* DurationPickerSheet.swift */,
 				5F6E1B4F2EBE709F009DF509 /* FilterPickerSheet.swift */,
 				5F6E1B502EBE709F009DF509 /* HomeView.swift */,
@@ -574,6 +577,7 @@
 				5F6E1B7A2EBE709F009DF509 /* RunOrchestrator.swift in Sources */,
 				5F6E1B7C2EBE709F009DF509 /* StartRunView.swift in Sources */,
 				5F6E1B7D2EBE709F009DF509 /* OnboardingFlowView.swift in Sources */,
+				5F6E1E922EDDE804009DF509 /* RunSetupSheet.swift in Sources */,
 				5F6E1B7F2EBE709F009DF509 /* WebTokenConnectView.swift in Sources */,
 				5F6E1B802EBE709F009DF509 /* ReccoBeatsClient.swift in Sources */,
 				5F6E1B812EBE709F009DF509 /* JukyHeadlessRefresher.swift in Sources */,
