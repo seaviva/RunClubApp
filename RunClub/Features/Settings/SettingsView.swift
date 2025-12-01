@@ -31,6 +31,8 @@ struct SettingsView: View {
     @State private var showStatsConnect: Bool = false
     @State private var showLengthDropdown: Bool = false
     @State private var showPlaylistSelection: Bool = false
+    @State private var showDefaultFilters: Bool = false
+    @State private var defaultFiltersCount: Int = 0
     
     // Track which sync type is running
     @State private var likesQuickSyncRunning: Bool = false
@@ -59,7 +61,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 0) {
                 // Header
                 Text("SETTINGS")
-                    .font(RCFont.light(14))
+                    .font(RCFont.regular(15))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 20)
@@ -69,13 +71,13 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         // MARK: - Default Preferences
                         SettingsSection(title: "DEFAULT PREFERENCES") {
-                            SettingsRow(label: "LENGTH", value: "\(defaultRunMinutes) MIN", showChevron: true) {
+                            SettingsRow(label: "RUN LENGTH", value: "\(defaultRunMinutes) MIN", showChevron: true) {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     showLengthDropdown.toggle()
                                 }
                             }
-                            SettingsRow(label: "FILTERS", value: "NONE", showChevron: true) {
-                                // TODO: Open filters picker
+                            SettingsRowNav(label: "MUSIC FILTERS", value: defaultFiltersCount > 0 ? "\(defaultFiltersCount)" : "NONE") {
+                                showDefaultFilters = true
                             }
                         }
                         .overlay(alignment: .topTrailing) {
@@ -253,6 +255,7 @@ struct SettingsView: View {
         .task {
             await playlistsCoordinator.configure(auth: auth, progressStore: playlistsProgress, likesContext: modelContext)
             await loadCounts()
+            defaultFiltersCount = DefaultFiltersHelper.getTotalCount()
         }
         .onChange(of: playlistsProgress.isRunning) { running in
             if !running {
@@ -271,6 +274,15 @@ struct SettingsView: View {
         }
         .navigationDestination(isPresented: $showPlaylistSelection) {
             PlaylistSelectionView()
+        }
+        .navigationDestination(isPresented: $showDefaultFilters) {
+            DefaultFiltersView()
+        }
+        .onChange(of: showDefaultFilters) { showing in
+            // Reload filter count when returning from DefaultFiltersView
+            if !showing {
+                defaultFiltersCount = DefaultFiltersHelper.getTotalCount()
+            }
         }
         }
     }

@@ -23,6 +23,8 @@ struct HomeView: View {
     @State private var customDecades: Set<Decade> = []
     @State private var customPrompt: String = ""
     @State private var customMinutes: Int? = nil
+    // Track if user has explicitly changed filters this session (to override defaults)
+    @State private var userChangedFilters: Bool = false
     // Carousel selection for templates on Home
     @State private var selectedTemplate: RunTemplateType = .easyRun
     // New sheets for filters and duration
@@ -77,17 +79,9 @@ struct HomeView: View {
 
                     Spacer(minLength: 8)
 
-                    Text("RUNCLUB")
-                        .font(RCFont.light(14))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .multilineTextAlignment(.center)
-
-                    Spacer(minLength: 8)
-
-                    HStack(spacing: 0) {
+                    HStack(spacing: 8) {
                         Button { showingLog = true } label: {
-                            Image("calendarblank")
+                            Image("ClockCounterClockwise")
                                 .renderingMode(.template)
                                 .resizable()
                                 .scaledToFit()
@@ -104,10 +98,11 @@ struct HomeView: View {
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                     .scaleEffect(0.9)
                             } else {
-                                Image(systemName: "line.3.horizontal")
+                                Image("Gear1")
+                                    .renderingMode(.template)
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: 20, height: 20)
+                                    .frame(width: 24, height: 24)
                                     .foregroundColor(.white)
                             }
                         }
@@ -229,6 +224,16 @@ struct HomeView: View {
                 .padding(.horizontal, 20)
             }
             .onAppear {
+                // Load default filters if user hasn't explicitly changed them this session
+                if !userChangedFilters {
+                    let defaultGenres = DefaultFiltersHelper.getDefaultGenres()
+                    let defaultDecades = DefaultFiltersHelper.getDefaultDecades()
+                    if !defaultGenres.isEmpty || !defaultDecades.isEmpty {
+                        customGenres = defaultGenres
+                        customDecades = defaultDecades
+                    }
+                }
+                
                 Task {
                     if let token = await auth.accessToken() {
                         spotify.accessTokenProvider = { token }
@@ -245,6 +250,7 @@ struct HomeView: View {
             FilterPickerSheet(initialGenres: customGenres, initialDecades: customDecades) { g, d in
                 customGenres = g
                 customDecades = d
+                userChangedFilters = true  // Mark that user has explicitly changed filters
             }
             .presentationDetents([.large])
         }
@@ -363,8 +369,6 @@ struct HomeView: View {
             return "A relaxed, steady-paced run with low-energy tracks to keep you comfortable from start to finish. Perfect for recovery or getting moving without pushing too hard."
         case .strongSteady:
             return "A steady run at a confident, moderate effort — powered by mid- to high-energy songs that help you lock into a groove and hold it."
-        case .longEasy:
-            return "An extended, relaxed run with smooth, low- to mid-energy tracks to help you settle in and keep the pace light for the long haul."
         case .shortWaves:
             return "A playful fartlek: one song easy, one song high-energy — repeat until you’re done. Let the music set the pace changes."
         case .longWaves:
@@ -382,7 +386,6 @@ struct HomeView: View {
         switch t {
         case .easyRun: return "light"
         case .strongSteady: return "tempo"
-        case .longEasy: return "longeasy"
         case .shortWaves: return "hiit"
         case .longWaves: return "intervals"
         case .pyramid: return "pyramid"

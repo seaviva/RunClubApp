@@ -1320,14 +1320,6 @@ final class LocalGenerator {
                 plan += slots(of: .hard, count: min(2, tail), target: 0.80)
                 if tail > 1 { plan[plan.count - 1] = Slot(effort: .max, targetEffort: 0.85) }
             }
-        case .longEasy:
-            // Mostly Easy; ≤20% Moderate
-            let modCount = min(max(0, Int(round(Double(m) * 0.2))), max(0, m - 1))
-            let pre = (m - modCount) / 2
-            let post = m - modCount - pre
-            plan += slots(of: .easy, count: pre, target: 0.45)
-            plan += slots(of: .moderate, count: modCount, target: 0.48)
-            plan += slots(of: .easy, count: post, target: 0.45)
         }
 
         // Cooldown (Easy ~0.35)
@@ -1412,13 +1404,6 @@ final class LocalGenerator {
                 plan += slots(of: .hard, count: min(2, tail), target: 0.80)
                 if tail > 1 { plan[plan.count - 1] = Slot(effort: .max, targetEffort: 0.85) }
             }
-        case .longEasy:
-            let modCount = min(max(0, Int(round(Double(m) * 0.2))), max(0, m - 1))
-            let pre = max(0, (m - modCount) / 2)
-            let post = max(0, m - modCount - pre)
-            plan += slots(of: .easy, count: pre, target: 0.45)
-            plan += slots(of: .moderate, count: modCount, target: 0.48)
-            plan += slots(of: .easy, count: post, target: 0.45)
         }
         // Cooldown (Easy ~0.35)
         plan += slots(of: .easy, count: max(0, cdSlots), target: 0.35)

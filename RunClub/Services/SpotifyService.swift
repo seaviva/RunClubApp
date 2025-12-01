@@ -1039,7 +1039,6 @@ final class SpotifyService {
         switch template {
         case .easyRun: return (130, 150)
         case .strongSteady: return (150, 170)
-        case .longEasy: return (130, 155)
         case .shortWaves, .longWaves, .pyramid, .kicker: return nil
         }
     }
