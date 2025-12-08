@@ -25,10 +25,9 @@ struct HomeView: View {
     @State private var pendingDecades: Set<Decade> = []
     
     // Sheet states
-    @State private var showingRunSetup = false
+    @State private var showingRunFlow = false
     @State private var showingSettings = false
     @State private var showingLog = false
-    @State private var showingPreview = false
     @State private var showingStartRun = false
     
     // Error handling
@@ -124,7 +123,7 @@ struct HomeView: View {
                         if generatedURL != nil {
                             showingStartRun = true
                         } else {
-                            showingRunSetup = true
+                            showingRunFlow = true
                         }
                     }) {
                         Text(generatedURL != nil ? "CONTINUE RUN" : "LET'S GO")
@@ -169,24 +168,17 @@ struct HomeView: View {
             }
         }
         // Sheets
-        .sheet(isPresented: $showingRunSetup) {
-            RunSetupSheet(
+        .sheet(isPresented: $showingRunFlow) {
+            RunFlowSheet(
                 initialTemplate: pendingTemplate,
                 initialMinutes: pendingMinutes,
                 initialGenres: pendingGenres,
                 initialDecades: pendingDecades
-            ) { template, minutes, genres, decades in
-                // Store the selected values and open preview
-                pendingTemplate = template
-                pendingMinutes = minutes
-                pendingGenres = genres
-                pendingDecades = decades
-                showingRunSetup = false
-                
-                // Small delay to allow sheet dismissal animation
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    showingPreview = true
-                }
+            ) { preview in
+                // Update pending values from the confirmed preview
+                pendingTemplate = preview.template
+                pendingMinutes = preview.runMinutes
+                Task { await confirm(preview: preview) }
             }
             .presentationDetents([.large])
             .interactiveDismissDisabled(true)
@@ -201,18 +193,6 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingLog) {
             RunLogView().environment(\.modelContext, modelContext)
-        }
-        .sheet(isPresented: $showingPreview) {
-            RunPreviewSheet(
-                template: pendingTemplate,
-                runMinutes: pendingMinutes,
-                genres: Array(pendingGenres),
-                decades: Array(pendingDecades)
-            ) { preview in
-                Task { await confirm(preview: preview) }
-            }
-            .presentationDetents([.large])
-            .interactiveDismissDisabled(true)
         }
         .sheet(isPresented: $showingStartRun) {
             if let url = generatedURL,
@@ -243,7 +223,7 @@ struct HomeView: View {
             generatedURL = url
             lastGeneratedTemplate = preview.template
             lastRunMinutes = preview.runMinutes
-            showingPreview = false
+            showingRunFlow = false
             showingStartRun = true
         } catch {
             errorMessage = (error as NSError).localizedDescription

@@ -231,8 +231,9 @@ final class LocalGenerator {
         var totalTracksSeen = 0
         func passesFilters(_ t: CachedTrack) -> Bool {
             totalTracksSeen += 1
-            // Must be playable and ≤ 6 minutes
+            // Must be playable, ≥ 1:30, and ≤ 6 minutes
             guard t.isPlayable else { return false }
+            guard t.durationMs >= 90 * 1000 else { return false }
             guard t.durationMs <= 6 * 60 * 1000 else { return false }
             // Genre includes (umbrella affinity): if user selected any, require affinity > 0
             if !genres.isEmpty {
@@ -738,6 +739,7 @@ final class LocalGenerator {
                         !selected.contains(where: { $0.track.id == c.track.id }) &&
                         (perArtistCount[c.track.artistId] ?? 0) < 2 &&
                         (recentArtists.last != c.track.artistId) &&
+                        c.track.durationMs >= 90 * 1000 &&
                         c.track.durationMs <= 6 * 60 * 1000 &&
                         c.source == .likes &&
                         // explicitly include within lockout if necessary
@@ -749,6 +751,7 @@ final class LocalGenerator {
                             !selected.contains(where: { $0.track.id == c.track.id }) &&
                             (perArtistCount[c.track.artistId] ?? 0) < 2 &&
                             (recentArtists.last != c.track.artistId) &&
+                            c.track.durationMs >= 90 * 1000 &&
                             c.track.durationMs <= 6 * 60 * 1000 &&
                             (c.source == .recs || c.source == .third) &&
                             (c.lastUsedAt == nil || now.timeIntervalSince(c.lastUsedAt!) < lockout)

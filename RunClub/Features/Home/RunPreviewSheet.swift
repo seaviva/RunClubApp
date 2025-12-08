@@ -1,7 +1,6 @@
 //
 //  RunPreviewSheet.swift
 //  RunClub
-//
 
 import SwiftUI
 import SwiftData
@@ -11,6 +10,7 @@ struct RunPreviewSheet: View {
     let runMinutes: Int
     var genres: [Genre] = []
     var decades: [Decade] = []
+    let onBack: () -> Void
     let onContinue: (PreviewRun) -> Void
 
     @Environment(\.modelContext) private var modelContext
@@ -20,97 +20,156 @@ struct RunPreviewSheet: View {
     @State private var replacingIndex: Int? = nil
 
     var body: some View {
-        VStack(spacing: 16) {
-            // Header bar (match DurationPickerSheet style)
-            ZStack {
-                Text("TODAY’S RUN")
-                    .font(RCFont.light(15))
-                    .foregroundColor(.white)
-                HStack {
-                    Button(action: { dismiss() }) {
-                        Image("x")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 24, height: 24)
-                            .foregroundColor(.white)
+        ZStack(alignment: .bottom) {
+            // Main content
+            VStack(spacing: 0) {
+                // Header
+                headerView
+                    .padding(.horizontal, 14)
+                
+                // Scrollable content
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Title row
+                        titleRow
+                        
+                        // Workout info bar
+                        workoutInfoBar
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 16)
+                        
+                        // Track sections
+                        content
+                            .padding(.horizontal, 20)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Close")
-                    Spacer()
-                    Button(action: { Task { await loadPreview() } }) {
-                        Image("refresh")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 24, height: 24)
-                            .foregroundColor(.white)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Refresh Preview")
+                    .padding(.bottom, 140) // Space for CTA
                 }
             }
-            // Subheader: Workout Playlist + total runtime
-            HStack {
-                Text("Total Runtime").font(RCFont.semiBold(17))
-                Spacer()
-                Text(totalRuntimeText).font(RCFont.semiBold(17))
-            }
-            .padding(.top, 16)
-            .padding(.bottom, 8)
-
-            // Scrollable content (extends to bottom; extra bottom padding so last row clears CTA)
-            ScrollView {
-                VStack(spacing: 18) {
-                    content
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, 120) // space for CTA overlay
-            }
-            .scrollIndicators(.hidden)
-            .mask(
+            
+            // CTA overlay pinned to bottom
+            VStack(spacing: 0) {
+                // Gradient for fade effect
                 LinearGradient(
-                    gradient: Gradient(stops: [
-                        .init(color: .white, location: 0.0),
-                        .init(color: .white, location: 0.80),
-                        .init(color: .clear, location: 1.0)
-                    ]),
+                    colors: [Color.black.opacity(0.0), Color.black],
                     startPoint: .top,
                     endPoint: .bottom
                 )
-            )
-        }
-        .padding(.top, 20)
-        .padding(.horizontal,20)
-        .foregroundColor(.white)
-        .background(Color.black.ignoresSafeArea())
-        .overlay(alignment: .bottom) {
-            // Gradient overlay + CTA pinned at bottom
-            ZStack(alignment: .bottom) {
-                LinearGradient(colors: [Color.black, Color.black.opacity(0.0)], startPoint: .bottom, endPoint: .top)
-                    .frame(height: 140)
-                    .allowsHitTesting(false)
+                .frame(height: 36)
+                .allowsHitTesting(false)
+                
+                // Button area with solid background
                 HStack {
-                    LooksGoodCTA(isEnabled: preview != nil) {
+                    StartRunCTA(isEnabled: preview != nil) {
                         if let p = preview { onContinue(p) }
                     }
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 34) // Safe area approximate
+                .background(Color.black)
             }
-            .ignoresSafeArea(edges: .bottom)
         }
+        .background(Color.black)
+        .ignoresSafeArea(edges: .bottom)
         .task { await loadPreview() }
+    }
+    
+    // MARK: - Header
+    
+    private var headerView: some View {
+        ZStack {
+            // Step indicator (two bars - second filled for step 2)
+            HStack(spacing: 6) {
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(Color.white.opacity(0.25))
+                    .frame(width: 34, height: 2)
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(Color.white)
+                    .frame(width: 34, height: 2)
+            }
+            
+            HStack {
+                Button(action: { onBack() }) {
+                    Image(systemName: "arrow.left")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.white)
+                }
+                .frame(width: 40, height: 40)
+                .contentShape(Rectangle())
+                
+                Spacer()
+                
+                Button(action: { dismiss() }) {
+                    Image("Xflat")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
+                }
+                .frame(width: 40, height: 40)
+                .contentShape(Rectangle())
+            }
+        }
+        .padding(.top, 16)
+    }
+    
+    // MARK: - Title Row
+    
+    private var titleRow: some View {
+        HStack {
+            Text("Your Run")
+                .font(RCFont.medium(28))
+                .foregroundColor(.white)
+            Spacer()
+        }
+        .padding(.top, 14)
+        .padding(.bottom, 16)
+        .padding(.horizontal, 20)
+    }
+    
+    // MARK: - Workout Info Bar
+    
+    private var workoutInfoBar: some View {
+        HStack {
+            Text(template.rawValue)
+                .font(RCFont.medium(16))
+                .foregroundColor(.white)
+            Spacer()
+            Text(totalRuntimeText)
+                .font(RCFont.medium(16))
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+        .background(Color.white.opacity(0.07))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     @ViewBuilder private var content: some View {
         if isLoading {
-            ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            ProgressView()
+                .frame(maxWidth: .infinity, minHeight: 200, alignment: .center)
         } else if let p = preview {
             let slices = sectionSlices(for: p)
-            if !slices.warmup.isEmpty { sectionView(title: "WARMUP", seconds: slices.warmupSeconds) { rowsView(slices.warmup) } }
-            if !slices.main.isEmpty { sectionView(title: "MAIN", seconds: slices.mainSeconds) { rowsView(slices.main) } }
-            if !slices.cooldown.isEmpty { sectionView(title: "COOLDOWN", seconds: slices.cooldownSeconds) { rowsView(slices.cooldown) } }
+            VStack(alignment: .leading, spacing: 0) {
+                if !slices.warmup.isEmpty {
+                    sectionView(title: "WARMUP", seconds: slices.warmupSeconds) {
+                        rowsView(slices.warmup)
+                    }
+                }
+                if !slices.main.isEmpty {
+                    sectionView(title: "MAIN", seconds: slices.mainSeconds) {
+                        rowsView(slices.main)
+                    }
+                }
+                if !slices.cooldown.isEmpty {
+                    sectionView(title: "COOLDOWN", seconds: slices.cooldownSeconds) {
+                        rowsView(slices.cooldown)
+                    }
+                }
+            }
         } else {
-            Text("Could not load preview.").foregroundColor(Color.white.opacity(0.4))
+            Text("Could not load preview.")
+                .foregroundColor(Color.white.opacity(0.4))
+                .frame(maxWidth: .infinity, minHeight: 200, alignment: .center)
         }
     }
 
@@ -138,19 +197,13 @@ struct RunPreviewSheet: View {
         replacingIndex = nil
     }
 
-    private func formatMs(_ ms: Int) -> String {
-        let totalSeconds = ms / 1000
-        let minutes = totalSeconds / 60
-        let seconds = totalSeconds % 60
-        return String(format: "%d:%02d", minutes, seconds)
-    }
-
     // MARK: - Sections
+    
     private func sectionSlices(for preview: PreviewRun) -> (warmup: [Row], main: [Row], cooldown: [Row], warmupSeconds: Int, mainSeconds: Int, cooldownSeconds: Int) {
         let gen = LocalGenerator(modelContext: modelContext)
         let counts = gen.plannedSegmentCounts(template: preview.template, runMinutes: preview.runMinutes)
         // Build flat rows with overall index
-        let rows: [Row] = preview.tracks.enumerated().map { (idx, t) in Row(index: idx + 1, track: t) }
+        let rows: [Row] = preview.tracks.enumerated().map { (idx, t) in Row(index: idx, track: t) }
         let wuCount = min(counts.wuSlots, rows.count)
         // Reserve cooldown from the end using planned cdSlots; main is the middle
         let cdCount = min(counts.cdSlots, max(0, rows.count - wuCount))
@@ -165,101 +218,176 @@ struct RunPreviewSheet: View {
     }
 
     private func sectionView<T: View>(title: String, seconds: Int, @ViewBuilder content: () -> T) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(title).font(RCFont.regular(14)).foregroundColor(Color.white.opacity(0.4))
+                Text(title)
+                    .font(RCFont.regular(14))
+                    .foregroundColor(Color.white.opacity(0.4))
                 Spacer()
-                Text(formatTotal(seconds)).font(RCFont.regular(14)).foregroundColor(Color.white.opacity(0.4))
+                Text(formatSectionTime(seconds))
+                    .font(RCFont.regular(14))
+                    .foregroundColor(Color.white.opacity(0.4))
             }
-            .padding(.bottom, 8)
-            .padding(.top, 4)
             content()
         }
+        .padding(.bottom, 20)
     }
 
     private func rowsView(_ rows: [Row]) -> some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             ForEach(rows) { r in
-                VStack(spacing: 12) {
-                    HStack(alignment: .center, spacing: 12) {
-                        Text("\(r.index)")
-                            .font(RCFont.regular(13))
-                            .foregroundColor(Color.white.opacity(0.4))
-                            .frame(width: 20, alignment: .center)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(r.track.title).font(RCFont.regular(16))
-                            Text(r.track.artist).font(RCFont.regular(13)).foregroundColor(Color.white.opacity(0.4))
-                        }
-                        Spacer()
-                        EffortTag(r.track.effort)
-                        Button(action: { Task { await replace(at: r.index - 1) } }) {
-                            Image("refresh")
-                                .renderingMode(.template)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 24, height: 24)
-                                .foregroundColor(Color(hex: 0x666666))
-                        }
-                        .disabled(replacingIndex != nil)
+                TrackRowView(
+                    track: r.track,
+                    isReplacing: replacingIndex == r.index,
+                    onReplace: {
+                        Task { await replace(at: r.index) }
                     }
-                }
+                )
             }
         }
     }
 
-    private func formatTotal(_ seconds: Int) -> String {
+    private func formatSectionTime(_ seconds: Int) -> String {
         let m = seconds / 60
         let s = seconds % 60
-        if s == 0 { return "\(m)min" }
-        return "\(m)min \(s)sec"
+        return "\(m)m \(s)s"
     }
 
     private var totalRuntimeText: String {
-        guard let p = preview else { return "" }
+        guard let p = preview else { return "--m --s" }
         let total = p.tracks.reduce(0) { $0 + ($1.durationMs / 1000) }
-        return formatTotal(total)
+        let m = total / 60
+        let s = total % 60
+        return "\(m)m \(s)s"
     }
 }
 
-private struct EffortTag: View {
-    let effort: LocalGenerator.EffortTier
-    init(_ e: LocalGenerator.EffortTier) { self.effort = e }
+// MARK: - Track Row View
+
+private struct TrackRowView: View {
+    let track: PreviewTrack
+    let isReplacing: Bool
+    let onReplace: () -> Void
+    
     var body: some View {
-        Text(label)
-            .font(RCFont.semiBold(12))
-            .foregroundColor(color)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(color.opacity(0.20))
-            .cornerRadius(12)
-    }
-    private var label: String {
-        switch effort { case .easy: return "EASY"; case .moderate: return "MEDIUM"; case .strong: return "STRONG"; case .hard: return "HARD"; case .max: return "MAX" }
-    }
-    private var color: Color {
-        switch effort {
-        case .easy: return Color(hex: 0x00C853)   // easy: 00C853
-        case .moderate: return Color(hex: 0xFF18A6) // moderate: FF18A6
-        case .strong: return Color(hex: 0x8E24AA)  // strong: 8E24AA
-        case .hard: return Color(hex: 0xFF6F00)    // hard: FF6F00
-        case .max: return Color(hex: 0xFF3333)     // max: FF3333
+        HStack(alignment: .center, spacing: 12) {
+            // Album art
+            AsyncImage(url: track.albumArtURL) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                case .failure, .empty:
+                    Rectangle()
+                        .fill(Color.white.opacity(0.1))
+                        .overlay(
+                            Image(systemName: "music.note")
+                                .foregroundColor(Color.white.opacity(0.3))
+                        )
+                @unknown default:
+                    Rectangle()
+                        .fill(Color.white.opacity(0.1))
+                }
+            }
+            .frame(width: 48, height: 48)
+            .clipShape(RoundedRectangle(cornerRadius: 2))
+            
+            // Track info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(track.title)
+                    .font(RCFont.regular(16))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                Text(track.artist)
+                    .font(RCFont.regular(13))
+                    .foregroundColor(Color.white.opacity(0.4))
+                    .lineLimit(1)
+            }
+            
+            Spacer()
+            
+            // Effort tag with refresh button
+            EffortTagButton(
+                effort: track.effort,
+                isLoading: isReplacing,
+                onTap: onReplace
+            )
         }
     }
 }
 
-// MARK: - Row model and CTA
+// MARK: - Effort Tag Button (combined effort label + refresh)
+
+private struct EffortTagButton: View {
+    let effort: LocalGenerator.EffortTier
+    let isLoading: Bool
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 6) {
+                if isLoading {
+                    ProgressView()
+                        .scaleEffect(0.6)
+                        .tint(color)
+                } else {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(color)
+                }
+                
+                Text(label)
+                    .font(RCFont.semiBold(12))
+                    .foregroundColor(color)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(color.opacity(0.20))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+        .disabled(isLoading)
+    }
+    
+    private var label: String {
+        switch effort {
+        case .easy: return "EASY"
+        case .moderate: return "MEDIUM"
+        case .strong: return "STRONG"
+        case .hard: return "HARD"
+        case .max: return "MAX"
+        }
+    }
+    
+    private var color: Color {
+        switch effort {
+        case .easy: return Color(hex: 0x00C853)
+        case .moderate: return Color(hex: 0xFF18A6)
+        case .strong: return Color(hex: 0x8E24AA)
+        case .hard: return Color(hex: 0xFF6F00)
+        case .max: return Color(hex: 0xFF3333)
+        }
+    }
+}
+
+// MARK: - Row model
+
 private struct Row: Identifiable {
     let id = UUID()
     let index: Int
     let track: PreviewTrack
 }
 
-private struct LooksGoodCTA: View {
+// MARK: - Start Run CTA
+
+private struct StartRunCTA: View {
     var isEnabled: Bool
     var action: () -> Void
+    
     var body: some View {
         Button(action: action) {
-            Text("LOOKS GOOD")
+            Text("START RUN")
                 .font(RCFont.semiBold(17))
                 .foregroundColor(.black)
                 .padding(.horizontal, 40)
@@ -272,5 +400,3 @@ private struct LooksGoodCTA: View {
         .opacity(isEnabled ? 1.0 : 0.6)
     }
 }
-
-

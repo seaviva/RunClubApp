@@ -39,21 +39,26 @@ final class RunPreviewService {
         if let prim = try? modelContext.fetch(FetchDescriptor<CachedTrack>()) {
             for t in prim where idsSet.contains(t.id) { byId[t.id] = t }
         }
+        
+        // Fetch album art URLs from Spotify
+        let albumArtURLs = (try? await spotify.getAlbumArtURLs(for: dry.trackIds)) ?? [:]
+        
         var previewTracks: [PreviewTrack] = []
         for (idx, tid) in dry.trackIds.enumerated() {
             let eff = idx < dry.efforts.count ? dry.efforts[idx] : .easy
+            let artURL = albumArtURLs[tid]
             if let ct = byId[tid] {
                 previewTracks.append(PreviewTrack(id: ct.id,
                                                   title: ct.name,
                                                   artist: ct.artistName,
-                                                  albumArtURL: nil,
+                                                  albumArtURL: artURL,
                                                   durationMs: ct.durationMs,
                                                   effort: eff))
             } else {
                 previewTracks.append(PreviewTrack(id: tid,
                                                   title: "Track",
                                                   artist: "",
-                                                  albumArtURL: nil,
+                                                  albumArtURL: artURL,
                                                   durationMs: 0,
                                                   effort: eff))
             }
@@ -81,13 +86,27 @@ final class RunPreviewService {
             if dry.efforts[idx2] == slotEffort && !exclude.contains(tid) { replacementId = tid; break }
         }
         guard let rid = replacementId else { return preview }
-        // Map replacementId to CachedTrack
-        if let ct = try? modelContext.fetch(FetchDescriptor<CachedTrack>()).first(where: { $0.id == rid }) {
+        
+        // Fetch album art for replacement track
+        let artURLs = (try? await spotify.getAlbumArtURLs(for: [rid])) ?? [:]
+        let artURL = artURLs[rid]
+        
+        // Map replacementId to CachedTrack (check all contexts)
+        var ct: CachedTrack?
+        if let t = try? modelContext.fetch(FetchDescriptor<CachedTrack>()).first(where: { $0.id == rid }) {
+            ct = t
+        } else if let t = try? PlaylistsDataStack.shared.context.fetch(FetchDescriptor<CachedTrack>()).first(where: { $0.id == rid }) {
+            ct = t
+        } else if let t = try? ThirdSourceDataStack.shared.context.fetch(FetchDescriptor<CachedTrack>()).first(where: { $0.id == rid }) {
+            ct = t
+        }
+        
+        if let ct {
             var next = preview
             next.tracks[index] = PreviewTrack(id: ct.id,
                                               title: ct.name,
                                               artist: ct.artistName,
-                                              albumArtURL: nil,
+                                              albumArtURL: artURL,
                                               durationMs: ct.durationMs,
                                               effort: slotEffort)
             return next

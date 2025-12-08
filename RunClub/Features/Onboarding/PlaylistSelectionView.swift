@@ -63,7 +63,7 @@ struct PlaylistSelectionView: View {
                             HStack(spacing: 14) {
                                 PlaylistImage(urlString: p.imageURL, isSynthetic: p.isSynthetic)
                                     .frame(width: 56, height: 56)
-                                    .cornerRadius(1)
+                                    .cornerRadius(2)
                                 
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(displayName(p))

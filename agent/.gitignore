@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+.eggs/
+*.egg-info/
+*.egg
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Agent output (keep structure, ignore contents)
+runs/*.json
+reports/*.md
+!runs/.gitkeep
+!reports/.gitkeep
+
+# Temp files
+*.log
+*.tmp
+.DS_Store

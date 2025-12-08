@@ -227,6 +227,19 @@ final class SpotifyService {
         }
         let tracks: [Track?]
     }
+    
+    // For fetching tracks with album art
+    private struct SeveralTracksWithArtResponse: Decodable {
+        struct Track: Decodable {
+            struct Album: Decodable {
+                struct Image: Decodable { let url: String?; let height: Int?; let width: Int? }
+                let images: [Image]?
+            }
+            let id: String?
+            let album: Album?
+        }
+        let tracks: [Track?]
+    }
 
     private struct SearchTracksResponse: Decodable {
         struct Tracks: Decodable {
@@ -453,6 +466,39 @@ final class SpotifyService {
             let resp = try JSONDecoder().decode(SeveralTracksResponse.self, from: data)
             for t in resp.tracks {
                 if let id = t?.id { result.insert(id) }
+            }
+            idx += chunkSize
+        }
+        return result
+    }
+    
+    // MARK: - Public: Fetch album art URLs for tracks
+    /// Returns a dictionary mapping track IDs to their album art URLs (smallest available image, typically 64px).
+    func getAlbumArtURLs(for ids: [String]) async throws -> [String: URL] {
+        guard !ids.isEmpty else { return [:] }
+        var result: [String: URL] = [:]
+        let chunkSize = 50
+        var idx = 0
+        while idx < ids.count {
+            let chunk = Array(ids[idx..<min(idx + chunkSize, ids.count)])
+            var comps = URLComponents(string: "https://api.spotify.com/v1/tracks")!
+            comps.queryItems = [.init(name: "ids", value: chunk.joined(separator: ","))]
+            let data = try await fetch(request(comps.url!), label: "GET /v1/tracks (album art)")
+            let resp = try JSONDecoder().decode(SeveralTracksWithArtResponse.self, from: data)
+            for t in resp.tracks {
+                guard let id = t?.id, let images = t?.album?.images, !images.isEmpty else { continue }
+                // Prefer a medium-sized image (around 300px) for good quality at 48x48 display
+                // Images are typically ordered largest to smallest, so pick the middle or last one
+                let sortedImages = images.compactMap { img -> (url: String, size: Int)? in
+                    guard let url = img.url else { return nil }
+                    return (url, img.height ?? img.width ?? 0)
+                }
+                // Find image closest to 300px, or fall back to first available
+                let targetSize = 300
+                let best = sortedImages.min(by: { abs($0.size - targetSize) < abs($1.size - targetSize) }) ?? sortedImages.first
+                if let urlStr = best?.url, let url = URL(string: urlStr) {
+                    result[id] = url
+                }
             }
             idx += chunkSize
         }
