@@ -1434,7 +1434,7 @@ final class LocalGenerator {
                             energyCapEasy: 0.70)
         case .moderate:
             return TierSpec(targetEffort: 0.48,
-                            tempoToleranceBPM: 12,
+                            tempoToleranceBPM: 14,
                             tempoFitMinimum: 0.42,
                             weights: (0.62, 0.28, 0.10),
                             energyMin: 0.35,
