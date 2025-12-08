@@ -43,6 +43,7 @@ final class LocalGenerator {
         let selected: [Candidate]
         let totalSeconds: Int
         let efforts: [EffortTier]
+        let segments: [String]  // "warmup", "main", "cooldown" for each track
         let debugLines: [String]
         let metrics: GenerationMetrics
     }
@@ -119,14 +120,7 @@ final class LocalGenerator {
         
         for (idx, candidate) in selection.selected.enumerated() {
             let effort = idx < selection.efforts.count ? selection.efforts[idx] : .easy
-            let segment: String
-            if idx < counts.wuSlots {
-                segment = "warmup"
-            } else if idx < counts.wuSlots + counts.coreSlots {
-                segment = "main"
-            } else {
-                segment = "cooldown"
-            }
+            let segment = idx < selection.segments.count ? selection.segments[idx] : "main"
             
             let slot = buildEffortTimeline(template: template, runMinutes: runMinutes)
             let targetEffort = idx < slot.count ? slot[idx].targetEffort : 0.4
@@ -459,6 +453,7 @@ final class LocalGenerator {
         
         var selected: [Candidate] = []
         var chosenEfforts: [EffortTier] = []
+        var chosenSegments: [String] = []
         var perArtistCount: [String: Int] = [:]
         var recentArtists: [String] = []
         var secondsSoFar = 0
@@ -471,12 +466,26 @@ final class LocalGenerator {
         var metricCount = 0
         
         let perArtistMax = (template == .light ? 1 : 2)
+        let cooldownStartIndex = counts.wuSlots + counts.coreSlots
+        var lastTempo: Double? = nil
         
         for (slotIndex, slot) in slots.enumerated() {
-            guard secondsSoFar < minSeconds else { break }
+            let isCooldownSlot = slotIndex >= cooldownStartIndex
+            
+            // Skip remaining CORE slots if we've hit min duration (but always process warmup and cooldown)
+            if secondsSoFar >= minSeconds && slotIndex >= counts.wuSlots && !isCooldownSlot {
+                emit("Slot #\(slotIndex) [skipped - duration hit, not cooldown]")
+                continue
+            }
+            
+            // Hard stop if we've exceeded max seconds
+            if secondsSoFar >= maxSeconds {
+                emit("Slot #\(slotIndex) [stopped - exceeded max seconds \(maxSeconds)]")
+                break
+            }
             
             // Filter available candidates
-            var available = pool.filter { c in
+            let available = pool.filter { c in
                 !selected.contains(where: { $0.track.id == c.track.id }) &&
                 (perArtistCount[c.track.artistId] ?? 0) < perArtistMax &&
                 (recentArtists.last != c.track.artistId)
@@ -485,10 +494,13 @@ final class LocalGenerator {
             guard !available.isEmpty else { continue }
             
             // Score candidates
+            // Relax tempo requirements for cooldown to ensure we always fill it
+            let tempoMinimum = isCooldownSlot ? 0.20 : tierSpec(for: slot.effort).tempoFitMinimum
+            
             var scored: [(Candidate, Double)] = []
             for c in available {
                 let base = score(candidate: c, slot: slot)
-                if base.tempoFit < tierSpec(for: slot.effort).tempoFitMinimum { continue }
+                if base.tempoFit < tempoMinimum { continue }
                 
                 // Basic scoring with bonuses
                 var bonus = 0.0
@@ -496,10 +508,25 @@ final class LocalGenerator {
                 if c.isRediscovery { bonus += 0.05 }
                 if c.source == .likes { bonus += 0.03 }
                 
+                // Transition smoothness bonus: prefer tracks within ±15 BPM of previous
+                if let prevTempo = lastTempo, let thisTempo = c.features?.tempo {
+                    let tempoDiff = abs(thisTempo - prevTempo)
+                    if tempoDiff <= 15 {
+                        bonus += 0.10  // Strong bonus for smooth transition
+                    } else if tempoDiff <= 25 {
+                        bonus += 0.05  // Mild bonus
+                    } else if tempoDiff > 40 {
+                        bonus -= 0.05  // Penalty for jarring jump
+                    }
+                }
+                
                 scored.append((c, base.baseScore + bonus))
             }
             
-            guard !scored.isEmpty else { continue }
+            guard !scored.isEmpty else {
+                emit("Slot #\(slotIndex) [\(slot.effort)] • NO CANDIDATES passed scoring (available:\(available.count))")
+                continue
+            }
             
             // Select from top candidates
             scored.sort { $0.1 > $1.1 }
@@ -513,23 +540,32 @@ final class LocalGenerator {
             }
             
             let secs = choice.track.durationMs / 1000
-            if secs <= 6 * 60 && secondsSoFar + secs <= maxSeconds {
+            // Allow cooldown tracks even if they slightly exceed max (up to 3 min over)
+            let effectiveMax = isCooldownSlot ? maxSeconds + 180 : maxSeconds
+            if secs <= 6 * 60 && secondsSoFar + secs <= effectiveMax {
                 selected.append(choice)
                 chosenEfforts.append(slot.effort)
+                
+                // Determine segment based on slot position (not output index)
+                let segment: String
+                if slotIndex < counts.wuSlots {
+                    segment = "warmup"
+                    wuSecondsAcc += secs
+                } else if slotIndex < cooldownStartIndex {
+                    segment = "main"
+                    mainSecondsAcc += secs
+                } else {
+                    segment = "cooldown"
+                    cdSecondsAcc += secs
+                }
+                chosenSegments.append(segment)
+                
                 secondsSoFar += secs
                 perArtistCount[choice.track.artistId, default: 0] += 1
                 recentArtists.append(choice.track.artistId)
                 if recentArtists.count > 7 { recentArtists.removeFirst() }
                 if choice.isRediscovery { chosenRediscovery += 1 }
-                
-                // Track segment durations
-                if slotIndex < counts.wuSlots {
-                    wuSecondsAcc += secs
-                } else if slotIndex < counts.wuSlots + counts.coreSlots {
-                    mainSecondsAcc += secs
-                } else {
-                    cdSecondsAcc += secs
-                }
+                lastTempo = choice.features?.tempo  // Track for transition smoothness
                 
                 // Metrics
                 let base = score(candidate: choice, slot: slot)
@@ -579,6 +615,7 @@ final class LocalGenerator {
             selected: selected,
             totalSeconds: secondsSoFar,
             efforts: chosenEfforts,
+            segments: chosenSegments,
             debugLines: debugLines,
             metrics: metrics
         )
