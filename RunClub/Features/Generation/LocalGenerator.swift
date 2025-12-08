@@ -1427,7 +1427,7 @@ final class LocalGenerator {
         switch tier {
         case .easy:
             return TierSpec(targetEffort: 0.35,
-                            tempoToleranceBPM: 15,
+                            tempoToleranceBPM: 18,
                             tempoFitMinimum: 0.35,
                             weights: (0.65, 0.25, 0.10),
                             energyMin: nil,
