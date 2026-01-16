@@ -10,7 +10,7 @@ RunClub is an iOS running app that generates Spotify playlists where track order
 
 - **Platform**: iOS 16+, SwiftUI
 - **Data**: SwiftData (local caching)
-- **Auth**: Spotify via Juky (web-based token flow, not native PKCE)
+- **Auth**: Spotify via Juky (web-based token flow, supports override tokens)
 - **External APIs**: Spotify Web API, ReccoBeats (audio features)
 - **Location**: CoreLocation for run tracking
 - **Notifications**: Local notifications for phase cues
@@ -25,9 +25,15 @@ RunClub is an iOS running app that generates Spotify playlists where track order
 - `Settings/` - User preferences
 - `Onboarding/` - Initial setup flow
 
+**Other key directories**:
+- `Core/Models/` - SwiftData entities (CachedTrack, AudioFeature, CachedArtist, etc.)
+- `Data/` - Library crawling, playlist sync, third-source data stack
+- `Services/` - SpotifyService (low-level API client)
+- `RunClub/RunClub/` - App entry point, RootView, Support utilities, Resources
+
 **Core patterns**:
 - MVVM with ObservableObjects (@Published, @StateObject)
-- Coordinators for orchestrating complex flows
+- Coordinators for orchestrating complex flows (CrawlCoordinator, PlaylistsCoordinator)
 - Services for API interactions
 
 ## Key Files
@@ -35,12 +41,11 @@ RunClub is an iOS running app that generates Spotify playlists where track order
 | File | Purpose |
 |------|---------|
 | `ALGORITHM_SPEC.md` | **Authoritative** spec for playlist generation algorithm |
-| `MASTER_PLAN.md` | Product roadmap and template definitions |
-| `FILES.md` | File inventory and descriptions |
 | `LocalGenerator.swift` | Core generation logic (implements ALGORITHM_SPEC.md) |
 | `RunOrchestrator.swift` | Manages run phases and cue scheduling |
 | `SpotifyService.swift` | Low-level Spotify Web API client |
 | `AuthService.swift` | Token management via Juky |
+| `CachedModels.swift` | SwiftData entities for tracks, features, artists |
 
 ## Workout Templates (6 types)
 
@@ -98,7 +103,7 @@ cd RunClub && xcodebuild -scheme RunClub -destination 'platform=iOS Simulator,id
 ### Testing Approach
 - Primary testing is manual on-device
 - Generation quality is evaluated against ALGORITHM_SPEC.md criteria
-- Consider adding structured logging for automated evaluation
+- Future: Agentic evaluation of generated playlists against spec benchmarks
 
 ## Data Flow
 
@@ -107,14 +112,22 @@ User selects template + duration + filters
     ↓
 LocalGenerator.swift builds effort curve from template
     ↓
-Scores tracks from SwiftData cache (likes + features + artists)
+Scores tracks from SwiftData cache (likes + playlists + third-source)
     ↓
 Selects tracks matching tempo/energy for each slot
     ↓
 Creates Spotify playlist via SpotifyService
     ↓
-RunOrchestrator manages playback phases
+RunOrchestrator manages playback phases during run
 ```
+
+## Data Sources (3-tier priority)
+
+1. **Liked tracks** - User's Spotify likes (primary, highest scoring bonus)
+2. **Playlist tracks** - User's owned/followed playlists
+3. **Third-source catalog** - Pre-built database for thin filter coverage
+
+All sources stored in SwiftData with audio features from ReccoBeats.
 
 ## Common Tasks
 
@@ -134,13 +147,6 @@ RunOrchestrator manages playback phases
 - Verify SwiftData cache has audio features (ReccoBeats)
 - Review tier-specific tempo windows and energy constraints
 
-## Known Limitations
-
-- No native PKCE auth (uses Juky web flow)
-- No HealthKit integration (CoreLocation only)
-- No offline/Watch support yet
-- `popularity` field is stored but never used in scoring
-
 ## External Services
 
 | Service | Purpose | Rate Limits |
@@ -148,9 +154,42 @@ RunOrchestrator manages playback phases
 | Spotify Web API | Auth, playlist creation, library access | ~2-3 req/sec, 429 backoff |
 | ReccoBeats | Audio features (tempo, energy, etc.) | ≤40 IDs per batch |
 
+## Library Cache & Crawling
+
+The app caches user's Spotify library locally to enable fast, offline-capable generation:
+
+- **Triggers**: After Spotify connect when cache empty or partial
+- **Process**: Pages `/v1/me/tracks`, fetches audio features via ReccoBeats, batch-fetches artist details
+- **Throttling**: ~2-3 req/sec with exponential backoff on 429s
+- **Resumable**: Tracks progress in CrawlState; survives app restarts
+- **UI**: Global progress toast during crawl; Settings shows counts and refresh option
+
+## Known Limitations
+
+- No native PKCE auth (uses Juky web flow)
+- No HealthKit integration (CoreLocation only)
+- No offline/Watch support yet
+- `popularity` field is stored but never used in scoring
+
 ## File Locations
 
 - **Project root**: `/Users/cvivadelli/Documents/RunClubApp/`
+- **Xcode project**: `RunClub/RunClub.xcodeproj`
 - **App source**: `RunClub/`
-- **Main app target**: `RunClub/RunClub/`
-- **Tests**: `RunClubTests/`, `RunClubUITests/`
+- **App entry point**: `RunClub/RunClub/` (RunClubApp.swift, RootView.swift)
+- **Tests**: `RunClub/RunClubTests/`, `RunClub/RunClubUITests/`
+
+## Future Ideas
+
+Track planned features and improvements here:
+
+- **User-tunable rediscovery ratio** (30–70%): Adjust rediscovery bias; default 50%
+- **Personal affinity feedback**: Thumbs up/down and skip signals folded into scoring with decay
+- **Genre-aware scoring refinements**: Incorporate speechiness/loudness for rap/metal/lofi cases
+- **Transition smoothness**: Prefer adjacent tracks with compatible musical key and small energy deltas
+- **HealthKit adaptivity**: Optional live pace/HR feedback to adjust slot targets
+- **Offline and Watch support**: Pre-generate multiple runs; watchOS app for on-wrist controls
+- **Social/sharing**: Share playlists, streaks, opt-in leaderboards
+- **Advanced diversity**: Beyond 10-day lookback; artist/label/region diversity; user allow/deny lists
+- **Template editor**: Power-user tool to design custom effort curves
+- **Weekly scheduling**: A/B week structure with template rotation based on runs/week preference

@@ -1,6 +1,11 @@
 ## RunClub – Templates and Playlist Generation Algorithm
 
-Scope: Authoritative specification for run template structure and the local playlist generation algorithm that uses SwiftData cache (Spotify liked tracks + ReccoBeats audio features + artist genres). This supersedes algorithm details in MASTER_PLAN.md.
+Scope: Authoritative specification for run template structure and the local playlist generation algorithm. This document is self-contained for both implementation and evaluation purposes.
+
+**How to use this document:**
+- For **implementation**: Follow the scoring formulas, tier specs, and selection process exactly
+- For **evaluation**: Use the "Playlist Evaluation Criteria" section to assess generated playlists
+- This document supersedes any other algorithm descriptions in the codebase
 
 
 ### High-level goals:
@@ -265,3 +270,121 @@ When a slot has too few viable candidates:
 - Algorithm operates entirely on SwiftData cache (likes + playlists + third-source catalog)
 - Remote fallbacks (e.g., Spotify recommendations API) are **not used** in local generation
 - Source priority: likes preferred, then playlists database, then third-source catalog
+
+
+---
+
+## Playlist Evaluation Criteria
+
+Use this section to evaluate whether a generated playlist meets quality standards. A playlist should pass ALL criteria to be considered optimal.
+
+### Duration Criteria
+| Check | Requirement | Severity |
+|-------|-------------|----------|
+| Total duration | Within ±2 minutes of requested run length | **FAIL** if violated |
+| Warm-up duration | Within ±60s of target for run length | **WARN** if violated |
+| Cool-down duration | Within ±60s of target for run length | **WARN** if violated |
+
+### Structure Criteria
+| Check | Requirement | Severity |
+|-------|-------------|----------|
+| Starts Easy | First track(s) must be Easy tier | **FAIL** if violated |
+| Ends Easy | Last track(s) must be Easy tier | **FAIL** if violated |
+| Template curve | Core section follows template pattern (see Templates section) | **FAIL** if violated |
+| Track count | Reasonable for duration (roughly 1 track per 3-4 minutes) | **WARN** if unusual |
+
+### Tempo Criteria
+| Check | Requirement | Severity |
+|-------|-------------|----------|
+| Tempo fit average | ≥ 70% of tracks have tempoFit ≥ tier minimum gate | **WARN** if below |
+| Tier BPM compliance | Each track's tempo (or ½×/2× variant) falls within tier window ± tolerance | **WARN** if >20% violations |
+| No extreme mismatches | No track should have tempoFit < 0.30 for its slot | **FAIL** if violated |
+
+### Energy Criteria
+| Check | Requirement | Severity |
+|-------|-------------|----------|
+| Easy tier energy | WU/CD tracks should have energy ≤ 0.75 (soft cap at 0.70) | **WARN** if violated |
+| High-intensity floors | Hard/Max tracks should have energy ≥ 0.50 | **WARN** if violated |
+| Energy arc | Energy should generally follow template pattern (not random) | **WARN** if chaotic |
+
+### Diversity Criteria
+| Check | Requirement | Severity |
+|-------|-------------|----------|
+| No duplicate tracks | Same track ID cannot appear twice | **FAIL** if violated |
+| No back-to-back artist | Same artist cannot have consecutive tracks | **FAIL** if violated |
+| Artist limit | Max 2 tracks per artist per playlist | **WARN** if violated |
+| Artist spacing | Same artist should have ~20 min gap (roughly 5-6 tracks) | **WARN** if violated |
+| Rediscovery ratio | ~50% of tracks should be "rediscovery" (unused ≥60 days) | **INFO** - best effort |
+
+### Filter Compliance
+| Check | Requirement | Severity |
+|-------|-------------|----------|
+| Genre filter | If genres selected, all tracks have affinity to those genres | **FAIL** if violated |
+| Decade filter | If decades selected, all tracks fall within those decades | **FAIL** if violated |
+| Track duration | All tracks between 90s and 360s | **FAIL** if violated |
+
+### Template-Specific Checks
+
+**Light:**
+- ≥ 70% Easy tier tracks in core
+- ≤ 20% Moderate tier tracks
+- No Strong/Hard/Max tracks
+
+**Tempo:**
+- ≥ 60% Strong tier tracks in core
+- ≤ 2 Hard tier spikes
+- No Max tier tracks
+
+**HIIT:**
+- Clear Easy↔Hard alternation pattern
+- Max of 1 Max tier track (near end only)
+- No back-to-back same tier (except Easy in WU/CD)
+
+**Intervals:**
+- Clear Moderate↔Hard alternation pattern
+- No Max tier tracks
+- Starts with Moderate after warm-up
+
+**Pyramid:**
+- Progressive build: Moderate → Strong → Hard → (Max) → Hard → Strong → Moderate
+- Max is optional (drop if short run)
+- Symmetric descent matches ascent
+
+**Kicker:**
+- Stable Moderate/Strong base
+- Final ramp sequence ending in Hard or Max
+- Max of 1 Max track, ≤ 2 Hard tracks total
+
+### Evaluation Summary Format
+
+When evaluating a playlist, report:
+```
+Template: [template name]
+Duration: [actual] / [target] minutes ([PASS/FAIL])
+Track Count: [n] tracks
+
+Structure: [PASS/WARN/FAIL]
+- Starts Easy: [✓/✗]
+- Ends Easy: [✓/✗]
+- Template curve: [✓/✗]
+
+Tempo Fit: [PASS/WARN/FAIL]
+- Average tempoFit: [X]%
+- Tracks below gate: [n]/[total]
+
+Energy Arc: [PASS/WARN/FAIL]
+- WU/CD energy compliance: [n]/[total]
+- High-intensity floor compliance: [n]/[total]
+
+Diversity: [PASS/WARN/FAIL]
+- Unique tracks: [✓/✗]
+- Artist spacing: [✓/✗]
+- Rediscovery ratio: [X]%
+
+Filter Compliance: [PASS/FAIL]
+- Genre filter: [✓/✗/N/A]
+- Decade filter: [✓/✗/N/A]
+
+Overall: [PASS/WARN/FAIL]
+Notes: [any specific issues or observations]
+```

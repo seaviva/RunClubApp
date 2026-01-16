@@ -34,7 +34,6 @@
 		5F6E1B802EBE709F009DF509 /* ReccoBeatsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B4A2EBE709F009DF509 /* ReccoBeatsClient.swift */; };
 		5F6E1B812EBE709F009DF509 /* JukyHeadlessRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B422EBE709F009DF509 /* JukyHeadlessRefresher.swift */; };
 		5F6E1B822EBE709F009DF509 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B412EBE709F009DF509 /* AuthService.swift */; };
-		5F6E1B832EBE709F009DF509 /* SpotifyRecommendationsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B4C2EBE709F009DF509 /* SpotifyRecommendationsClient.swift */; };
 		5F6E1B842EBE709F009DF509 /* GenreUmbrellaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B482EBE709F009DF509 /* GenreUmbrellaService.swift */; };
 		5F6E1B852EBE709F009DF509 /* CompletedRun.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B2F2EBE709F009DF509 /* CompletedRun.swift */; };
 		5F6E1B862EBE709F009DF509 /* LoginSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1B432EBE709F009DF509 /* LoginSplashView.swift */; };
@@ -109,7 +108,6 @@
 		5F6E1B492EBE709F009DF509 /* LocalGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalGenerator.swift; sourceTree = "<group>"; };
 		5F6E1B4A2EBE709F009DF509 /* ReccoBeatsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReccoBeatsClient.swift; sourceTree = "<group>"; };
 		5F6E1B4B2EBE709F009DF509 /* RunPreviewService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunPreviewService.swift; sourceTree = "<group>"; };
-		5F6E1B4C2EBE709F009DF509 /* SpotifyRecommendationsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyRecommendationsClient.swift; sourceTree = "<group>"; };
 		5F6E1B4E2EBE709F009DF509 /* DurationPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DurationPickerSheet.swift; sourceTree = "<group>"; };
 		5F6E1B4F2EBE709F009DF509 /* FilterPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPickerSheet.swift; sourceTree = "<group>"; };
 		5F6E1B502EBE709F009DF509 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -266,7 +264,6 @@
 				5F6E1B492EBE709F009DF509 /* LocalGenerator.swift */,
 				5F6E1B4A2EBE709F009DF509 /* ReccoBeatsClient.swift */,
 				5F6E1B4B2EBE709F009DF509 /* RunPreviewService.swift */,
-				5F6E1B4C2EBE709F009DF509 /* SpotifyRecommendationsClient.swift */,
 			);
 			path = Generation;
 			sourceTree = "<group>";
@@ -586,7 +583,6 @@
 				5F6E1B802EBE709F009DF509 /* ReccoBeatsClient.swift in Sources */,
 				5F6E1B812EBE709F009DF509 /* JukyHeadlessRefresher.swift in Sources */,
 				5F6E1B822EBE709F009DF509 /* AuthService.swift in Sources */,
-				5F6E1B832EBE709F009DF509 /* SpotifyRecommendationsClient.swift in Sources */,
 				5F6E1B842EBE709F009DF509 /* GenreUmbrellaService.swift in Sources */,
 				5F6E1B852EBE709F009DF509 /* CompletedRun.swift in Sources */,
 				5F6E1BA12EC3ABA2009DF509 /* PlaylistSelectionView.swift in Sources */,
