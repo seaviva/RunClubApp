@@ -2,10 +2,10 @@
 
 ### Vision
 - **Goal**: Minimal, fast running app that generates Spotify playlists where track order encodes workout structure and total time ≈ requested duration.
-- **Scope**: Keep PKCE auth untouched. Build incrementally. iOS 16+, SwiftUI.
+- **Scope**: iOS 16+, SwiftUI. Build incrementally.
 
 ### Constraints
-- **Auth**: Existing PKCE flow via `AuthService` must remain unchanged.
+- **Auth**: Juky-based web flow via `AuthService`. Supports override tokens for third-party integrations.
 - **Storage**: Tokens in Keychain. User prefs local.
 - **UI**: Minimal; runner-focused.
 - **Spotify**: Use web API with user’s market from profile.
@@ -146,8 +146,10 @@ Notes: Local generation is SwiftData‑first; legacy Spotify recommendations pat
 - Purpose: eliminate network reads during generation and reduce rate limiting by locally caching liked tracks, audio features, and artists.
 - Data models (SwiftData):
   - `CachedTrack` (id, name, artistId, artistName, durationMs, albumName, albumReleaseYear, popularity?, explicit, addedAt)
+    - Note: `popularity` is stored but **never used** in generation logic or filtering
   - `AudioFeature` (trackId, tempo?, energy?, danceability?, valence?, loudness?, key?, mode?, timeSignature?) — sourced from ReccoBeats
   - `CachedArtist` (id, name, genres:[String], popularity?)
+    - Note: `popularity` is stored but **never used** in generation logic or filtering
   - `CrawlState` (status running/idle/failed, nextOffset:Int?, totals, lastError?, lastCompletedAt?)
 - Behavior:
   - Triggers immediately after Spotify connect when cache is empty or `CrawlState.nextOffset` indicates a partial crawl; resumable across launches.
@@ -188,7 +190,7 @@ Notes: Local generation is SwiftData‑first; legacy Spotify recommendations pat
   - Preferred duration: Short/Medium/Long (AppStorage `preferredDurationCategory`).
 - Spotify:
   - Status: Connected/Not Connected.
-  - Reconnect (PKCE login), Disconnect (clear credentials).
+  - Reconnect (Juky web login), Disconnect (clear credentials).
 - App:
   - Reset onboarding flag.
   - Show version/build.
@@ -212,7 +214,6 @@ Notes: Local generation is SwiftData‑first; legacy Spotify recommendations pat
 
 ## Housekeeping
 - Fix `Info.plist` key: `LSAplicationQueriesSchemes` → `LSApplicationQueriesSchemes`.
-- Keep PKCE auth unchanged.
 
 ## Roadmap
 - Phase 0–1: Onboarding prefs, Home skeleton, A/B scheduler, “Do something else” flow stub. Generate uses current test path.

@@ -198,9 +198,20 @@ struct HomeView: View {
             if let url = generatedURL,
                let t = lastGeneratedTemplate,
                let m = lastRunMinutes {
-                StartRunView(playlistURI: url.absoluteString, template: t, runMinutes: m) { elapsedSeconds, distanceMeters in
-                    persistCompletedRun(template: t, runMinutes: m, elapsedSeconds: elapsedSeconds, distanceMeters: distanceMeters)
-                }
+                StartRunView(
+                    playlistURI: url.absoluteString,
+                    template: t,
+                    runMinutes: m,
+                    onCompleted: { elapsedSeconds, distanceMeters in
+                        persistCompletedRun(template: t, runMinutes: m, elapsedSeconds: elapsedSeconds, distanceMeters: distanceMeters)
+                    },
+                    onDiscarded: {
+                        // Clear the generated run state so "Continue Run" goes away
+                        generatedURL = nil
+                        lastGeneratedTemplate = nil
+                        lastRunMinutes = nil
+                    }
+                )
                 .presentationDetents([.large])
                 .interactiveDismissDisabled(true)
                 .presentationDragIndicator(.hidden)

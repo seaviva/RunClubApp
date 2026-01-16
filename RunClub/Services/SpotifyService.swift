@@ -139,8 +139,7 @@ final class SpotifyService {
                                              market: String?,
                                              targetEnergy: Double?,
                                              targetDanceability: Double?,
-                                             targetValence: Double?,
-                                             targetPopularity: Int?) async throws -> [RecCandidate] {
+                                             targetValence: Double?) async throws -> [RecCandidate] {
         // Build seeds with a hard cap of 5 combined across artists/tracks/genres
         let shuffledArtists = Array(seedArtists.shuffled())
         let shuffledTracks = Array(seedTracks.shuffled())
@@ -157,7 +156,7 @@ final class SpotifyService {
         let pickedGenres = Array(genreTokens.prefix(max(0, remaining)))
 
         func buildQueryItems(minTempo: Double, maxTempo: Double,
-                             includeEnergy: Bool, includeDance: Bool, includeValence: Bool, includePopularity: Bool) -> [URLQueryItem] {
+                             includeEnergy: Bool, includeDance: Bool, includeValence: Bool) -> [URLQueryItem] {
             var items: [URLQueryItem] = [
                 .init(name: "limit", value: "100"),
                 .init(name: "min_tempo", value: String(Int(minTempo))),
@@ -171,11 +170,10 @@ final class SpotifyService {
             if pickedArtists.isEmpty && pickedTracks.isEmpty && pickedGenres.isEmpty {
                 items.append(.init(name: "seed_genres", value: "pop"))
             }
-            // Broad filters: minimum energy/danceability 0.25; minimum popularity 25.
+            // Broad filters: minimum energy/danceability 0.25.
             if includeEnergy { items.append(.init(name: "min_energy", value: String(format: "%.2f", 0.25))) }
             if includeDance { items.append(.init(name: "min_danceability", value: String(format: "%.2f", 0.25))) }
             // Valence intentionally omitted
-            if includePopularity { items.append(.init(name: "min_popularity", value: "25")) }
             return items
         }
 
@@ -200,7 +198,7 @@ final class SpotifyService {
 
         // Strict: single attempt with hard filters; no relaxations or fallbacks
         let items = buildQueryItems(minTempo: minBPM, maxTempo: maxBPM,
-                                    includeEnergy: true, includeDance: true, includeValence: true, includePopularity: true)
+                                    includeEnergy: true, includeDance: true, includeValence: true)
         do {
             let result = try await exec(items, label: "GET /v1/recommendations (adv,strict)")
             return result
@@ -1174,7 +1172,7 @@ final class SpotifyService {
     }
 
     // MARK: - Public: Generation (MVP Light/Tempo)
-    /// Generates a playlist for Light or Tempo honoring hard filters, BPM, popularity, and duration bounds.
+    /// Generates a playlist for Light or Tempo honoring hard filters, BPM, and duration bounds.
     
 
     // MARK: - Public helpers

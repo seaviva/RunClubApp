@@ -19,6 +19,9 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
     @Published private(set) var currentTrackProgressMs: Int = 0
     @Published private(set) var currentTrackId: String?
     @Published private(set) var playbackError: String?
+    
+    /// Callback invoked when track changes (for orchestrator sync)
+    var onTrackChanged: ((String?) -> Void)?
 
     var onPlaybackEnded: (() -> Void)?
 
@@ -28,6 +31,10 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
     private var triggeredEndRefresh: Bool = false
 
     private var lastPlaylistURI: String = ""
+    
+    // Periodic sync timer for accurate state tracking
+    private var syncTimer: Timer?
+    private static let syncInterval: TimeInterval = 3.0 // Poll Spotify every 3 seconds
 
     override init() {
         super.init()
@@ -54,18 +61,40 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
         Task { await pauseViaWebAPI() }
         isPlaying = false
         stopProgressTimer()
+        stopSyncTimer()
     }
 
     func resume() {
         Task { await resumeViaWebAPI() }
         isPlaying = true
         startProgressTimer()
+        startSyncTimer()
     }
 
     func stop() {
         Task { await pauseViaWebAPI() }
         isPlaying = false
         stopProgressTimer()
+        stopSyncTimer()
+    }
+    
+    // MARK: - Periodic Spotify State Sync
+    // Polls Spotify API regularly to keep local state in sync with actual playback
+    private func startSyncTimer() {
+        stopSyncTimer()
+        syncTimer = Timer.scheduledTimer(withTimeInterval: Self.syncInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                await self?.refreshNowPlaying()
+            }
+        }
+        if let syncTimer {
+            RunLoop.main.add(syncTimer, forMode: .common)
+        }
+    }
+    
+    private func stopSyncTimer() {
+        syncTimer?.invalidate()
+        syncTimer = nil
     }
 
     private func openInSpotify(uri: String) {
@@ -111,15 +140,18 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
         progressTimer?.invalidate(); progressTimer = nil
         guard isPlaying else { return }
         progressTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            guard self.isPlaying, let track = self.currentTrack else { return }
-            let nextVal = min(track.durationMs, self.currentTrackProgressMs + 1000)
-            self.currentTrackProgressMs = nextVal
-            // Near end: trigger a metadata refresh to pick up next track when Web API is driving
-            if nextVal >= track.durationMs { 
-                if !self.triggeredEndRefresh {
-                    self.triggeredEndRefresh = true
-                    Task { await self.refreshNowPlaying() }
+            // Dispatch to MainActor since this callback runs on RunLoop but class is @MainActor
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                guard self.isPlaying, let track = self.currentTrack else { return }
+                let nextVal = min(track.durationMs, self.currentTrackProgressMs + 1000)
+                self.currentTrackProgressMs = nextVal
+                // Near end: trigger a metadata refresh to pick up next track when Web API is driving
+                if nextVal >= track.durationMs - 2000 { // 2 second buffer before end
+                    if !self.triggeredEndRefresh {
+                        self.triggeredEndRefresh = true
+                        await self.refreshNowPlaying()
+                    }
                 }
             }
         }
@@ -206,8 +238,15 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
                 let _ = data // ignore body
             }
         }
+        // Initial refresh to get current state
         await refreshNowPlaying()
-        await MainActor.run { self.startProgressTimer() }
+        // Start progress timer and sync timer
+        await MainActor.run {
+            self.startProgressTimer()
+            self.startSyncTimer()
+        }
+        // Poll a few more times to ensure state is accurate after Spotify fully starts
+        kickstartProgressRefresh()
     }
 
     private func pauseViaWebAPI() async {
@@ -215,6 +254,8 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
         var req = URLRequest(url: u); req.httpMethod = "PUT"
         if let token = await AuthService.sharedToken() { req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
         _ = try? await URLSession.shared.data(for: req)
+        // Brief delay to let Spotify settle, then refresh to get accurate position
+        try? await Task.sleep(nanoseconds: 200_000_000)
         await refreshNowPlaying()
     }
 
@@ -224,19 +265,34 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
         if let token = await AuthService.sharedToken() { req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
         _ = try? await URLSession.shared.data(for: req)
         await refreshNowPlaying()
-        await MainActor.run { self.startProgressTimer() }
+        await MainActor.run {
+            self.startProgressTimer()
+            self.startSyncTimer()
+        }
+        // Brief polling burst to ensure accurate state after resume
+        kickstartProgressRefresh()
     }
 
     private func refreshNowPlaying() async {
         guard let u = URL(string: "https://api.spotify.com/v1/me/player/currently-playing?additional_types=track") else { return }
         var req = URLRequest(url: u)
         if let token = await AuthService.sharedToken() { req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
-        guard let (data, response) = try? await URLSession.shared.data(for: req), (response as? HTTPURLResponse)?.statusCode == 200 else { return }
+        guard let (data, response) = try? await URLSession.shared.data(for: req) else { return }
+        
+        // Handle 204 No Content (nothing playing) gracefully
+        guard let http = response as? HTTPURLResponse else { return }
+        if http.statusCode == 204 {
+            // Nothing currently playing
+            isPlaying = false
+            return
+        }
+        guard http.statusCode == 200 else { return }
+        
         struct NowPlaying: Decodable {
             struct Item: Decodable {
                 struct Artist: Decodable { let name: String }
                 struct Album: Decodable {
-                    struct ImageObj: Decodable { let url: String }
+                    struct ImageObj: Decodable { let url: String; let height: Int?; let width: Int? }
                     let images: [ImageObj]?
                 }
                 let id: String?
@@ -252,6 +308,7 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
         if let np = try? JSONDecoder().decode(NowPlaying.self, from: data), let item = np.item {
             let incomingTitle = item.name
             let incomingArtist = item.artists?.first?.name ?? ""
+            let incomingId = item.id
             // Preserve prior non-zero duration if Spotify returns 0/unknown briefly after start
             var duration = item.duration_ms ?? 0
             if duration == 0, let cur = currentTrack {
@@ -263,16 +320,44 @@ final class SpotifyPlaybackController: NSObject, ObservableObject {
             }
             let newSignature = "\(incomingTitle)|\(incomingArtist)|\(duration)"
             let didChange = (newSignature != lastTrackSignature)
+            
+            // Detect track change for orchestrator sync
+            let previousTrackId = currentTrackId
+            
             currentTrack = (incomingTitle, incomingArtist, duration)
-            currentTrackId = item.id
-            if let urlStr = item.album?.images?.first?.url, let url = URL(string: urlStr) {
-                currentImageURL = url
-            } else { currentImageURL = nil }
-            // Prefer reported progress; if missing, keep prior progress
-            let reported = np.progress_ms ?? currentTrackProgressMs
+            currentTrackId = incomingId
+            
+            // Select best quality image (prefer ~300px for good display at various sizes)
+            if let images = item.album?.images, !images.isEmpty {
+                let targetSize = 300
+                let best = images.min(by: { img1, img2 in
+                    let size1 = img1.height ?? img1.width ?? 0
+                    let size2 = img2.height ?? img2.width ?? 0
+                    return abs(size1 - targetSize) < abs(size2 - targetSize)
+                })
+                if let urlStr = best?.url, let url = URL(string: urlStr) {
+                    currentImageURL = url
+                } else if let urlStr = images.first?.url, let url = URL(string: urlStr) {
+                    currentImageURL = url
+                }
+            } else {
+                currentImageURL = nil
+            }
+            
+            // ALWAYS use reported progress from Spotify as source of truth (fixes drift)
+            let reported = np.progress_ms ?? 0
             currentTrackProgressMs = duration > 0 ? max(0, min(duration, reported)) : reported
+            
             isPlaying = np.is_playing ?? isPlaying
-            if didChange { lastTrackSignature = newSignature; triggeredEndRefresh = false }
+            
+            if didChange {
+                lastTrackSignature = newSignature
+                triggeredEndRefresh = false
+                // Notify listeners of track change (e.g., for orchestrator phase sync)
+                if previousTrackId != nil && incomingId != previousTrackId {
+                    onTrackChanged?(incomingId)
+                }
+            }
         }
     }
 

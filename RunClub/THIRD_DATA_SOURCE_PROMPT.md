@@ -357,7 +357,7 @@ Example cached_artists.jsonl row:
   - Target 2–5 min; permit up to 6 min only if otherwise eliminating valuable coverage. Enforce hard cap at 6 min.
 
 - Dedupe:
-  - Collapse variants sharing same ISRC to a single canonical track (prefer higher popularity; break ties on earliest release year or stable ID ordering).
+  - Collapse variants sharing same ISRC to a single canonical track (break ties on earliest release year or stable ID ordering).
   - Always unique on final Spotify track ID in exported files.
 
 - Artists and genres:

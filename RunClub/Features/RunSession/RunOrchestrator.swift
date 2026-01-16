@@ -57,17 +57,21 @@ final class RunOrchestrator: ObservableObject {
     func resume() {
         guard isActive else { return }
         if let p = pauseStartDate, let s = startDate {
-            totalPausedSeconds += Int(Date().timeIntervalSince(p))
-            // Shift baseline so elapsed = now - (start + paused)
-            startDate = s.addingTimeInterval(TimeInterval(totalPausedSeconds))
+            // Calculate ONLY this pause's duration, not cumulative
+            let thisPauseDuration = Int(Date().timeIntervalSince(p))
+            totalPausedSeconds += thisPauseDuration
+            // Shift baseline forward by THIS pause duration only
+            startDate = s.addingTimeInterval(TimeInterval(thisPauseDuration))
             pauseStartDate = nil
+            print("[ORCHESTRATOR] Resume: paused for \(thisPauseDuration)s, total paused: \(totalPausedSeconds)s")
         }
         startTimer()
         Task {
-            if let start = startDate {
-                let runPhases = phases.map { RunPhase(name: $0.name, effort: $0.effort, durationSeconds: $0.durationSeconds) }
-                await NotificationScheduler.shared.rescheduleFromElapsed(start: start, phases: runPhases, elapsedSeconds: elapsedSeconds)
-            }
+            // Recalculate elapsed from the adjusted startDate
+            let currentElapsed = Int(Date().timeIntervalSince(startDate ?? Date()))
+            print("[ORCHESTRATOR] Rescheduling notifications with elapsed: \(currentElapsed)s")
+            let runPhases = phases.map { RunPhase(name: $0.name, effort: $0.effort, durationSeconds: $0.durationSeconds) }
+            await NotificationScheduler.shared.rescheduleFromElapsed(start: Date(), phases: runPhases, elapsedSeconds: currentElapsed)
         }
     }
 
@@ -76,13 +80,16 @@ final class RunOrchestrator: ObservableObject {
         isActive = false
         current = nil
         next = nil
+        Task { await NotificationScheduler.shared.cancelRunCues() }
     }
 
     private func startTimer() {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            self.tick()
+            // Dispatch to MainActor since timer callbacks aren't automatically on MainActor
+            Task { @MainActor [weak self] in
+                self?.tick()
+            }
         }
         RunLoop.main.add(timer!, forMode: .common)
     }

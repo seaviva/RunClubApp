@@ -20,7 +20,6 @@ struct RunClubApp: App {
     @StateObject private var auth = AuthService()
     @StateObject private var progressStore = LikesProgressStore()
     @StateObject private var playlistsProgressStore = PlaylistsProgressStore()
-    private let spotify = SpotifyService() // keep for future injection
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -58,7 +57,6 @@ struct RunClubApp: App {
                 .environmentObject(progressStore)
                 .environmentObject(playlistsProgressStore)
                 .onAppear { RootView.sharedAuth = auth }
-                .task { /* disable native PKCE restore */ }
                 .onAppear {
                     // Allow notifications to alert while app is foregrounded
                     UNUserNotificationCenter.current().delegate = NotificationDelegate.shared

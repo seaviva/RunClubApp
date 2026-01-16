@@ -2,7 +2,7 @@
 //  RunSessionManager.swift
 //  RunClub
 //
-//  Manages HealthKit workout sessions and GPS route recording for running.
+//  Manages CoreLocation-based GPS route recording for running.
 //
 
 import Foundation

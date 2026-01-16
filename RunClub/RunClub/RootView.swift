@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import UIKit
 import SwiftData
 
 struct RootView: View {

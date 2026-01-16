@@ -16,6 +16,7 @@ struct StartRunView: View {
     let template: RunTemplateType
     let runMinutes: Int
     var onCompleted: ((Int, Double) -> Void)? = nil
+    var onDiscarded: (() -> Void)? = nil
 
     @StateObject private var workout = RunSessionManager()
     @StateObject private var orchestrator = RunOrchestrator()
@@ -249,6 +250,11 @@ struct StartRunView: View {
         orchestrator.onCompleted = { endRun() }
         orchestrator.onPhaseUpdate = { _, _ in }
         spotify.onPlaybackEnded = { endRun() }
+        // Wire up track change detection for debugging/logging
+        spotify.onTrackChanged = { [weak orchestrator] newTrackId in
+            print("[SYNC] Spotify track changed to: \(newTrackId ?? "nil")")
+            // Could add logic here to verify orchestrator phase alignment
+        }
         // Preload playlist head so the UI shows first/next before starting
         Task { await spotify.preloadPlaylistHead(uri: playlistURI) }
     }
@@ -258,7 +264,13 @@ struct StartRunView: View {
             do {
                 try await workout.requestAuthorization()
                 try await workout.startRunning()
-                await NotificationScheduler.shared.requestAuthorization()
+                
+                // Request notification authorization and log result
+                let notifAuthorized = await NotificationScheduler.shared.requestAuthorization()
+                if !notifAuthorized {
+                    print("[RUN] Notification authorization denied - phase cues will not be delivered")
+                }
+                
                 // Build phases aligned to actual playlist tracks to keep effort synced with music
                 let durations = await fetchPlaylistTrackDurations()
                 let efforts = plannedEfforts
@@ -268,14 +280,19 @@ struct StartRunView: View {
                     let name = label(for: e)
                     return .init(index: idx, name: name, effort: e, durationSeconds: max(1, durations[idx]))
                 }
+                
+                print("[RUN] Starting run with \(phases.count) phases, total duration: \(phases.map { $0.durationSeconds }.reduce(0, +))s")
+                
                 // Ensure playback is activated and started before orchestrator to keep cues aligned
                 await spotify.ensureActiveDeviceAndPlay(uri: playlistURI)
                 if spotify.isPlaying {
                     await orchestrator.start(phases: phases)
                     hasStarted = true
+                } else {
+                    print("[RUN] Spotify playback did not start - cannot begin run")
                 }
             } catch {
-                // TODO: surface error
+                print("[RUN] Failed to start run: \(error)")
             }
         }
     }
@@ -309,6 +326,7 @@ struct StartRunView: View {
             await orchestrator.stop()
             await NotificationScheduler.shared.cancelRunCues()
             workout.cancel()
+            onDiscarded?()
             dismiss()
         }
     }
@@ -424,7 +442,10 @@ extension StartRunView {
             elapsedSeconds: orchestrator.elapsedSeconds
         )
         .overlay(alignment: .topTrailing) {
-            Button(action: { dismiss() }) {
+            Button(action: {
+                onDiscarded?() // Clear "Continue Run" state
+                dismiss()
+            }) {
                 Image(systemName: "xmark").imageScale(.medium)
             }
             .padding(16)

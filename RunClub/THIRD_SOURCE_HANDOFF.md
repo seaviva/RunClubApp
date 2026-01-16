@@ -36,7 +36,7 @@ CachedTrack (one row per track)
 - durationMs: Int
 - albumName: String
 - albumReleaseYear: Int? (nullable)
-- popularity: Int? (nullable)
+- popularity: Int? (nullable) — stored but **never used** in generation logic or filtering
 - explicit: Bool
 - addedAt: Date (UTC)
 - isPlayable: Bool (true for included tracks)
@@ -55,8 +55,8 @@ AudioFeature (one row per track)
 CachedArtist (artists referenced by tracks)
 - id: String (Spotify artist ID, unique)
 - name: String
-- genres: [String] (normalized: lowercase, hyphen→space, “&”→“and”)
-- popularity: Int?
+- genres: [String] (normalized: lowercase, hyphen→space, "&"→"and")
+- popularity: Int? — stored but **never used** in generation logic or filtering
 
 CrawlState (single row)
 - statusRaw: String (“idle”)
