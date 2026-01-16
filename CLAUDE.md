@@ -77,6 +77,11 @@ cd RunClub && xcodebuild -scheme RunClub -destination 'platform=iOS Simulator,id
 
 ## Development Guidelines
 
+### Git Workflow
+- **Work directly on main**: Do not create feature branches. All work happens on the `main` branch.
+- **Commit frequently**: Make small, focused commits directly to main
+- **Push after commits**: Push to origin/main after completing work
+
 ### Always Do
 - **Read before editing**: Always read a file before modifying it
 - **Verify builds**: After code changes, confirm the project builds
@@ -149,4 +154,3 @@ RunOrchestrator manages playback phases
 - **App source**: `RunClub/`
 - **Main app target**: `RunClub/RunClub/`
 - **Tests**: `RunClubTests/`, `RunClubUITests/`
-- **Agent folder**: `agent/` (experimental, may be removed)
