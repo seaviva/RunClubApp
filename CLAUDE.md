@@ -25,11 +25,13 @@ RunClub is an iOS running app that generates Spotify playlists where track order
 - `Settings/` - User preferences
 - `Onboarding/` - Initial setup flow
 
-**Other key directories**:
+**Other key directories** (all at `RunClub/` level):
 - `Core/Models/` - SwiftData entities (CachedTrack, AudioFeature, CachedArtist, etc.)
 - `Data/` - Library crawling, playlist sync, third-source data stack
 - `Services/` - SpotifyService (low-level API client)
-- `RunClub/RunClub/` - App entry point, RootView, Support utilities, Resources
+- `Support/` - Utilities (Buttons, Config, Fonts, Keychain, Seeders)
+- `Resources/` - Bundled assets (Fonts, Video, ThirdSource data, JSON mappings)
+- `RootView.swift`, `RunClubApp.swift` - App entry point at root level
 
 **Core patterns**:
 - MVVM with ObservableObjects (@Published, @StateObject)

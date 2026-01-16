@@ -57,6 +57,15 @@
 		5F6E1E942EDF25EB009DF509 /* RunFlowSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6E1E932EDF25EB009DF509 /* RunFlowSheet.swift */; };
 		5F94FD012E4F8E1900A3F9AE /* SpotifyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F94FCFF2E4F8CF600A3F9AE /* SpotifyService.swift */; };
 		5FECA3D02E79E918007D0002 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5FECA3CF2E79E918007D0002 /* Assets.xcassets */; };
+		5F0000112EE000000009DF50 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0000012EE000000009DF50 /* RootView.swift */; };
+		5F0000122EE000000009DF50 /* RunClubApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0000022EE000000009DF50 /* RunClubApp.swift */; };
+		5F0000132EE000000009DF50 /* Buttons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0000032EE000000009DF50 /* Buttons.swift */; };
+		5F0000142EE000000009DF50 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0000042EE000000009DF50 /* Config.swift */; };
+		5F0000152EE000000009DF50 /* Fonts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0000052EE000000009DF50 /* Fonts.swift */; };
+		5F0000162EE000000009DF50 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0000062EE000000009DF50 /* Keychain.swift */; };
+		5F0000172EE000000009DF50 /* PlaylistsStoreSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0000072EE000000009DF50 /* PlaylistsStoreSeeder.swift */; };
+		5F0000182EE000000009DF50 /* ThirdSourceStoreSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0000082EE000000009DF50 /* ThirdSourceStoreSeeder.swift */; };
+		5F0000192EE000000009DF50 /* VideoBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0000092EE000000009DF50 /* VideoBackgroundView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -143,27 +152,18 @@
 		5F94FCE62E4F886300A3F9AE /* RunClubUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunClubUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F94FCFF2E4F8CF600A3F9AE /* SpotifyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyService.swift; sourceTree = "<group>"; };
 		5FECA3CF2E79E918007D0002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5F0000012EE000000009DF50 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		5F0000022EE000000009DF50 /* RunClubApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunClubApp.swift; sourceTree = "<group>"; };
+		5F0000032EE000000009DF50 /* Buttons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Buttons.swift; sourceTree = "<group>"; };
+		5F0000042EE000000009DF50 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		5F0000052EE000000009DF50 /* Fonts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fonts.swift; sourceTree = "<group>"; };
+		5F0000062EE000000009DF50 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		5F0000072EE000000009DF50 /* PlaylistsStoreSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistsStoreSeeder.swift; sourceTree = "<group>"; };
+		5F0000082EE000000009DF50 /* ThirdSourceStoreSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThirdSourceStoreSeeder.swift; sourceTree = "<group>"; };
+		5F0000092EE000000009DF50 /* VideoBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoBackgroundView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		5F94FCFA2E4F89FE00A3F9AE /* Exceptions for "RunClub" folder in "RunClub" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 5F94FCCC2E4F886200A3F9AE /* RunClub */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5F94FCCF2E4F886200A3F9AE /* RunClub */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				5F94FCFA2E4F89FE00A3F9AE /* Exceptions for "RunClub" folder in "RunClub" target */,
-			);
-			path = RunClub;
-			sourceTree = "<group>";
-		};
 		5F94FCDF2E4F886300A3F9AE /* RunClubTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = RunClubTests;
@@ -368,12 +368,14 @@
 		5F94FCC42E4F886200A3F9AE = {
 			isa = PBXGroup;
 			children = (
+				5F0000012EE000000009DF50 /* RootView.swift */,
+				5F0000022EE000000009DF50 /* RunClubApp.swift */,
 				5FECA3CF2E79E918007D0002 /* Assets.xcassets */,
 				5F6E1B362EBE709F009DF509 /* Core */,
 				5F6E1B402EBE709F009DF509 /* Data */,
 				5F6E1B622EBE709F009DF509 /* Features */,
 				5F94FCFC2E4F8CC400A3F9AE /* Services */,
-				5F94FCCF2E4F886200A3F9AE /* RunClub */,
+				5F00001B0SUPPORT00009DF50 /* Support */,
 				5F94FCDF2E4F886300A3F9AE /* RunClubTests */,
 				5F94FCE92E4F886300A3F9AE /* RunClubUITests */,
 				5F6E1BAF2EC61EAD009DF509 /* Frameworks */,
@@ -399,6 +401,20 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		5F00001B0SUPPORT00009DF50 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				5F0000032EE000000009DF50 /* Buttons.swift */,
+				5F0000042EE000000009DF50 /* Config.swift */,
+				5F0000052EE000000009DF50 /* Fonts.swift */,
+				5F0000062EE000000009DF50 /* Keychain.swift */,
+				5F0000072EE000000009DF50 /* PlaylistsStoreSeeder.swift */,
+				5F0000082EE000000009DF50 /* ThirdSourceStoreSeeder.swift */,
+				5F0000092EE000000009DF50 /* VideoBackgroundView.swift */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -414,9 +430,6 @@
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				5F94FCCF2E4F886200A3F9AE /* RunClub */,
 			);
 			name = RunClub;
 			packageProductDependencies = (
@@ -596,6 +609,15 @@
 				5F6E1B8B2EBE709F009DF509 /* FilterPickerSheet.swift in Sources */,
 				5F6E1B952EC3AAE4009DF509 /* CachedPlaylist.swift in Sources */,
 				5F6E1B962EC3AAE4009DF509 /* PlaylistMembership.swift in Sources */,
+				5F0000112EE000000009DF50 /* RootView.swift in Sources */,
+				5F0000122EE000000009DF50 /* RunClubApp.swift in Sources */,
+				5F0000132EE000000009DF50 /* Buttons.swift in Sources */,
+				5F0000142EE000000009DF50 /* Config.swift in Sources */,
+				5F0000152EE000000009DF50 /* Fonts.swift in Sources */,
+				5F0000162EE000000009DF50 /* Keychain.swift in Sources */,
+				5F0000172EE000000009DF50 /* PlaylistsStoreSeeder.swift in Sources */,
+				5F0000182EE000000009DF50 /* ThirdSourceStoreSeeder.swift in Sources */,
+				5F0000192EE000000009DF50 /* VideoBackgroundView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -756,7 +778,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				CODE_SIGN_ENTITLEMENTS = RunClub/RunClub.entitlements;
+				CODE_SIGN_ENTITLEMENTS = RunClub.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -764,7 +786,7 @@
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = RunClub/Info.plist;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = RunClubAppX;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Allow background location to record your route while the phone is locked.";
@@ -799,7 +821,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				CODE_SIGN_ENTITLEMENTS = RunClub/RunClub.entitlements;
+				CODE_SIGN_ENTITLEMENTS = RunClub.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -807,7 +829,7 @@
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = RunClub/Info.plist;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = RunClubAppX;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Allow background location to record your route while the phone is locked.";
