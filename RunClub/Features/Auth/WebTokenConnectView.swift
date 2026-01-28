@@ -8,6 +8,11 @@
 import SwiftUI
 import WebKit
 
+/// WKWebView subclass that hides the keyboard input accessory view (next/prev/Done toolbar)
+final class NoInputAccessoryWebView: WKWebView {
+    override var inputAccessoryView: UIView? { nil }
+}
+
 final class WebTokenMessageHandler: NSObject, WKScriptMessageHandler {
     var onAuth: ((String) -> Void)?
     var onNotLoggedIn: (() -> Void)?
@@ -16,7 +21,7 @@ final class WebTokenMessageHandler: NSObject, WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "runclub" else { return }
         guard let body = message.body as? String else { return }
-        print("[WebToken] message body=\(body.prefix(300))")
+        print("[WebTokenConnectView] message body=\(body.prefix(300))")
         if let data = body.data(using: .utf8),
            let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let type = obj["type"] as? String {
@@ -49,6 +54,8 @@ final class WebTokenMessageHandler: NSObject, WKScriptMessageHandler {
             case "FAIL_AUTH":
                 // keep the sheet open; allow redirect flow to continue
                 onFailAuth?()
+            // case "DEBUG_INFO":
+                // print("[AUTH] WebTokenConnectView.DEBUG_INFO \(obj["data"] ?? "nil")")
             default:
                 break
             }
@@ -56,7 +63,26 @@ final class WebTokenMessageHandler: NSObject, WKScriptMessageHandler {
     }
 }
 
-struct WebTokenConnectView: UIViewRepresentable {
+struct WebTokenConnectView: View {
+    var onAuth: (String) -> Void
+    var onFail: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color(red: 0x12/255, green: 0x12/255, blue: 0x12/255)
+                .ignoresSafeArea()
+            
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                .scaleEffect(1.25)
+            
+            WebTokenConnectWebView(onAuth: onAuth, onFail: onFail)
+                .ignoresSafeArea(.keyboard)
+        }
+    }
+}
+
+private struct WebTokenConnectWebView: UIViewRepresentable {
     var onAuth: (String) -> Void
     var onFail: () -> Void
 
@@ -69,68 +95,169 @@ struct WebTokenConnectView: UIViewRepresentable {
         contentController.addUserScript(shimScript)
 
         // Inject Juky script to retrieve tokens from IndexedDB and guide login flow
-        let webviewURL = "https://web.juky.app"
+        let webviewURL = Config.jukyWebURL
         let scriptSource = """
-        const WEBVIEW_URL = '\(webviewURL)';
-        const sendMessage = (type, data) => {
-          window.ReactNativeWebView.postMessage(JSON.stringify({type, data}));
-        }
-        const findAllByText = (text) => {
-          return Array.from(document.querySelectorAll('*')).filter(element => {
-            if (element.children.length > 0) { return false; }
-            return element.textContent.trim().includes(text);
-          });
-        };
-        document.documentElement.style.opacity = 0;
-        document.documentElement.style.backgroundColor = '#121212';
-        document.body.style.opacity = 0;
-        window.addEventListener('load', async () => {
-          const pageURL = new URL(window.location.href);
-          if (pageURL.host === 'web.juky.app') {
-            document.documentElement.style.opacity = 0;
-            try {
-              const db = await new Promise((resolve, reject) => {
-                const request = window.indexedDB.open('SpotifyTokensDatabase');
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-              });
-              if (db.objectStoreNames.length > 0) {
-                const transaction = db.transaction(['spotifyTokens']);
-                const objectStore = transaction.objectStore('spotifyTokens');
-                const res = await new Promise((resolve, reject) => {
-                  const storeResult = objectStore.getAll();
-                  storeResult.onsuccess = () => resolve(storeResult.result);
-                  storeResult.onerror = () => reject(storeResult.error);
-                });
-                if (res.length > 0) {
-                  sendMessage('AUTH_DATA', res[0]);
-                  return;
-                }
+          const WEBVIEW_URL = "\(webviewURL)";
+
+          const sendMessage = (type, data) => {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type, data }));
+          };
+
+          const findAllByText = (text) => {
+            return Array.from(document.querySelectorAll("*")).filter((element) => {
+              if (element.children.length > 0) {
+                return false;
               }
-            } catch (e) {}
-            // Prompt user to continue
-            const cws = findAllByText('Continue with Spotify')[0];
-            if (cws) { cws.click(); }
-            sendMessage('NOT_LOGGED_IN', {});
-          } else {
-            document.documentElement.style.opacity = 1;
-            document.body.style.opacity = 1;
-            // Minimal UI cleanup (keep permissions visible)
-            const loginForm = document.querySelector('form');
-            if (loginForm && loginForm.nextSibling) { loginForm.nextSibling.style.display = 'none'; }
-            const buttonsList = document.querySelector('ul');
-            if (buttonsList) { buttonsList.style.display = 'none'; }
-            const separator = document.querySelector('hr');
-            if (separator) { separator.style.display = 'none'; }
-            const signupLink = document.querySelector('a[href*="/login/signup"]') ?? document.getElementById('sign-up-link');
-            if (signupLink && signupLink.parentElement) { signupLink.parentElement.style.display = 'none'; }
+              return element.textContent.trim().includes(text);
+            });
+          };
+
+          document.documentElement.style.opacity = 0;
+          document.documentElement.style.backgroundColor = "#121212";
+          document.body.style.opacity = 0;
+
+          // Persist data across page navigations using sessionStorage
+          let silentAuthorization =
+            sessionStorage.getItem("silentAuthorization") === "false" ? false : true;
+          let retriesAttempts = parseInt(
+            sessionStorage.getItem("retriesAttempts") ?? "2",
+            10
+          );
+
+          window.addEventListener("load", async () => {
+            const pageURL = new URL(window.location.href);
+            // sendMessage("DEBUG_INFO", window.location.href);
+
+            if (pageURL.host === "web.juky.app") {
+              // Don't show page content
+              document.documentElement.style.opacity = 0;
+
+              // Wait for the login callback to be processed
+              if (pageURL.href.includes("/login")) {
+                // In case page didn't redirect
+                window.setTimeout(() => {
+                  window.location.href = WEBVIEW_URL;
+                }, 1000);
+                return;
+              }
+
+              // Try to get token from storage
+              try {
+                const db = await new Promise((resolve, reject) => {
+                  const request = window.indexedDB.open("SpotifyTokensDatabase");
+                  request.onsuccess = () => resolve(request.result);
+                  request.onerror = () => reject(request.error);
+                });
+
+                if (db.objectStoreNames.length > 0) {
+                  const transaction = db.transaction(["spotifyTokens"]);
+                  const objectStore = transaction.objectStore("spotifyTokens");
+
+                  const res = await new Promise((resolve, reject) => {
+                    const storeResult = objectStore.getAll();
+                    storeResult.onsuccess = () => resolve(storeResult.result);
+                    storeResult.onerror = () => reject(storeResult.error);
+                  });
+
+                  if (res.length > 0) {
+                    // Sort tokens by expiry date (the most lasting one should be first)
+                    // res.sort((a, b) => (a.expiry > b.expiry ? -1 : 1));
+                    res.sort((a, b) => (a.expiry > b.expiry ? 1 : -1));
+                    sendMessage("AUTH_DATA", res[0]);
+                    return;
+                  }
+                }
+              } catch (e) {}
+
+              // Check if user just authorized in spotify page but still no token in storage - reload page once and try again
+              if (!silentAuthorization) {
+                sessionStorage.setItem("silentAuthorization", "true");
+                silentAuthorization = true;
+                window.setTimeout(() => {
+                  window.location.reload();
+                }, 1000);
+                return;
+              }
+
+              // Failed loading - retry couple times
+              // if (retriesAttempts > 0) {
+              //   retriesAttempts--;
+              //   sessionStorage.setItem("retriesAttempts", String(retriesAttempts));
+              //   window.setTimeout(() => {
+              //     window.location.href = WEBVIEW_URL;
+              //   }, 1000);
+              //   return;
+              // }
+
+              // Go to spotify authorization page
+              document.querySelector("button")?.click();
+              sendMessage("NOT_LOGGED_IN", {});
+            } else {
+              // Check if user is already authorized in spotify page before, just click "authorize" automatically
+              // (Lost/expired token case)
+              const authAcceptElement = document.querySelector(
+                '[data-testid="auth-accept"]'
+              );
+              if (silentAuthorization && authAcceptElement) {
+                authAcceptElement.click();
+                return;
+              }
+
+              document.documentElement.style.opacity = 1;
+              document.body.style.opacity = 1;
+              sessionStorage.setItem("silentAuthorization", "false");
+              silentAuthorization = false;
+
+              const googleLoginLink = document.querySelector('a[href*="/login/google"]');
+              if (googleLoginLink) {
+                googleLoginLink.style.display = "none";
+              }
+
+              const facebookLoginLink = document.querySelector(
+                'a[href*="/login/facebook"]'
+              );
+              if (facebookLoginLink) {
+                facebookLoginLink.style.display = "none";
+              }
+
+              const inputElement = document.querySelector("input");
+              if (inputElement) {
+                inputElement.setAttribute("name", "search");
+                inputElement.setAttribute("autocomplete", "off");
+              }
+            }
+
+            const signupLink =
+              document.querySelector('a[href*="/login/signup"]') ??
+              document.getElementById("sign-up-link");
+            if (signupLink) {
+              signupLink.parentElement.style.display = "none";
+            }
+
             const termsLink = document.querySelector('a[href*="policies.google"]');
-            if (termsLink && termsLink.parentElement) { termsLink.parentElement.style.pointerEvents = 'none'; }
-            sendMessage('NOT_LOGGED_IN', {});
-          }
-        });
+            if (termsLink) {
+              termsLink.parentElement.style.pointerEvents = "none";
+            }
+
+            const replacedElements = findAllByText("Juky");
+            replacedElements.forEach((element) => {
+              element.innerHTML = element.innerHTML.replaceAll("Juky", "RunClub");
+            });
+
+            const recentTracksText = findAllByText('View your activity')[0] ?? findAllByText('Ver tu actividad')[0] ?? findAllByText('Voir votre activité')[0];
+            if (recentTracksText) {
+              const recentTracksBlock = recentTracksText.parentElement.parentElement;
+              Array.from(recentTracksBlock.parentElement.children).forEach((el, index) => {
+                if (el.index !== 0 && el !== recentTracksBlock) {
+                  el.style.display = 'none';
+                }
+              });
+            }
+
+            sendMessage("NOT_LOGGED_IN", {});
+          });
         """
-        let userScript = WKUserScript(source: scriptSource, injectionTime: .atDocumentEnd, forMainFrameOnly: false)
+        let userScript = WKUserScript(source: scriptSource, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
         contentController.addUserScript(userScript)
 
         let config = WKWebViewConfiguration()
@@ -141,10 +268,13 @@ struct WebTokenConnectView: UIViewRepresentable {
         handler.onFailAuth = { print("[AUTH] WebTokenConnectView.onFailAuth (keeping sheet open)") }
         contentController.add(handler, name: "runclub")
 
-        let webView = WKWebView(frame: .zero, configuration: config)
-        // Assign onAuth after webView exists so we can hide/stop it immediately upon success
+        let webView = NoInputAccessoryWebView(frame: .zero, configuration: config)
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
+        
         handler.onAuth = { token in
-            // Backward-compatible: if given a single token string
             AuthService.setOverrideTokens(accessToken: token, refreshToken: nil, expiresAt: nil)
             print("[AUTH] WebTokenConnectView.onAuth token length=\(token.count)")
             DispatchQueue.main.async {
