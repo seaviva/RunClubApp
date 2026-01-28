@@ -406,12 +406,12 @@ final class SpotifyService {
 
     private func fetch(_ request: URLRequest, label: String) async throws -> Data {
         let (data, response) = try await URLSession.shared.data(for: request)
-        if let http = response as? HTTPURLResponse, http.statusCode == 401 {
-            print("Spotify fetch 401 — \(label). Attempting headless refresh…")
-            // Try to obtain a fresh token from Juky (headless) and retry once
-            _ = await JukyHeadlessRefresher.refreshToken()
+        if let http = response as? HTTPURLResponse, http.statusCode == 401 || http.statusCode == 400 {
+            print("Spotify fetch error \(http.statusCode) — \(label). Attempting token refresh…")
+            // Try to obtain a fresh token and retry once
+            await AuthService.refreshToken()
             if let fresh = await AuthService.sharedToken() {
-                print("Spotify fetch 401 — obtained refreshed token, retrying: \(label)")
+                print("Spotify fetch error \(http.statusCode) — obtained refreshed token, retrying: \(label)")
                 var retried = request
                 var headers = retried.allHTTPHeaderFields ?? [:]
                 headers["Authorization"] = "Bearer \(fresh)"
@@ -420,17 +420,17 @@ final class SpotifyService {
                 guard let http2 = response2 as? HTTPURLResponse else { return data2 }
                 if !(200...299).contains(http2.statusCode) {
                     let body2 = String(data: data2, encoding: .utf8) ?? ""
-                    if (http2.statusCode == 401) {
+                    if (http2.statusCode == 401 || http2.statusCode == 400) {
                         await MainActor.run {
                             AuthService.clearOverrideToken()
                         }
-                        print("Spotify fetch 401 — override token cleared; please reconnect via Juky")
+                        print("Spotify fetch error \(http2.statusCode) — override token cleared; please reconnect via Juky")
                     }
                     throw SpotifyServiceError.http(status: http2.statusCode, body: body2, endpoint: label)
                 }
                 return data2
             }
-            print("Spotify fetch 401 — refresh failed: \(label)")
+            print("Spotify fetch error \(http.statusCode) — refresh failed: \(label)")
         }
         guard let http = response as? HTTPURLResponse else { return data }
         guard (200...299).contains(http.statusCode) else {

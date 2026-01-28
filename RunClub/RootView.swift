@@ -34,7 +34,17 @@ struct RootView: View {
                     .environmentObject(playlistsCoordinator)
             }
         }
-        .onAppear { progressStore.debugName = "LIKES"; playlistsProgress.debugName = "PLAYLISTS" }
+        .onAppear {
+            progressStore.debugName = "LIKES";
+            playlistsProgress.debugName = "PLAYLIST S";
+            Keychain.set(Data("test".utf8), key: "spotify_override_access_token")
+
+            // Task {
+            //     let tok = await AuthService.refreshToken()
+            //     print("[ROOT] sharedToken=\(tok)")
+            // }
+            // print("[ROOT] has_override_token=\(hasOverrideToken)")
+        }
         .onChange(of: hasOverrideToken) { newVal in
             print("[AUTH] has_override_token changed -> \(newVal)")
         }

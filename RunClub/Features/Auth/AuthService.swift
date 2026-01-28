@@ -63,6 +63,8 @@ extension AuthService {
     private static let overrideTokenExpiresKey = "spotify_override_access_expires_at"
     private static let overrideRefreshTokenKey = "spotify_override_refresh_token"
 
+    private static let clientId = "14be97171d404e41b4a79431a2bffbcf"
+
     /// Synchronous accessor for use in request closures.
     static func sharedTokenSync() -> String? {
         RootView.sharedAuth?.credentials?.accessToken
@@ -98,9 +100,9 @@ extension AuthService {
 
     /// Async: returns a usable access token. Prefers override (Juky). If missing/expired, tries headless fetch.
     static func sharedToken() async -> String? {
-        print("[AUTH] sharedToken() begin")
+        print("[AUTH] sharedToken() called")
         if let tok = validOverrideToken() { return tok }
-        _ = await JukyHeadlessRefresher.refreshToken()
+        await refreshToken()
         if let tok = validOverrideToken() { return tok }
         // fallback to any native creds if present
         return RootView.sharedAuth?.credentials?.accessToken
@@ -114,6 +116,67 @@ extension AuthService {
             if Date() >= expiresAt { return nil }
         }
         return s
+    }
+
+    private static var refreshTask: Task<Bool?, Never>?
+    
+    static func refreshToken() async -> Bool? {
+        // If refresh already in progress, wait for it
+        if let existingTask = refreshTask {
+            print("[AUTH] refreshToken() — joining existing refresh task")
+            return await existingTask.value
+        }
+        
+        print("[AUTH] refreshToken() starting new refresh task")
+        
+        let task = Task<Bool?, Never> {
+            defer { refreshTask = nil }
+            return await performRefresh()
+        }
+        refreshTask = task
+        return await task.value
+    }
+    
+    private static func performRefresh() async -> Bool? {
+        guard let refreshToken = Keychain.get(overrideRefreshTokenKey),
+              let refreshTokenString = String(data: refreshToken, encoding: .utf8),
+              !refreshTokenString.isEmpty else {
+            print("[AUTH] performRefresh() error: no refresh token")
+            return await JukyHeadlessRefresher.refreshToken()
+        }
+        
+        let url = URL(string: "https://accounts.spotify.com/api/token")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.httpBody = "grant_type=refresh_token&refresh_token=\(refreshTokenString)&client_id=\(clientId)".data(using: .utf8)
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(for: request)
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+               guard let accessToken = json["access_token"] as? String,
+                     let newRefreshToken = json["refresh_token"] as? String else {
+                print("[AUTH] performRefresh() error: no access token or refresh token: \(json)")
+                return await JukyHeadlessRefresher.refreshToken()
+               }
+                
+                // Calculate expires_at from expires_in
+                var expiresAt: Date? = nil
+                if let expiresIn = json["expires_in"] as? Double {
+                    expiresAt = Date().addingTimeInterval(expiresIn)
+                }
+                
+                // Save tokens to Keychain
+                setOverrideTokens(accessToken: accessToken, refreshToken: newRefreshToken, expiresAt: expiresAt)
+                print("[AUTH] performRefresh saved new tokens, expiresAt=\(expiresAt?.description ?? "nil")")
+                return true
+            }
+
+            return await JukyHeadlessRefresher.refreshToken()
+        } catch {
+            print("[AUTH] performRefresh error: \(error)")
+            return false
+        }
     }
 }
 
